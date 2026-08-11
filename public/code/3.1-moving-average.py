@@ -1,3 +1,4 @@
+# @quantlab/output: 3.1-moving-average
 import numpy as np
 import pandas as pd
 np.random.seed(42)

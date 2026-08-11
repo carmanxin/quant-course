@@ -1,3 +1,4 @@
+# @quantlab/output: 2.2-black-scholes
 import numpy as np
 from scipy.stats import norm
 def black_scholes(S, K, T, r, sigma):

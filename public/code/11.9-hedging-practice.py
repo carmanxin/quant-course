@@ -1,3 +1,4 @@
+# @quantlab/output: 11.9-hedging-practice
 """11.9 套保策略实战 — Delta / Gamma / Vega 套保三个案例"""
 import numpy as np
 from scipy.stats import norm

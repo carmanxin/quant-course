@@ -1,3 +1,4 @@
+# @quantlab/output: 11.1-greeks
 import numpy as np
 from scipy.stats import norm
 def bs_greeks(S, K, T, r, sigma):

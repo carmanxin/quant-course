@@ -1,3 +1,4 @@
+# @quantlab/output: 1.5-global-aum
 # 1.5-global-aum.py
 # 全球量化私募 AUM 排行榜 2025-2026
 # 数据来源:13F/Form ADV/PivotalPath/各机构 Investor Letter 估算

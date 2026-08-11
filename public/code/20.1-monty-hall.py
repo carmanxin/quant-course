@@ -1,3 +1,4 @@
+# @quantlab/output: 20.1-monty-hall
 import numpy as np
 np.random.seed(42)
 n_trials = 10000

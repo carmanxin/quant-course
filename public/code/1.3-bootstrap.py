@@ -1,3 +1,4 @@
+# @quantlab/output: 1.3-bootstrap
 import numpy as np
 returns = np.random.randn(500) * 0.01 + 0.0005
 original_sharpe = np.mean(returns) / np.std(returns) * np.sqrt(252)

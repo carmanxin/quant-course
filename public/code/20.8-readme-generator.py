@@ -1,3 +1,4 @@
+# @quantlab/output: 20.8-readme-generator
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,3 +1,4 @@
+# @quantlab/output: 12.1-yield-curve
 import numpy as np
 from scipy.optimize import minimize
 def nelson_siegel(t, beta0, beta1, beta2, tau):

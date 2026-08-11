@@ -1,3 +1,4 @@
+# @quantlab/output: 4.3-performance
 import numpy as np
 np.random.seed(42)
 returns = np.random.randn(500) * 0.012 + 0.0004

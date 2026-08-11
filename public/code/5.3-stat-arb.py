@@ -1,3 +1,4 @@
+# @quantlab/output: 5.3-stat-arb
 import numpy as np
 np.random.seed(42)
 n = 200

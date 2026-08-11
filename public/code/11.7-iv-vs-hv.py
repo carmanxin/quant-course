@@ -1,3 +1,4 @@
+# @quantlab/output: 11.7-iv-vs-hv
 """11.7 隐含波动率 vs 历史波动率 — 5 种 HV 计算 + VIX 构造"""
 import numpy as np
 import pandas as pd

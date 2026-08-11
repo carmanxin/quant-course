@@ -1,3 +1,4 @@
+# @quantlab/output: 5.1-ic-analysis
 import numpy as np
 from scipy.stats import spearmanr
 np.random.seed(42)

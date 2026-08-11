@@ -1,3 +1,4 @@
+# @quantlab/output: 14.3-optimal-execution
 import numpy as np
 X, T, sigma, eta, gamma = 100000, 1.0, 0.02, 2.5e-7, 2.5e-6
 kappa = np.sqrt(gamma * sigma**2 / eta)

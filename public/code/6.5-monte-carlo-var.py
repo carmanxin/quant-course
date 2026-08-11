@@ -1,3 +1,4 @@
+# @quantlab/output: 6.5-monte-carlo-var
 import numpy as np
 np.random.seed(42)
 initial = 100000

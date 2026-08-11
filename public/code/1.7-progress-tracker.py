@@ -1,3 +1,4 @@
+# @quantlab/output: 1.7-progress-tracker
 # 1.7-progress-tracker.py
 # 个人量化学习进度跟踪器(2025-2026 版)
 # 包含 12 个月时间轴可视化与通过概率估算

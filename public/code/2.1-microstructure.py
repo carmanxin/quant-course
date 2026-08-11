@@ -1,3 +1,4 @@
+# @quantlab/output: 2.1-microstructure
 bids = [(100, 100), (99.5, 200), (99, 300)]
 total_shares = 500
 cost = 0

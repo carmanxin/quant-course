@@ -1,3 +1,4 @@
+# @quantlab/output: 6.1-efficient-frontier
 import numpy as np
 from scipy.optimize import minimize
 np.random.seed(42)

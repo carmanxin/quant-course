@@ -1,3 +1,4 @@
+# @quantlab/output: 11.8-vol-trading
 """11.8 波动率交易策略 — 5 大经典策略 Payoff 与 Greeks"""
 import numpy as np
 from scipy.stats import norm

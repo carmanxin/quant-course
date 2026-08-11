@@ -1,3 +1,4 @@
+# @quantlab/output: 3.2-data-cleaning
 import pandas as pd
 import numpy as np
 np.random.seed(42)

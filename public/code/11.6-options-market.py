@@ -1,3 +1,4 @@
+# @quantlab/output: 11.6-options-market
 """11.6 期权市场基础 — 合约规格与报价获取演示"""
 import numpy as np
 from scipy.stats import norm
