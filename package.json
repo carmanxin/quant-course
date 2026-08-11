@@ -1,0 +1,21 @@
+{
+  "name": "quant-course",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3",
+    "vue": "^3.5.13"
+  },
+  "dependencies": {
+    "echarts": "^5.6.0",
+    "markdown-it-mathjax3": "^4.3.2",
+    "playwright": "^1.60.0",
+    "pyodide": "^0.29.4"
+  }
+}

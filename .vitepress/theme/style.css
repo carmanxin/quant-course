@@ -1,0 +1,888 @@
+/* =====================================================================
+   FinTech 设计系统 · 量化交易课程
+   主调: 薄荷绿 #00E5A0 · 赛博青 #00D4FF · 霓虹紫 #7C3AED · 警示粉 #FF0080
+   ===================================================================== */
+
+/* ---------- 1. 设计令牌 (Design Tokens) ---------- */
+:root {
+  /* 品牌主色 */
+  --ft-brand:           #00E5A0;                 /* Electric Mint  - 多头主色 */
+  --ft-brand-2:         #00D4FF;                 /* Cyber Cyan    - 信息 */
+  --ft-brand-3:         #7C3AED;                 /* Royal Purple  - 高级 */
+  --ft-brand-4:         #FF0080;                 /* Hot Pink      - 警示强调 */
+  --ft-brand-5:         #FFB800;                 /* Trading Gold  - 提示 */
+
+  /* 多空语义 */
+  --ft-bull:            #00E5A0;
+  --ft-bear:            #FF4D6D;
+  --ft-flat:            #94A3B8;
+
+  /* 浅色模式表面 */
+  --ft-bg:              #F5F7FB;                 /* 页面底色 */
+  --ft-bg-soft:         #EDF1F8;                 /* 次要背景 */
+  --ft-surface:         #FFFFFF;                 /* 卡片 */
+  --ft-surface-2:       #F8FAFD;                 /* 二级卡片 */
+  --ft-overlay:         rgba(255, 255, 255, 0.7);
+
+  /* 文本 */
+  --ft-text-1:          #0B1220;                 /* 主标题 - 近黑 */
+  --ft-text-2:          #475569;                 /* 段落 */
+  --ft-text-3:          #94A3B8;                 /* 弱化文本 */
+  --ft-text-invert:     #FFFFFF;
+
+  /* 描边 */
+  --ft-border:          #E2E8F0;
+  --ft-border-strong:   #CBD5E1;
+
+  /* 阴影 / 发光 */
+  --ft-shadow-sm:       0 2px 6px rgba(13, 26, 56, .06);
+  --ft-shadow:          0 8px 24px rgba(13, 26, 56, .08);
+  --ft-shadow-lg:       0 20px 60px rgba(13, 26, 56, .12);
+  --ft-glow-mint:       0 0 32px rgba(0, 229, 160, .45);
+  --ft-glow-cyan:       0 0 32px rgba(0, 212, 255, .45);
+  --ft-glow-purple:     0 0 32px rgba(124, 58, 237, .45);
+  --ft-glow-pink:       0 0 32px rgba(255, 0, 128, .45);
+
+  /* 渐变 */
+  --ft-grad-primary:    linear-gradient(135deg, #00E5A0 0%, #00D4FF 100%);
+  --ft-grad-purple:     linear-gradient(135deg, #7C3AED 0%, #FF0080 100%);
+  --ft-grad-sunset:     linear-gradient(135deg, #FFB800 0%, #FF0080 100%);
+  --ft-grad-night:      linear-gradient(135deg, #0B1220 0%, #1B2A4E 100%);
+  --ft-grad-aurora:     linear-gradient(135deg, #00E5A0 0%, #00D4FF 35%, #7C3AED 70%, #FF0080 100%);
+  --ft-grad-glass:      linear-gradient(135deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.55) 100%);
+
+  /* 字体 */
+  --ft-font-sans:       "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --ft-font-mono:       "JetBrains Mono", "SF Mono", "Cascadia Code", Consolas, monospace;
+  --ft-font-display:    "Inter", "PingFang SC", system-ui, sans-serif;
+
+  /* 圆角 */
+  --ft-radius-sm:       8px;
+  --ft-radius:          12px;
+  --ft-radius-lg:       20px;
+  --ft-radius-pill:     9999px;
+
+  /* 过渡曲线 */
+  --ft-ease:            cubic-bezier(.4, 0, .2, 1);
+  --ft-ease-bounce:     cubic-bezier(.34, 1.56, .64, 1);
+
+  /* VitePress 桥接 */
+  --vp-c-bg:            var(--ft-bg);
+  --vp-c-bg-alt:        var(--ft-bg-soft);
+  --vp-c-bg-elv:        var(--ft-surface);
+  --vp-c-bg-soft:       var(--ft-bg-soft);
+  --vp-c-border:        var(--ft-border);
+  --vp-c-divider:       var(--ft-border);
+  --vp-c-text-1:        var(--ft-text-1);
+  --vp-c-text-2:        var(--ft-text-2);
+  --vp-c-text-3:        var(--ft-text-3);
+  --vp-c-brand-1:       var(--ft-brand);
+  --vp-c-brand-2:       var(--ft-brand-3);
+  --vp-c-brand-3:       var(--ft-brand);
+  --vp-c-brand-soft:    rgba(0, 229, 160, .12);
+}
+
+/* ---------- 2. 暗色模式令牌 ---------- */
+.dark {
+  --ft-bg:              #05080F;
+  --ft-bg-soft:         #0B1220;
+  --ft-surface:         #0F1729;
+  --ft-surface-2:       #131C30;
+  --ft-overlay:         rgba(15, 23, 41, .7);
+  --ft-text-1:          #F1F5F9;
+  --ft-text-2:          #CBD5E1;
+  --ft-text-3:          #64748B;
+  --ft-border:          #1E293B;
+  --ft-border-strong:   #334155;
+  --ft-shadow-sm:       0 2px 6px rgba(0, 0, 0, .3);
+  --ft-shadow:          0 8px 24px rgba(0, 0, 0, .4);
+  --ft-shadow-lg:       0 20px 60px rgba(0, 0, 0, .5);
+  --ft-glow-mint:       0 0 36px rgba(0, 229, 160, .55);
+  --vp-c-bg:            var(--ft-bg);
+  --vp-c-bg-alt:        var(--ft-bg-soft);
+  --vp-c-bg-elv:        var(--ft-surface);
+  --vp-c-bg-soft:       var(--ft-surface-2);
+  --vp-c-border:        var(--ft-border);
+}
+
+/* ---------- 3. 全局重置 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  font-family: var(--ft-font-sans);
+  color: var(--ft-text-1);
+  background: var(--ft-bg);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  /* 全局背景:细微的网格 + 中心光晕 */
+  background-image:
+    radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(0, 229, 160, .08), transparent 60%),
+    radial-gradient(ellipse 800px 400px at 90% 50%, rgba(124, 58, 237, .06), transparent 60%),
+    linear-gradient(var(--ft-bg), var(--ft-bg));
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(0, 229, 160, .15), transparent 60%),
+    radial-gradient(ellipse 800px 400px at 90% 50%, rgba(124, 58, 237, .12), transparent 60%),
+    linear-gradient(var(--ft-bg), var(--ft-bg));
+}
+
+/* 选中态 */
+::selection {
+  background: var(--ft-brand);
+  color: #051912;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--ft-brand), var(--ft-brand-2));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--ft-brand-2), var(--ft-brand-3));
+}
+
+/* ---------- 4. 顶栏 (毛玻璃 + 渐变描边) ---------- */
+.VPNavBar {
+  background: var(--ft-overlay) !important;
+  backdrop-filter: saturate(180%) blur(24px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+  border-bottom: 1px solid var(--ft-border) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 4px 16px rgba(13,26,56,.04);
+}
+.dark .VPNavBar {
+  box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 4px 24px rgba(0,0,0,.4);
+}
+
+/* 导航文字 */
+.VPNavBar .VPNavBarMenuLink, .VPNavBarTitle .title {
+  font-weight: 600 !important;
+  transition: color .2s var(--ft-ease) !important;
+}
+.VPNavBar .VPNavBarMenuLink:hover {
+  color: var(--ft-brand) !important;
+}
+
+/* 站点标题 Logo */
+.VPNavBar.has-sidebar .VPNavBarTitle .title {
+  background: var(--ft-grad-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 800 !important;
+  letter-spacing: -.02em;
+}
+
+/* ---------- 5. 侧边栏 ---------- */
+.VPSidebar {
+  background: var(--ft-bg-soft) !important;
+  border-right: 1px solid var(--ft-border) !important;
+}
+
+.VPSidebarItem.level-1 > .item > .text {
+  font-weight: 700 !important;
+  letter-spacing: -.01em;
+  color: var(--ft-text-1) !important;
+}
+
+.VPSidebarItem .item .link {
+  position: relative !important;
+  border-radius: var(--ft-radius-sm) !important;
+  margin: 2px 8px !important;
+  padding: 8px 12px !important;
+  transition: all .2s var(--ft-ease) !important;
+  color: var(--ft-text-2) !important;
+}
+.VPSidebarItem .item .link:hover {
+  color: var(--ft-brand) !important;
+  background: rgba(0, 229, 160, .08) !important;
+  transform: translateX(4px);
+}
+.VPSidebarItem .item .link.active {
+  color: #FFFFFF !important;
+  background: var(--ft-grad-primary) !important;
+  box-shadow: var(--ft-glow-mint);
+  font-weight: 600;
+}
+
+/* ---------- 6. 主页 Hero (重头戏) ---------- */
+.VPHero {
+  position: relative !important;
+  padding: 96px 0 80px !important;
+  background:
+    radial-gradient(ellipse 800px 400px at 30% 30%, rgba(0, 229, 160, .18), transparent 60%),
+    radial-gradient(ellipse 600px 400px at 80% 70%, rgba(124, 58, 237, .15), transparent 60%) !important;
+  overflow: hidden;
+}
+
+.VPHero .name {
+  background: var(--ft-grad-aurora) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  font-weight: 900 !important;
+  letter-spacing: -.03em !important;
+  font-size: clamp(2.4rem, 5vw, 3.6rem) !important;
+  line-height: 1.1 !important;
+  animation: ft-gradient-pan 8s ease infinite !important;
+  background-size: 200% 200% !important;
+}
+
+@keyframes ft-gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.VPHero .text {
+  font-weight: 700 !important;
+  color: var(--ft-text-1) !important;
+  letter-spacing: -.01em;
+}
+
+.VPHero .tagline {
+  color: var(--ft-text-2) !important;
+  font-size: 1.05rem;
+  max-width: 580px;
+}
+
+/* ---------- 7. 按钮 (核心动效) ---------- */
+.VPButton {
+  position: relative !important;
+  overflow: hidden !important;
+  font-weight: 600 !important;
+  letter-spacing: .01em !important;
+  border-radius: var(--ft-radius-pill) !important;
+  padding: 12px 26px !important;
+  transition: transform .25s var(--ft-ease-bounce), box-shadow .25s var(--ft-ease) !important;
+  isolation: isolate;
+  border: none !important;
+}
+
+.VPButton::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.6) 50%, transparent 70%) !important;
+  transform: translateX(-100%) !important;
+  transition: transform .8s var(--ft-ease) !important;
+  pointer-events: none;
+  z-index: 1;
+}
+.VPButton:hover::before { transform: translateX(100%) !important; }
+
+/* 主按钮 - 渐变 + 发光 + 缩放 */
+.VPButton.brand {
+  background: var(--ft-grad-primary) !important;
+  color: #051912 !important;
+  box-shadow: 0 6px 20px rgba(0, 229, 160, .35);
+}
+.VPButton.brand:hover {
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: var(--ft-glow-mint), 0 12px 32px rgba(0, 229, 160, .4) !important;
+}
+.VPButton.brand:active {
+  transform: translateY(0) scale(.98) !important;
+}
+
+/* 次按钮 - 描边渐变 */
+.VPButton.alt {
+  background: var(--ft-surface) !important;
+  color: var(--ft-text-1) !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+  position: relative !important;
+}
+.VPButton.alt::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -2px !important;
+  border-radius: inherit !important;
+  padding: 2px !important;
+  background: var(--ft-grad-aurora) !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  opacity: .8;
+  transition: opacity .25s var(--ft-ease);
+}
+.VPButton.alt:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: var(--ft-shadow);
+}
+.VPButton.alt:hover::after { opacity: 1; }
+
+/* ---------- 8. 卡片 ---------- */
+.card {
+  background: var(--ft-surface) !important;
+  border: 1px solid var(--ft-border) !important;
+  border-radius: var(--ft-radius-lg) !important;
+  padding: 28px !important;
+  margin: 20px 0 !important;
+  box-shadow: var(--ft-shadow-sm);
+  transition: transform .25s var(--ft-ease), box-shadow .25s var(--ft-ease), border-color .25s var(--ft-ease) !important;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ft-grad-aurora);
+  opacity: 0;
+  transition: opacity .3s var(--ft-ease);
+  z-index: -1;
+  border-radius: inherit;
+}
+.card:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: var(--ft-shadow-lg) !important;
+  border-color: transparent !important;
+}
+.dark .card:hover {
+  box-shadow: var(--ft-glow-cyan), 0 12px 32px rgba(0,0,0,.5) !important;
+}
+
+/* ---------- 9. Features 卡片 (首页) ---------- */
+.VPFeature {
+  background: var(--ft-surface) !important;
+  border: 1px solid var(--ft-border) !important;
+  border-radius: var(--ft-radius-lg) !important;
+  padding: 28px 24px !important;
+  transition: transform .25s var(--ft-ease), box-shadow .25s var(--ft-ease) !important;
+  position: relative !important;
+  overflow: hidden;
+}
+.VPFeature::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--ft-grad-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .4s var(--ft-ease);
+}
+.VPFeature:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: var(--ft-shadow-lg) !important;
+}
+.VPFeature:hover::after { transform: scaleX(1); }
+
+.VPFeature .title {
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  color: var(--ft-text-1) !important;
+}
+.VPFeature .details {
+  color: var(--ft-text-2) !important;
+  line-height: 1.6;
+}
+
+/* ---------- 10. 内容容器 ---------- */
+.VPContent { background: var(--ft-bg) !important; }
+
+.VPDoc {
+  padding-top: 32px !important;
+}
+
+/* 标题层次 */
+h1, h2, h3, h4 {
+  font-weight: 700 !important;
+  letter-spacing: -.02em !important;
+  color: var(--ft-text-1) !important;
+}
+
+h1 {
+  background: var(--ft-grad-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+h2 {
+  position: relative;
+  padding-left: 16px !important;
+  margin-top: 2.4em !important;
+}
+h2::before {
+  content: "";
+  position: absolute;
+  left: 0; top: .15em;
+  width: 5px; height: .85em;
+  background: var(--ft-grad-primary);
+  border-radius: 4px;
+}
+
+h3 { color: var(--ft-text-1) !important; }
+
+/* ---------- 11. 链接 ---------- */
+a {
+  color: var(--ft-brand-3) !important;
+  text-decoration: none !important;
+  transition: color .2s var(--ft-ease) !important;
+  background-image: linear-gradient(transparent calc(100% - 1px), var(--ft-brand) 1px);
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+}
+a:hover {
+  color: var(--ft-brand-4) !important;
+  background-size: 100% 100%;
+}
+
+/* ---------- 12. 行内代码 ---------- */
+code, .highlight {
+  font-family: var(--ft-font-mono) !important;
+  font-feature-settings: "tnum", "zero", "ss01";
+}
+:not(pre) > code, .highlight {
+  background: rgba(124, 58, 237, .08) !important;
+  color: var(--ft-brand-3) !important;
+  border: 1px solid rgba(124, 58, 237, .15);
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  font-size: .88em !important;
+  font-weight: 600;
+}
+.dark :not(pre) > code, .dark .highlight {
+  background: rgba(0, 229, 160, .12) !important;
+  color: var(--ft-brand) !important;
+  border-color: rgba(0, 229, 160, .25);
+}
+
+/* 代码块 —— 浅色主题:10% 灰度 + 黑色边框(清晰可读) */
+div[class*="language-"], div[class*="vp-code-block"] {
+  background: #f5f5f5 !important;             /* 10% 灰度 (light gray) */
+  border: 1px solid #000 !important;          /* 黑色边框 */
+  border-radius: var(--ft-radius) !important;
+}
+
+/* 代码块 —— 暗色主题:恢复深色背景 */
+.dark div[class*="language-"], 
+.dark div[class*="vp-code-block"] {
+  background: #0B1220 !important;            /* 深色背景 */
+  border: 1px solid var(--ft-border) !important;
+  border-radius: var(--ft-radius) !important;
+}
+.vp-code-group .tabs label {
+  background: transparent !important;
+  color: var(--ft-text-3) !important;
+  font-family: var(--ft-font-mono) !important;
+  transition: all .2s var(--ft-ease) !important;
+}
+.vp-code-group .tabs label:hover { color: var(--ft-brand) !important; }
+.vp-code-group .tabs label.active {
+  color: var(--ft-brand) !important;
+  border-bottom-color: var(--ft-brand) !important;
+}
+
+/* ---------- 13. 自定义容器 (提示框) ---------- */
+.custom-block {
+  border-radius: var(--ft-radius) !important;
+  border-left: 4px solid var(--ft-brand) !important;
+  background: var(--ft-surface) !important;
+  padding: 16px 20px !important;
+  transition: transform .2s var(--ft-ease), box-shadow .2s var(--ft-ease);
+}
+.custom-block:hover {
+  transform: translateX(2px);
+  box-shadow: var(--ft-shadow-sm);
+}
+.custom-block.tip      { border-left-color: var(--ft-brand) !important; }
+.custom-block.info     { border-left-color: var(--ft-brand-2) !important; }
+.custom-block.warning  { border-left-color: var(--ft-brand-5) !important; }
+.custom-block.danger   { border-left-color: var(--ft-bear) !important; }
+
+/* ---------- 14. details / 名词解释 ---------- */
+details {
+  background: var(--ft-surface) !important;
+  border: 1px solid var(--ft-border) !important;
+  border-radius: var(--ft-radius) !important;
+  padding: 14px 20px !important;
+  margin: 14px 0 !important;
+  transition: all .25s var(--ft-ease) !important;
+}
+details:hover {
+  border-color: var(--ft-brand) !important;
+  box-shadow: var(--ft-shadow-sm);
+  transform: translateY(-1px);
+}
+details[open] {
+  border-color: var(--ft-brand) !important;
+  box-shadow: 0 0 0 3px rgba(0, 229, 160, .08);
+}
+summary {
+  font-weight: 700 !important;
+  color: var(--ft-brand-3) !important;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+summary::before {
+  content: "▸";
+  color: var(--ft-brand);
+  transition: transform .2s var(--ft-ease);
+}
+details[open] summary::before { transform: rotate(90deg); }
+
+/* ---------- 15. 公式 ---------- */
+.formula {
+  background: var(--ft-bg-soft);
+  border: 1px dashed var(--ft-border-strong);
+  padding: 14px 20px;
+  border-radius: var(--ft-radius);
+  font-family: var(--ft-font-mono);
+  margin: 14px 0;
+  display: inline-block;
+  color: var(--ft-text-1);
+}
+
+/* ---------- 16. 按钮 (组件库内) ---------- */
+button, .vp-raw button {
+  background: var(--ft-grad-primary);
+  color: #051912;
+  border: none;
+  padding: 10px 22px;
+  border-radius: var(--ft-radius-pill);
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--ft-font-sans);
+  font-size: .92em;
+  letter-spacing: .01em;
+  box-shadow: 0 4px 14px rgba(0, 229, 160, .25);
+  transition: transform .25s var(--ft-ease-bounce), box-shadow .25s var(--ft-ease);
+  position: relative;
+  overflow: hidden;
+}
+button::before, .vp-raw button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.5) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform .7s var(--ft-ease);
+}
+button:hover, .vp-raw button:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(0, 229, 160, .4), var(--ft-glow-mint);
+}
+button:hover::before, .vp-raw button:hover::before { transform: translateX(100%); }
+button:active, .vp-raw button:active { transform: translateY(0) scale(.97); }
+
+/* 次级按钮 - 描边渐变 */
+.btn-secondary, button.secondary {
+  background: var(--ft-surface) !important;
+  color: var(--ft-text-1) !important;
+  border: 1.5px solid var(--ft-border-strong) !important;
+  box-shadow: none !important;
+}
+.btn-secondary:hover, button.secondary:hover {
+  border-color: var(--ft-brand-3) !important;
+  color: var(--ft-brand-3) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, .08) !important;
+}
+
+/* ---------- 17. 输入控件 ---------- */
+.input-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.input-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ft-text-2);
+  font-weight: 600;
+  font-size: .95em;
+}
+.input-group input, input[type="number"], input[type="text"] {
+  width: 90px;
+  padding: 10px 14px;
+  border-radius: var(--ft-radius-sm);
+  border: 1.5px solid var(--ft-border);
+  background: var(--ft-surface);
+  color: var(--ft-text-1);
+  font-family: var(--ft-font-mono);
+  font-size: .95em;
+  font-weight: 600;
+  transition: all .2s var(--ft-ease);
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(13, 26, 56, .04);
+}
+.input-group input:focus {
+  border-color: var(--ft-brand);
+  box-shadow: 0 0 0 4px rgba(0, 229, 160, .15);
+  transform: translateY(-1px);
+}
+
+/* ---------- 18. 测验选项 ---------- */
+.quiz-option {
+  display: block;
+  background: var(--ft-surface);
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius);
+  padding: 14px 20px;
+  margin: 10px 0;
+  cursor: pointer;
+  transition: all .2s var(--ft-ease);
+  color: var(--ft-text-1);
+  font-weight: 500;
+  position: relative;
+}
+.quiz-option:hover {
+  border-color: var(--ft-brand);
+  background: linear-gradient(135deg, var(--ft-surface), rgba(0, 229, 160, .04));
+  transform: translateY(-2px) translateX(2px);
+  box-shadow: var(--ft-shadow-sm);
+}
+.quiz-option:active { transform: translateY(0); }
+
+/* ---------- 19. 结果文本 ---------- */
+.result-text {
+  font-weight: 600;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--ft-bg-soft);
+  border-left: 3px solid var(--ft-brand);
+  border-radius: var(--ft-radius-sm);
+  font-family: var(--ft-font-mono);
+}
+
+/* ---------- 20. 图表容器 ---------- */
+.chart-container {
+  width: 100%;
+  border-radius: var(--ft-radius);
+  margin: 16px 0;
+  background: var(--ft-surface);
+  border: 1px solid var(--ft-border);
+  overflow: hidden;
+  transition: box-shadow .25s var(--ft-ease);
+}
+.chart-container:hover {
+  box-shadow: var(--ft-shadow);
+}
+
+/* ---------- 21. 表格 ---------- */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0;
+  border-radius: var(--ft-radius);
+  overflow: hidden;
+  border: 1px solid var(--ft-border) !important;
+  width: 100%;
+}
+th {
+  background: var(--ft-bg-soft) !important;
+  padding: 12px 18px;
+  font-weight: 700;
+  color: var(--ft-text-1);
+  border-bottom: 2px solid var(--ft-brand) !important;
+  text-align: left;
+}
+td {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--ft-border);
+  color: var(--ft-text-2);
+  transition: background .2s var(--ft-ease);
+}
+tr:hover td { background: rgba(0, 229, 160, .04); }
+.dark tr:hover td { background: rgba(0, 229, 160, .06); }
+
+/* ---------- 22. 搜索框 ---------- */
+.VPLocalSearchBox .search-input,
+.DocSearch-Button {
+  background: var(--ft-surface) !important;
+  border: 1px solid var(--ft-border) !important;
+  border-radius: var(--ft-radius-pill) !important;
+  transition: all .2s var(--ft-ease) !important;
+}
+.VPLocalSearchBox .search-input:focus,
+.DocSearch-Button:hover {
+  border-color: var(--ft-brand) !important;
+  box-shadow: 0 0 0 4px rgba(0, 229, 160, .12) !important;
+}
+
+/* ---------- 23. 大纲 (On this page) ---------- */
+.VPDocOutline {
+  border-left: 1px solid var(--ft-border) !important;
+}
+.VPDocOutlineItem:hover a {
+  color: var(--ft-brand) !important;
+}
+
+/* ---------- 24. Footer / 页脚 ---------- */
+.VPFooter {
+  background: var(--ft-bg-soft) !important;
+  border-top: 1px solid var(--ft-border) !important;
+  padding: 32px 24px !important;
+}
+
+/* ---------- 25. 自定义 Hero 横幅 ---------- */
+.ft-hero-banner {
+  position: relative;
+  margin: -32px -32px 40px;
+  padding: 56px 40px 64px;
+  border-radius: var(--ft-radius-lg);
+  background: var(--ft-grad-night);
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: var(--ft-shadow-lg);
+}
+.ft-hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 300px at 20% 30%, rgba(0, 229, 160, .35), transparent 60%),
+    radial-gradient(ellipse 500px 400px at 80% 70%, rgba(255, 0, 128, .3), transparent 60%),
+    radial-gradient(ellipse 400px 200px at 50% 0%, rgba(124, 58, 237, .25), transparent 60%);
+  z-index: -2;
+}
+.ft-hero-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: -1;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 80%);
+}
+.ft-hero-banner h1 {
+  background: linear-gradient(135deg, #00E5A0 0%, #00D4FF 50%, #fff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ft-hero-banner .ft-ticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .2);
+  backdrop-filter: blur(10px);
+  font-size: .8em;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.ft-hero-banner .ft-ticker .live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ft-brand);
+  box-shadow: 0 0 8px var(--ft-brand);
+  animation: ft-pulse 1.6s infinite;
+}
+@keyframes ft-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .5; transform: scale(.8); }
+}
+
+/* ---------- 26. 指标卡片 ---------- */
+.ft-metric {
+  display: inline-block;
+  padding: 10px 16px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--ft-radius);
+  backdrop-filter: blur(10px);
+  margin: 6px 4px;
+  font-family: var(--ft-font-mono);
+}
+.ft-metric .ft-metric-val {
+  font-size: 1.4em;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+.ft-metric.bull .ft-metric-val { color: var(--ft-brand); }
+.ft-metric.bear .ft-metric-val { color: var(--ft-bear); }
+.ft-metric .ft-metric-label {
+  font-size: .7em;
+  opacity: .6;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* ---------- 27. 滚动跑马灯 (ticker) ---------- */
+.ft-marquee {
+  display: flex;
+  gap: 32px;
+  padding: 12px 0;
+  overflow: hidden;
+  background: var(--ft-bg-soft);
+  border-top: 1px solid var(--ft-border);
+  border-bottom: 1px solid var(--ft-border);
+  font-family: var(--ft-font-mono);
+  font-size: .85em;
+  white-space: nowrap;
+}
+.ft-marquee::before, .ft-marquee::after {
+  content: "";
+  flex-shrink: 0;
+  width: 80px;
+}
+.ft-marquee-track {
+  display: flex;
+  gap: 32px;
+  animation: ft-marquee 40s linear infinite;
+}
+@keyframes ft-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ft-marquee:hover .ft-marquee-track { animation-play-state: paused; }
+.ft-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ft-marquee-item .sym {
+  font-weight: 800;
+  color: var(--ft-text-1);
+}
+.ft-marquee-item .px {
+  color: var(--ft-text-2);
+}
+.ft-marquee-item .chg.up   { color: var(--ft-bull);  font-weight: 700; }
+.ft-marquee-item .chg.down { color: var(--ft-bear);  font-weight: 700; }
+
+/* ---------- 28. 数字滚动动画 ---------- */
+.ft-counter {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 29. 减弱动画偏好 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- 30. 响应式微调 ---------- */
+@media (max-width: 640px) {
+  .VPHero { padding: 48px 0 40px !important; }
+  .card   { padding: 20px !important; }
+  .VPFeature { padding: 20px 16px !important; }
+}

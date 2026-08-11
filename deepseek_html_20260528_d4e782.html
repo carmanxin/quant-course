@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>量化交易系统设计与实践 · 完整充实课程（含名词解释）</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0f172a; color: #e2e8f0;
+      display: flex; height: 100vh; overflow: hidden;
+    }
+    .sidebar {
+      width: 300px; background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid #334155;
+    }
+    .sidebar-header h2 {
+      font-size: 1.4rem; font-weight: 600;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .sidebar-header p { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+    .module-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .module-item { border-bottom: 1px solid #1e293b; }
+    .module-title {
+      padding: 12px 20px; font-weight: 600; font-size: 0.95rem;
+      cursor: pointer; background: #1e293b; transition: background 0.2s;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #cbd5e1;
+    }
+    .module-title:hover { background: #273349; }
+    .module-title.active { background: #0f172a; color: #38bdf8; border-left: 3px solid #38bdf8; }
+    .chapter-list { display: none; background: #0f172a; }
+    .chapter-list.open { display: block; }
+    .chapter-item {
+      padding: 10px 20px 10px 32px; font-size: 0.85rem;
+      cursor: pointer; color: #94a3b8; transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .chapter-item:hover { background: #1e293b; color: #e2e8f0; }
+    .chapter-item.active-chapter { color: #38bdf8; background: #1e293b; border-left: 3px solid #38bdf8; }
+    .content {
+      flex: 1; overflow-y: auto; padding: 32px 40px;
+      background: #0b1120; scroll-behavior: smooth;
+    }
+    .content-section { display: none; }
+    .content-section.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .card {
+      background: #1e293b; border-radius: 12px; padding: 24px;
+      margin-bottom: 20px; border: 1px solid #334155;
+    }
+    h3 { font-size: 1.5rem; margin-bottom: 16px; color: #f1f5f9; }
+    h4 { font-size: 1.1rem; margin: 16px 0 8px; color: #cbd5e1; }
+    p, li { line-height: 1.7; color: #cbd5e1; }
+    ul { padding-left: 20px; }
+    .highlight {
+      background: #2d3a4f; padding: 2px 8px;
+      border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em;
+    }
+    button {
+      background: #3b82f6; border: none; color: white;
+      padding: 8px 18px; border-radius: 6px; cursor: pointer;
+      font-weight: 500; transition: background 0.2s;
+      margin-right: 8px; margin-top: 8px;
+    }
+    button:hover { background: #2563eb; }
+    .quiz-option {
+      display: block; background: #1e293b; border: 1px solid #334155;
+      border-radius: 8px; padding: 12px 16px; margin: 8px 0;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .quiz-option:hover { background: #273349; border-color: #3b82f6; }
+    .quiz-option.correct { background: #065f46; border-color: #10b981; }
+    .quiz-option.incorrect { background: #7f1d1d; border-color: #ef4444; }
+    .input-group {
+      display: flex; gap: 12px; align-items: center; margin: 12px 0;
+      flex-wrap: wrap;
+    }
+    .input-group label {
+      display: flex; align-items: center; gap: 6px; color: #cbd5e1;
+    }
+    .input-group input {
+      width: 80px; padding: 6px 10px; border-radius: 6px;
+      border: 1px solid #334155; background: #0f172a; color: white;
+    }
+    canvas { width: 100%; border-radius: 8px; margin: 16px 0; background: #0f172a; }
+    .formula {
+      background: #0f172a; padding: 10px 15px;
+      border-radius: 6px; font-family: 'Fira Code', monospace;
+      margin: 8px 0; display: inline-block;
+    }
+    .result-text { font-weight: 600; margin-top: 8px; font-size: 1.1rem; }
+    details {
+      background: #0f172a; border-radius: 8px; padding: 12px 16px;
+      margin: 12px 0; color: #cbd5e1;
+    }
+    summary {
+      font-weight: 600; cursor: pointer; color: #38bdf8;
+    }
+    details p, details li { color: #cbd5e1; }
+    pre {
+      background: #0f172a; padding: 12px; border-radius: 6px;
+      font-family: 'Fira Code', monospace; font-size: 0.85rem;
+      overflow-x: auto; color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>量化交易课程</h2>
+    <p>10大模块 · 含名词解释</p>
+  </div>
+  <div class="module-list" id="moduleList"></div>
+</div>
+<div class="content" id="contentArea"></div>
+
+<script>
+  // ---------- 完整课程数据（已添加名词解释的可折叠部分） ----------
+  const courseData = [
+    {
+      title: "模块一：量化交易全景与行业认知",
+      chapters: [
+        { id: "1.1", title: "1.1 发展史与生态", content: `
+          <div class="card">
+            <h3>📈 量化交易发展史</h3>
+            <p>从20世纪70年代统计套利萌芽，到80年代文艺复兴科技崛起，再到21世纪机器学习驱动。</p>
+            <details><summary>名词解释：量化交易</summary><p>利用数学模型、统计分析和计算机程序进行投资决策和执行的交易方式，强调系统化、纪律性和风险控制。</p></details>
+            <details><summary>名词解释：统计套利</summary><p>基于统计模型发现资产价格间的异常关系，并利用这种关系进行交易以获取低风险利润。</p></details>
+            <ul><li><strong>1973年</strong>：Black-Scholes期权定价模型</li><li><strong>1988年</strong>：大奖章基金</li></ul>
+            <h4>量化生态图谱</h4>
+            <ul>
+              <li><strong>自营交易公司</strong>：Optiver、Jane Street</li>
+              <li><strong>量化对冲基金</strong>：Two Sigma、D.E. Shaw</li>
+              <li><strong>银行做市商</strong>：提供流动性</li>
+              <li><strong>因子工厂</strong>：WorldQuant等</li>
+            </ul>
+          </div>
+        `},
+        { id: "1.2", title: "1.2 策略分类", content: `
+          <div class="card">
+            <h3>策略大类</h3>
+            <p><span class="highlight">Alpha策略</span>追求超额收益，<span class="highlight">Beta策略</span>跟踪市场指数。</p>
+            <details><summary>名词解释：Alpha</summary><p>投资组合相对于基准指数（如沪深300）的超额收益，衡量基金经理的选股或择时能力。</p></details>
+            <details><summary>名词解释：Beta</summary><p>衡量资产或组合相对于市场整体的系统性风险，Beta=1表示与市场同步波动。</p></details>
+            <h4>按交易逻辑分类</h4>
+            <ul><li>方向性策略</li><li>相对价值策略</li><li>事件驱动</li><li>做市策略</li></ul>
+            <h4>📌 案例：简单趋势跟踪信号</h4>
+            <pre>
+import pandas as pd
+df['MA_short'] = df['Close'].rolling(20).mean()
+df['MA_long'] = df['Close'].rolling(50).mean()
+df['Signal'] = (df['MA_short'] > df['MA_long']).astype(int)
+            </pre>
+          </div>
+        `},
+        { id: "1.3", title: "1.3 量化思维核心", content: `
+          <div class="card">
+            <h3>假设检验与概率优势</h3>
+            <p>量化交易的本质是寻找正的期望值。大数定律确保长期收敛。</p>
+            <details><summary>名词解释：期望值</summary><p>在大量重复试验中，每次试验结果的平均值。公式为 (胜率×平均盈利) - (败率×平均亏损)。</p></details>
+            <p class="formula">E[R] = (胜率 × 平均盈利) - (败率 × 平均亏损)</p>
+            <h4>📌 案例：Bootstrap检验</h4>
+            <pre>
+import numpy as np
+returns = np.random.randn(500) * 0.01 + 0.0005
+original_sharpe = np.mean(returns) / np.std(returns) * np.sqrt(252)
+bootstrapped = [np.mean(np.random.choice(returns, size=500)) / np.std(np.random.choice(returns, size=500)) * np.sqrt(252) for _ in range(1000)]
+p_value = np.mean(np.array(bootstrapped) > original_sharpe)
+print(f"p值: {p_value:.3f}")
+            </pre>
+          </div>
+        `},
+        { id: "1.4", title: "1.4 现实挑战", content: `
+          <div class="card">
+            <h3>四大挑战</h3>
+            <ul>
+              <li><strong>过拟合</strong>：样本内好，样本外差。</li>
+              <details><summary>名词解释：过拟合</summary><p>模型过度学习训练数据中的噪声和细节，导致在未知数据上表现不佳。量化中常见于参数过多或反复试错。</p></details>
+              <li><strong>策略衰退</strong>：Alpha衰减。</li>
+              <li><strong>交易成本</strong>：侵蚀利润。</li>
+              <li><strong>黑箱风险</strong>：模型不可解释。</li>
+            </ul>
+            <h4>📌 案例：成本影响回测</h4>
+            <pre>
+cost_rate = 0.001
+nav_with_cost = nav_no_cost.copy()
+for i in range(1, len(nav_with_cost)):
+    if trades[i] != 0:
+        nav_with_cost[i:] *= (1 - cost_rate)
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块二：金融基础与数理工具",
+      chapters: [
+        { id: "2.1", title: "2.1 市场微观结构", content: `
+          <div class="card">
+            <h3>订单簿与流动性</h3>
+            <details><summary>名词解释：订单簿</summary><p>记录所有未成交的限价买卖订单，显示各价位上的挂单量。买盘最高价称为Bid，卖盘最低价称为Ask。</p></details>
+            <h4>📌 案例：冲击成本计算</h4>
+            <pre>
+bids = [(100,100),(99.5,200),(99,300)]  # (价格,数量)
+total_shares = 500
+cost = 0
+for price, volume in bids:
+    if total_shares <= 0: break
+    executed = min(total_shares, volume)
+    cost += executed * price
+    total_shares -= executed
+avg_price = cost / 500
+impact = (avg_price - bids[0][0]) / bids[0][0]
+print(f"冲击成本: {impact:.2%}")
+            </pre>
+          </div>
+        `},
+        { id: "2.2", title: "2.2 资产定价基础", content: `
+          <div class="card">
+            <h3>主要资产定价原理</h3>
+            <details><summary>名词解释：DCF模型</summary><p>折现现金流模型，通过预测未来现金流并以适当折现率折现来估算资产内在价值。</p></details>
+            <h4>📌 案例：Black-Scholes期权定价</h4>
+            <pre>
+from scipy.stats import norm
+def black_scholes(S, K, T, r, sigma):
+    d1 = (np.log(S/K) + (r + sigma**2/2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma*np.sqrt(T)
+    call = S * norm.cdf(d1) - K * np.exp(-r*T) * norm.cdf(d2)
+    return call
+print(black_scholes(100, 105, 0.5, 0.03, 0.2))
+            </pre>
+          </div>
+        `},
+        { id: "2.3", title: "2.3 概率统计与相关性", content: `
+          <div class="card">
+            <h3>概率思维与随机性</h3>
+            <details><summary>名词解释：肥尾分布</summary><p>与正态分布相比，尾部更厚的分布，意味着极端事件发生概率更高。金融收益率常呈现此特征。</p></details>
+            <h4>🎲 期望值计算器</h4>
+            <div class="input-group"><label>胜率(%) <input id="winRate" type="number" value="55" min="0" max="100"></label><label>平均盈利($) <input id="winAmt" type="number" value="100" step="1"></label><label>平均亏损($) <input id="lossAmt" type="number" value="90" step="1"></label><button onclick="calcExpectedValue()">计算期望值</button></div>
+            <p id="evResult" class="result-text"></p>
+            <h4>📉 随机游走模拟器</h4>
+            <button onclick="drawRandomWalks()">生成路径</button>
+            <canvas id="randomWalkCanvas" height="250"></canvas>
+            <h4>🔥 资产相关性热力图</h4>
+            <button onclick="drawCorrelationHeatmap()">生成热力图</button>
+            <canvas id="heatmapCanvas" height="300"></canvas>
+          </div>
+        `},
+        { id: "2.4", title: "2.4 时间序列分析", content: `
+          <div class="card">
+            <h3>平稳性与协整</h3>
+            <details><summary>名词解释：平稳性</summary><p>时间序列的统计特性（均值、方差、自相关）不随时间变化。ADF检验常用于检测单位根。</p></details>
+            <details><summary>名词解释：协整</summary><p>两个或多个非平稳序列的线性组合是平稳的，表明它们之间存在长期均衡关系，常用于配对交易。</p></details>
+            <h4>📌 案例：Python进行协整检验</h4>
+            <pre>
+from statsmodels.tsa.stattools import coint
+score, pvalue, _ = coint(df['X'], df['Y'])
+print(f"协整检验p值: {pvalue:.4f}")
+            </pre>
+          </div>
+        `},
+        { id: "2.5", title: "2.5 线性模型与正则化", content: `
+          <div class="card">
+            <h3>因子合成中的线性工具</h3>
+            <details><summary>名词解释：Lasso回归</summary><p>在损失函数中加入L1惩罚项，能将不重要特征的系数压缩为0，实现特征选择。</p></details>
+            <h4>📌 案例：Lasso选因子</h4>
+            <pre>
+from sklearn.linear_model import LassoCV
+model = LassoCV(cv=5).fit(X, y)
+selected = np.where(model.coef_ != 0)[0]
+print(f"选中因子个数: {len(selected)}")
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块三：Python 量化编程与数据工程",
+      chapters: [
+        { id: "3.1", title: "3.1 Python数据栈", content: `
+          <div class="card">
+            <h3>核心库</h3>
+            <details><summary>名词解释：NumPy</summary><p>Python科学计算基础库，提供高性能多维数组对象及丰富的数学函数，通过向量化运算加速计算。</p></details>
+            <details><summary>名词解释：Pandas</summary><p>基于NumPy构建的数据分析库，核心数据结构DataFrame和Series，擅长处理时间序列和表格数据。</p></details>
+            <h4>📌 案例：移动平均</h4>
+            <pre>
+df['MA5'] = df['Close'].rolling(5).mean()
+df['MA20'] = df['Close'].rolling(20).mean()
+            </pre>
+          </div>
+        `},
+        { id: "3.2", title: "3.2 数据获取与清洗", content: `
+          <div class="card">
+            <h3>数据源与清洗</h3>
+            <details><summary>名词解释：复权</summary><p>调整股价以反映分红、送股、拆股等事件，保持价格序列连续可比。前复权调整历史价格，后复权调整当前价格。</p></details>
+            <h4>📌 案例：清洗日线数据</h4>
+            <pre>
+df['Close'] = df['Close'].ffill()
+df['Return'] = df['Close'].pct_change()
+abnormal = df[df['Return'].abs() > 0.2]
+print(f"异常天数: {len(abnormal)}")
+            </pre>
+          </div>
+        `},
+        { id: "3.3", title: "3.3 性能优化", content: `
+          <div class="card">
+            <h3>加速计算</h3>
+            <details><summary>名词解释：向量化运算</summary><p>使用数组操作替代显式循环，利用底层C实现并行化，大幅提升执行速度。</p></details>
+            <details><summary>名词解释：Numba JIT</summary><p>即时编译技术，在函数前加@jit装饰器，将Python函数编译为机器码，可获得接近C的执行速度。</p></details>
+            <h4>📌 案例：向量化vs循环</h4>
+            <pre>
+import numpy as np
+returns = np.random.randn(1_000_000)
+sharpe_np = returns.mean() / returns.std()  # 向量化
+            </pre>
+          </div>
+        `},
+        { id: "3.4", title: "3.4 金融数据特色处理", content: `
+          <div class="card">
+            <h3>高频与衍生品数据处理</h3>
+            <details><summary>名词解释：主力合约</summary><p>在期货市场中，成交量和持仓量最大的合约月份，通常将其作为连续交易的代表。</p></details>
+            <h4>📌 案例：期货主力拼接</h4>
+            <pre>
+continuous = pd.concat([group.iloc[:,1:].sum().idxmax() for _, group in monthly_data.groupby(pd.Grouper(freq='M'))])
+            </pre>
+          </div>
+        `},
+        { id: "3.5", title: "3.5 可视化与探索", content: `
+          <div class="card">
+            <h3>金融可视化</h3>
+            <details><summary>名词解释：K线图</summary><p>展示特定周期内开盘价、收盘价、最高价、最低价的图表，红色（或空心）表示上涨，绿色（或实心）表示下跌。</p></details>
+            <h4>📌 案例：绘制K线</h4>
+            <pre>
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+for i, row in df.iterrows():
+    color = 'red' if row['Close'] >= row['Open'] else 'green'
+    ax.plot([i,i], [row['Low'],row['High']], 'black')
+    ax.plot([i,i], [row['Open'],row['Close']], color, linewidth=5)
+plt.show()
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块四：回测框架与绩效评估",
+      chapters: [
+        { id: "4.1", title: "4.1 回测引擎原理", content: `
+          <div class="card">
+            <h3>事件驱动 vs 向量化回测</h3>
+            <details><summary>名词解释：前视偏差</summary><p>在回测中无意使用了未来才能获知的信息，导致结果过于乐观。常见于使用全样本统计量或未来数据。</p></details>
+            <h4>📌 案例：向量化回测</h4>
+            <pre>
+returns = df['Close'].pct_change()
+strategy_returns = returns * df['signal'].shift(1)
+cumulative = (1 + strategy_returns).cumprod()
+            </pre>
+          </div>
+        `},
+        { id: "4.2", title: "4.2 交易成本建模", content: `
+          <div class="card">
+            <h3>必须精确建模的成本</h3>
+            <details><summary>名词解释：冲击成本</summary><p>大额订单导致市场价格向不利方向移动的额外成本，与订单大小和市场深度有关。</p></details>
+            <h4>📌 案例：加入成本</h4>
+            <pre>
+cost_rate = 0.001
+trades = df['position'].diff().abs()
+cost = trades * df['Close'] * cost_rate
+net_returns = strategy_returns - cost / capital
+            </pre>
+          </div>
+        `},
+        { id: "4.3", title: "4.3 绩效指标全景", content: `
+          <div class="card">
+            <h3>核心绩效指标</h3>
+            <details><summary>名词解释：夏普比率</summary><p>衡量每单位总风险所获得的超额回报，公式：(年化收益率 - 无风险利率) / 年化波动率。数值越高越好。</p></details>
+            <details><summary>名词解释：最大回撤</summary><p>在选定周期内，净值从最高点到最低点的最大跌幅，衡量策略最糟糕的连续亏损情况。</p></details>
+            <details><summary>名词解释：卡玛比率</summary><p>年化收益率除以最大回撤，反映单位回撤所获得的收益，越大表示策略在不利时期的恢复能力越强。</p></details>
+            <h4>📊 实战模拟</h4>
+            <button onclick="simulatePerformance()">生成并评估</button>
+            <div id="perfMetrics"></div>
+            <canvas id="navCanvas" height="220"></canvas>
+            <canvas id="ddCanvas" height="120"></canvas>
+          </div>
+        `},
+        { id: "4.4", title: "4.4 回测陷阱与对策", content: `
+          <div class="card">
+            <h3>⚠️ 常见回测陷阱</h3>
+            <details><summary>名词解释：幸存者偏差</summary><p>只使用当前仍然存在的资产历史数据，忽略了已经退市或破产的资产，导致回测结果虚高。</p></details>
+            <details><summary>名词解释：前视偏差</summary><p>见4.1名词解释。</p></details>
+            <div style="margin-top:20px"><p><strong>小测验：</strong>在回测中使用当前标普500成分股做历史分析，主要引入什么偏差？</p>
+            <div class="quiz-option" onclick="checkQuiz(this, true)">A. 幸存者偏差</div>
+            <div class="quiz-option" onclick="checkQuiz(this, false)">B. 前视偏差</div>
+            <div class="quiz-option" onclick="checkQuiz(this, false)">C. 数据挖掘偏差</div>
+            <p id="quizFeedback"></p></div>
+          </div>
+        `},
+        { id: "4.5", title: "4.5 统计检验", content: `
+          <div class="card">
+            <h3>策略显著性检验</h3>
+            <details><summary>名词解释：PBO (回测过拟合概率)</summary><p>衡量因数据挖掘而导致回测结果不可靠的概率。PBO越低，策略过拟合风险越小。</p></details>
+            <details><summary>名词解释：Bootstrap</summary><p>通过对原始样本进行有放回的重抽样，构造统计量的分布，从而进行假设检验或置信区间估计。</p></details>
+            <h4>📌 案例：Bootstrap显著性</h4>
+            <pre>
+original_sharpe = ...
+bootstrapped = [np.mean(np.random.choice(returns, size=len(returns))) for _ in range(1000)]
+p_value = np.mean(np.array(bootstrapped) > original_sharpe)
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块五：策略开发工坊",
+      chapters: [
+        { id: "5.1", title: "5.1 因子投资体系", content: `
+          <div class="card">
+            <h3>因子检验流程</h3>
+            <details><summary>名词解释：IC分析</summary><p>计算因子值与未来收益之间的秩相关系数（Rank IC），衡量因子的预测能力。IC均值和IR（IC均值/IC标准差）是重要指标。</p></details>
+            <details><summary>名词解释：因子正交化</summary><p>将因子对其他因子回归取残差，消除因子间的共线性，得到纯净的Alpha信号。</p></details>
+            <h4>📊 因子IC分析模拟器</h4>
+            <button onclick="runICAnalysis()">运行IC分析</button>
+            <div id="icMetrics"></div>
+            <canvas id="icCanvas" height="200"></canvas>
+            <h4>📌 案例：计算Rank IC</h4>
+            <pre>
+from scipy.stats import spearmanr
+ic = df.groupby('date').apply(lambda x: spearmanr(x['factor'], x['fwd_return'])[0])
+print(f"IC均值: {ic.mean():.4f}")
+            </pre>
+          </div>
+        `},
+        { id: "5.2", title: "5.2 双均线策略模拟", content: `
+          <div class="card">
+            <h3>📊 双均线交叉策略模拟</h3>
+            <details><summary>名词解释：移动平均线</summary><p>过去N个周期收盘价的平均值连成的线，用于平滑价格波动、识别趋势。短期均线上穿长期均线为金叉（买入信号），下穿为死叉（卖出信号）。</p></details>
+            <div class="input-group"><label>快线周期 <input id="fastPeriod" type="number" value="10" min="2" max="50"></label><label>慢线周期 <input id="slowPeriod" type="number" value="30" min="5" max="100"></label><button onclick="runBacktest()">运行回测</button></div>
+            <canvas id="priceCanvas" height="300"></canvas>
+            <canvas id="equityCanvas" height="150"></canvas>
+          </div>
+        `},
+        { id: "5.3", title: "5.3 统计套利", content: `
+          <div class="card">
+            <h3>配对交易与协整对冲</h3>
+            <details><summary>名词解释：配对交易</summary><p>寻找两只历史价格高度相关的股票，当价差偏离均值时做多弱势股、做空强势股，押注价差回归。</p></details>
+            <h4>📌 案例：价差信号</h4>
+            <pre>
+spread = df['stock1'] - hedge_ratio * df['stock2']
+zscore = (spread - spread.mean()) / spread.std()
+df['position'] = -zscore  # 均值回归
+            </pre>
+          </div>
+        `},
+        { id: "5.4", title: "5.4 CTA趋势跟踪", content: `
+          <div class="card">
+            <h3>时间序列动量策略</h3>
+            <details><summary>名词解释：海龟交易法则</summary><p>著名的趋势跟踪策略，使用20日和55日通道突破作为入场信号，以ATR（平均真实波幅）动态确定仓位大小。</p></details>
+            <h4>📌 案例：通道突破</h4>
+            <pre>
+high = df['High'].rolling(20).max()
+low = df['Low'].rolling(20).min()
+df['signal'] = np.where(df['Close'] > high.shift(1), 1, np.where(df['Close'] < low.shift(1), -1, 0))
+            </pre>
+          </div>
+        `},
+        { id: "5.5", title: "5.5 事件驱动策略", content: `
+          <div class="card">
+            <h3>常见事件类型</h3>
+            <details><summary>名词解释：盈利惊喜 (SUE)</summary><p>实际每股收益与分析师预期的差值，标准化后通常用SUE因子衡量。正惊喜往往带来股价上涨。</p></details>
+            <h4>📌 案例：SUE因子</h4>
+            <pre>
+df['SUE'] = (df['eps_actual'] - df['eps_estimate']) / df['eps_estimate'].std()
+df['alpha'] = np.where(df['SUE'] > 1, 1, -1)
+            </pre>
+          </div>
+        `},
+        { id: "5.6", title: "5.6 多因子组合与择时", content: `
+          <div class="card">
+            <h3>因子合成与择时</h3>
+            <details><summary>名词解释：因子择时</summary><p>根据市场环境（如利率、波动率）动态调整不同因子的权重，期望在因子轮动中获取额外收益。</p></details>
+            <h4>📌 案例：IC加权合成</h4>
+            <pre>
+ic_weights = ic_mean / ic_std  # ICIR
+composite = (factor_df * ic_weights).sum(axis=1)
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块六：投资组合管理与优化",
+      chapters: [
+        { id: "6.1", title: "6.1 均值-方差优化", content: `
+          <div class="card">
+            <h3>马科维茨有效前沿</h3>
+            <details><summary>名词解释：有效前沿</summary><p>在给定风险水平下提供最高期望收益，或在给定期望收益下具有最小风险的投资组合集合的曲线。</p></details>
+            <h4>📈 两资产有效前沿模拟器</h4>
+            <div class="input-group"><label>资产A收益(%) <input id="retA" type="number" value="8" step="0.1"></label><label>风险(%) <input id="riskA" type="number" value="15" step="0.1"></label><label>资产B收益(%) <input id="retB" type="number" value="12" step="0.1"></label><label>风险(%) <input id="riskB" type="number" value="25" step="0.1"></label><label>相关系数 <input id="corrAB" type="number" value="0.2" step="0.1" min="-1" max="1"></label><button onclick="drawEfficientFrontier()">更新图表</button></div>
+            <canvas id="frontierCanvas" height="300"></canvas>
+          </div>
+        `},
+        { id: "6.2", title: "6.2 风险平价与分散度", content: `
+          <div class="card">
+            <h3>风险平价</h3>
+            <details><summary>名词解释：风险平价</summary><p>组合中每个资产对总风险的贡献度相等，不依赖预期收益，较等权重更稳健。桥水全天候策略即基于此理念。</p></details>
+            <h4>📌 案例：简单风险平价迭代</h4>
+            <pre>
+cov = returns.cov()
+vols = np.sqrt(np.diag(cov))
+weights = 1 / vols
+weights /= weights.sum()
+            </pre>
+          </div>
+        `},
+        { id: "6.3", title: "6.3 动态权重管理", content: `
+          <div class="card">
+            <h3>凯利准则</h3>
+            <details><summary>名词解释：凯利公式</summary><p>用于确定最优下注比例，以最大化长期资本增长率的公式：f* = (bp - q) / b，其中b是盈亏比，p是胜率，q=1-p。</p></details>
+            <h4>💰 凯利公式计算器</h4>
+            <div class="input-group"><label>胜率 p (%) <input id="kellyP" type="number" value="55" min="0" max="100"></label><label>盈亏比 b <input id="kellyB" type="number" value="1.5" step="0.1" min="0.1"></label><button onclick="calcKelly()">计算最优比例</button></div>
+            <p id="kellyResult" class="result-text"></p>
+          </div>
+        `},
+        { id: "6.4", title: "6.4 约束处理", content: `
+          <div class="card">
+            <h3>行业中性、市值中性</h3>
+            <details><summary>名词解释：行业中性</summary><p>确保投资组合在各行业的权重与基准一致，消除因行业配置偏离带来的额外风险，从而获取纯净的选股Alpha。</p></details>
+            <h4>📌 案例：行业中性约束</h4>
+            <pre>
+industry_exposure = np.zeros(n_industries)
+for i, w in enumerate(weights):
+    industry_exposure[industry[i]] += w * market_cap[i]
+# 优化中加入等式约束令industry_exposure = 0
+            </pre>
+          </div>
+        `},
+        { id: "6.5", title: "6.5 压力测试与VaR", content: `
+          <div class="card">
+            <h3>蒙特卡洛VaR</h3>
+            <details><summary>名词解释：VaR (在险价值)</summary><p>在一定的置信水平和持有期内，投资组合可能遭受的最大损失。例如95%置信度下的1天VaR表示有95%的把握损失不会超过该值。</p></details>
+            <details><summary>名词解释：CVaR (条件在险价值)</summary><p>当损失超过VaR阈值时，损失的平均值，衡量尾部风险的大小。</p></details>
+            <h4>📉 蒙特卡洛VaR计算器</h4>
+            <div class="input-group"><label>初始资金($) <input id="mcInitial" type="number" value="100000" step="1000"></label><label>年化收益(%) <input id="mcRet" type="number" value="8" step="0.1"></label><label>年化波动(%) <input id="mcVol" type="number" value="20" step="0.1"></label><label>持仓天数 <input id="mcDays" type="number" value="30" min="1"></label><label>置信水平(%) <input id="mcConf" type="number" value="95" min="90" max="99"></label><button onclick="runMonteCarloVar()">计算VaR</button></div>
+            <p id="mcVarResult" class="result-text"></p>
+            <canvas id="mcPathCanvas" height="200"></canvas>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块七：执行算法与微观结构",
+      chapters: [
+        { id: "7.1", title: "7.1 订单类型与风险", content: `
+          <div class="card">
+            <h3>订单类型</h3>
+            <details><summary>名词解释：限价单</summary><p>指定买入或卖出价格的订单，只有当市场价格达到或优于指定价格时才会成交，可能面临未成交风险。</p></details>
+            <details><summary>名词解释：市价单</summary><p>以当前最优价格立即成交的订单，保证成交但价格不确定，存在滑点成本。</p></details>
+            <h4>📌 案例：模拟市价单滑点</h4>
+            <pre>
+market_buy_price = 100.1
+limit_buy_price = 100.0
+slippage = (market_buy_price - limit_buy_price) / limit_buy_price
+print(f"滑点: {slippage:.4%}")
+            </pre>
+          </div>
+        `},
+        { id: "7.2", title: "7.2 算法执行原理", content: `
+          <div class="card">
+            <h3>TWAP / VWAP / POV</h3>
+            <details><summary>名词解释：TWAP</summary><p>时间加权平均价格算法，将大订单均匀拆分在指定时间段内执行，以接近时间加权均价。</p></details>
+            <details><summary>名词解释：VWAP</summary><p>成交量加权平均价格算法，根据历史成交量分布决定每段时间的下单量，以跟踪市场成交量加权均价。</p></details>
+            <h4>📌 案例：VWAP切片</h4>
+            <pre>
+profile = df.groupby('time')['volume'].sum()
+total_volume = profile.sum()
+slice_sizes = (profile / total_volume * total_order_size).astype(int)
+            </pre>
+          </div>
+        `},
+        { id: "7.3", title: "7.3 做市策略思想", content: `
+          <div class="card">
+            <h3>买卖价差捕捉</h3>
+            <details><summary>名词解释：做市商</summary><p>持续提供双边报价（同时报出买价和卖价）以提供市场流动性，并通过买卖价差盈利。</p></details>
+            <h4>📌 案例：简单做市报价</h4>
+            <pre>
+fair_price = (bid + ask) / 2
+inventory = current_position
+spread = base_spread + inventory_skew * inventory
+bid_quote = fair_price - spread / 2
+ask_quote = fair_price + spread / 2
+            </pre>
+          </div>
+        `},
+        { id: "7.4", title: "7.4 高频交易简介", content: `
+          <div class="card">
+            <h3>高频策略类型</h3>
+            <details><summary>名词解释：延迟套利</summary><p>利用超低延迟的交易系统，在不同交易所或资产之间捕捉瞬时价差进行套利。</p></details>
+            <h4>📌 案例：检测订单流不平衡</h4>
+            <pre>
+imbalance = (buy_volume - sell_volume) / (buy_volume + sell_volume)
+if imbalance > threshold:
+    place_order('buy')
+            </pre>
+          </div>
+        `},
+        { id: "7.5", title: "7.5 执行成本分析", content: `
+          <div class="card">
+            <h3>Implementation Shortfall</h3>
+            <details><summary>名词解释：执行缺口</summary><p>决策时的理论价格与实际成交价格之间的差异，包含佣金、滑点、机会成本等。</p></details>
+            <h4>📌 案例：计算执行缺口</h4>
+            <pre>
+arrival_price = 100
+executed_price = 100.3
+shortfall = (executed_price - arrival_price) / arrival_price
+print(f"执行缺口: {shortfall:.3%}")
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块八：机器学习与另类数据",
+      chapters: [
+        { id: "8.1", title: "8.1 监督学习选股", content: `
+          <div class="card">
+            <h3>XGBoost / LSTM / Transformer</h3>
+            <details><summary>名词解释：XGBoost</summary><p>基于梯度提升树的集成学习算法，高效处理表格数据，常用于金融因子模型，提供特征重要性排序。</p></details>
+            <h4>📌 案例：XGBoost分类</h4>
+            <pre>
+from xgboost import XGBClassifier
+model = XGBClassifier()
+model.fit(X_train, y_train)
+probs = model.predict_proba(X_test)[:,1]
+            </pre>
+          </div>
+        `},
+        { id: "8.2", title: "8.2 无监督与降维", content: `
+          <div class="card">
+            <h3>PCA与聚类</h3>
+            <details><summary>名词解释：PCA</summary><p>主成分分析，通过线性变换将高维数据投影到低维空间，保留方差最大的方向，用于降维和去噪。</p></details>
+            <h4>📌 案例：PCA降维</h4>
+            <pre>
+from sklearn.decomposition import PCA
+pca = PCA(n_components=5)
+principal_factors = pca.fit_transform(factor_matrix)
+            </pre>
+          </div>
+        `},
+        { id: "8.3", title: "8.3 NLP应用", content: `
+          <div class="card">
+            <h3>新闻情绪与财报语调</h3>
+            <details><summary>名词解释：BERT</summary><p>基于Transformer的预训练语言模型，可理解上下文语义，常用于文本情感分类、命名实体识别等NLP任务。</p></details>
+            <h4>📌 案例：情感分析</h4>
+            <pre>
+from transformers import pipeline
+sentiment = pipeline('sentiment-analysis')
+result = sentiment("公司利润大幅增长")[0]
+print(result['label'], result['score'])
+            </pre>
+          </div>
+        `},
+        { id: "8.4", title: "8.4 另类数据", content: `
+          <div class="card">
+            <h3>非传统数据源</h3>
+            <details><summary>名词解释：另类数据</summary><p>非传统金融数据，如卫星图像、电商销量、信用卡流水、社交媒体情绪等，可用于挖掘独特的Alpha。</p></details>
+            <h4>📌 案例：电商数据估算</h4>
+            <pre>
+rank_change = df['rank'].pct_change()
+df['expected_sales'] = -rank_change * base_sales
+            </pre>
+          </div>
+        `},
+        { id: "8.5", title: "8.5 过拟合防御", content: `
+          <div class="card">
+            <h3>防过拟合策略</h3>
+            <details><summary>名词解释：对抗验证</summary><p>将训练集和测试集合并，打标签（0为训练，1为测试），训练一个分类器。如果分类器AUC远高于0.5，说明分布不一致，模型可能会过拟合。</p></details>
+            <h4>📌 案例：Purged K-Fold</h4>
+            <pre>
+from sklearn.model_selection import TimeSeriesSplit
+tscv = TimeSeriesSplit(n_splits=5)
+for train_idx, test_idx in tscv.split(X):
+    pass
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块九：实盘部署与系统架构",
+      chapters: [
+        { id: "9.1", title: "9.1 量化系统设计", content: `
+          <div class="card">
+            <h3>模块化解耦</h3>
+            <details><summary>名词解释：消息队列</summary><p>如Kafka，用于在系统的不同模块之间异步传输消息，实现解耦、削峰填谷和容错。</p></details>
+            <h4>📌 案例：Kafka发送行情</h4>
+            <pre>
+from kafka import KafkaProducer
+producer = KafkaProducer(bootstrap_servers='localhost:9092')
+producer.send('market_data', value=tick_data)
+            </pre>
+          </div>
+        `},
+        { id: "9.2", title: "9.2 实时数据管道", content: `
+          <div class="card">
+            <h3>WebSocket + Redis</h3>
+            <details><summary>名词解释：WebSocket</summary><p>全双工通信协议，允许服务器主动向客户端推送数据，常用于实时行情传输。</p></details>
+            <details><summary>名词解释：Redis</summary><p>高性能内存数据库，常用于缓存实时数据、发布/订阅消息，延迟极低。</p></details>
+            <h4>📌 案例：订阅WebSocket</h4>
+            <pre>
+import websocket
+def on_message(ws, message):
+    data = json.loads(message)
+    r.set(data['symbol'], data['price'])
+ws = websocket.WebSocketApp("wss://api.exchange.com/ws", on_message=on_message)
+ws.run_forever()
+            </pre>
+          </div>
+        `},
+        { id: "9.3", title: "9.3 模拟与实盘对接", content: `
+          <div class="card">
+            <h3>盈透(IB)/CTP接口</h3>
+            <details><summary>名词解释：CTP</summary><p>中国期货市场统一的交易接口协议，用于连接期货公司交易系统，支持国内商品期货和金融期货。</p></details>
+            <h4>📌 案例：IB下单</h4>
+            <pre>
+from ibapi.client import EClient
+class IBApp(EWrapper, EClient):
+    def nextValidId(self, orderId):
+        contract = Contract()
+        contract.symbol = "AAPL"
+        order = Order()
+        order.action = "BUY"
+        order.orderType = "MKT"
+        order.totalQuantity = 100
+        self.placeOrder(orderId, contract, order)
+            </pre>
+          </div>
+        `},
+        { id: "9.4", title: "9.4 策略监控与运维", content: `
+          <div class="card">
+            <h3>仪表盘与警报</h3>
+            <details><summary>名词解释：Grafana</summary><p>开源的可视化分析平台，支持多种数据源，可创建实时监控仪表盘并设置报警规则。</p></details>
+            <h4>📌 案例：Prometheus指标</h4>
+            <pre>
+from prometheus_client import Gauge
+g = Gauge('pnl', 'Real-time PnL')
+g.set(current_pnl)
+            </pre>
+          </div>
+        `},
+        { id: "9.5", title: "9.5 合规与监管", content: `
+          <div class="card">
+            <h3>程序化交易报备</h3>
+            <details><summary>名词解释：异常交易监控</summary><p>交易所对程序化交易设置的监管指标，如频繁撤单、自成交比例、大额申报等，超标可能被处罚或暂停交易。</p></details>
+            <h4>📌 案例：监控撤单率</h4>
+            <pre>
+cancel_rate = cancelled_orders / total_orders
+if cancel_rate > threshold:
+    alert("撤单率过高")
+            </pre>
+          </div>
+        `}
+      ]
+    },
+    {
+      title: "模块十：前沿专题与职业成长",
+      chapters: [
+        { id: "10.1", title: "10.1 强化学习交易", content: `
+          <div class="card">
+            <h3>强化学习环境建模</h3>
+            <details><summary>名词解释：PPO</summary><p>近端策略优化，一种强化学习算法，通过限制策略更新幅度来保证训练的稳定性，常用于连续动作空间。</p></details>
+            <h4>📌 案例：自定义交易环境</h4>
+            <pre>
+import gym
+class TradingEnv(gym.Env):
+    def step(self, action):
+        pass
+            </pre>
+          </div>
+        `},
+        { id: "10.2", title: "10.2 生成式AI", content: `
+          <div class="card">
+            <h3>合成数据生成</h3>
+            <details><summary>名词解释：GAN</summary><p>生成对抗网络，通过生成器与判别器的博弈来学习真实数据的分布，可生成逼真的金融时间序列用于数据增强。</p></details>
+            <h4>📌 案例：GAN结构示意</h4>
+            <pre>
+generator = build_generator()
+discriminator = build_discriminator()
+# 对抗训练循环
+            </pre>
+          </div>
+        `},
+        { id: "10.3", title: "10.3 暗池", content: `
+          <div class="card">
+            <h3>暗池交易</h3>
+            <details><summary>名词解释：暗池</summary><p>非公开的另类交易系统，订单信息不对外显示，用于大宗交易以减少市场冲击。</p></details>
+            <h4>📌 案例：SOR逻辑</h4>
+            <pre>
+if order_size > market_depth * 0.5:
+    send_to_dark_pool(order)
+else:
+    send_to_lit_market(order)
+            </pre>
+          </div>
+        `},
+        { id: "10.4", title: "10.4 团队分工", content: `
+          <div class="card">
+            <h3>角色与能力模型</h3>
+            <details><summary>名词解释：量化研究员</summary><p>负责因子挖掘、模型开发、回测分析，需要扎实的金融知识、统计建模能力和编程技能（Python/R）。</p></details>
+            <h4>📌 案例：研究员技能栈</h4>
+            <pre>
+# Python, R, SQL, 机器学习, 金融知识
+# 典型工作流：数据清洗 -> 因子挖掘 -> 回测 -> 归因分析
+            </pre>
+          </div>
+        `},
+        { id: "10.5", title: "10.5 终极项目", content: `
+          <div class="card">
+            <h3>从零交付策略</h3>
+            <details><summary>名词解释：策略说明书</summary><p>详细记录策略逻辑、因子定义、回测表现、风险归因、运行环境等信息的文档，是实盘部署前的必要产出。</p></details>
+            <h4>📌 案例：项目检查清单</h4>
+            <pre>
+# 1. 数据获取与清洗
+# 2. 因子构建与IC分析
+# 3. 简单回测系统搭建
+# 4. 绩效归因与风险分析
+# 5. 编写模拟盘交易脚本
+# 6. 定期评估与再训练
+            </pre>
+          </div>
+        `}
+      ]
+    }
+  ];
+
+  // ---------- 页面渲染（保持不变） ----------
+  const moduleListEl = document.getElementById('moduleList');
+  const contentArea = document.getElementById('contentArea');
+
+  function renderSidebar() {
+    courseData.forEach((mod, modIndex) => {
+      const modDiv = document.createElement('div');
+      modDiv.className = 'module-item';
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'module-title';
+      titleDiv.innerHTML = `${mod.title} <span>▸</span>`;
+      titleDiv.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cl = modDiv.querySelector('.chapter-list');
+        const arrow = titleDiv.querySelector('span');
+        const isOpen = cl.classList.contains('open');
+        document.querySelectorAll('.chapter-list').forEach(c => c.classList.remove('open'));
+        document.querySelectorAll('.module-title span').forEach(s => s.textContent = '▸');
+        if (!isOpen) { cl.classList.add('open'); arrow.textContent = '▾'; }
+      });
+      const chList = document.createElement('div');
+      chList.className = 'chapter-list';
+      mod.chapters.forEach((ch, chIdx) => {
+        const chDiv = document.createElement('div');
+        chDiv.className = 'chapter-item';
+        chDiv.textContent = ch.title;
+        chDiv.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active-chapter'));
+          chDiv.classList.add('active-chapter');
+          document.querySelectorAll('.module-title').forEach(el => el.classList.remove('active'));
+          titleDiv.classList.add('active');
+          showContent(modIndex, chIdx);
+        });
+        chList.appendChild(chDiv);
+      });
+      modDiv.appendChild(titleDiv);
+      modDiv.appendChild(chList);
+      moduleListEl.appendChild(modDiv);
+    });
+  }
+
+  function showContent(modIdx, chIdx) {
+    const chapter = courseData[modIdx].chapters[chIdx];
+    const sectionId = `section-${modIdx}-${chIdx}`;
+    let section = document.getElementById(sectionId);
+    if (!section) {
+      section = document.createElement('div');
+      section.id = sectionId;
+      section.className = 'content-section';
+      section.innerHTML = chapter.content;
+      contentArea.appendChild(section);
+    }
+    document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+    section.classList.add('active');
+
+    const id = chapter.id;
+    setTimeout(() => {
+      if (id === '2.3') { calcExpectedValue(); drawRandomWalks(); drawCorrelationHeatmap(); }
+      else if (id === '4.3') simulatePerformance();
+      else if (id === '5.1') runICAnalysis();
+      else if (id === '5.2') runBacktest();
+      else if (id === '6.1') drawEfficientFrontier();
+      else if (id === '6.3') calcKelly();
+      else if (id === '6.5') runMonteCarloVar();
+    }, 80);
+  }
+
+  function initDefaultContent() {
+    if (courseData.length > 0) {
+      const first = document.querySelector('.module-title');
+      if (first) { first.click(); setTimeout(() => { const ch = document.querySelector('.chapter-item'); if (ch) ch.click(); }, 80); }
+    }
+  }
+
+  // 所有交互组件函数与之前一致（略）
+  function drawLine(ctx, data, color, w, h, lw) {
+    if (!data || data.length === 0) return;
+    const valid = data.filter(v => v != null);
+    if (valid.length === 0) return;
+    const min = Math.min(...valid), max = Math.max(...valid), range = max - min || 1;
+    const ox = 20, oy = 10, gw = w - 40, gh = h - 20;
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw;
+    let started = false;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] == null) { started = false; continue; }
+      const x = ox + (i / (data.length - 1)) * gw;
+      const y = h - oy - ((data[i] - min) / range) * gh;
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  function drawGrid(ctx, w, h) {
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 4; i++) {
+      const y = 10 + (i / 4) * (h - 20);
+      ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(w - 20, y); ctx.stroke();
+    }
+  }
+  function normalRandom(mean, std) {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return mean + std * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function calcExpectedValue() {
+    const p = parseFloat(document.getElementById('winRate')?.value) || 55;
+    const win = parseFloat(document.getElementById('winAmt')?.value) || 100;
+    const loss = parseFloat(document.getElementById('lossAmt')?.value) || 90;
+    const ev = (p / 100) * win - ((100 - p) / 100) * loss;
+    const el = document.getElementById('evResult');
+    if (el) {
+      el.textContent = `期望值 = ${ev.toFixed(2)} 美元/笔。${ev > 0 ? '✅ 正期望策略' : '❌ 负期望'}`;
+      el.style.color = ev > 0 ? '#10b981' : '#ef4444';
+    }
+  }
+  function drawRandomWalks() {
+    const canvas = document.getElementById('randomWalkCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 700;
+    const h = canvas.height = 250;
+    ctx.clearRect(0, 0, w, h);
+    drawGrid(ctx, w, h);
+    for (let p = 0; p < 20; p++) {
+      const prices = [100];
+      for (let i = 1; i < 150; i++) prices.push(prices[i-1] * (1 + normalRandom(0.0002, 0.015)));
+      drawLine(ctx, prices, `hsl(${(p*360/20)%360},70%,65%)`, w, h, 1);
+    }
+  }
+  function drawCorrelationHeatmap() {
+    const canvas = document.getElementById('heatmapCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 700;
+    const h = canvas.height = 300;
+    ctx.clearRect(0, 0, w, h);
+    const stocks = 5, days = 200;
+    const returns = [];
+    for (let s = 0; s < stocks; s++) {
+      const rets = [];
+      for (let d = 0; d < days; d++) rets.push(normalRandom(0, 0.01));
+      returns.push(rets);
+    }
+    const corrMatrix = [];
+    for (let i = 0; i < stocks; i++) {
+      corrMatrix[i] = [];
+      for (let j = 0; j < stocks; j++) {
+        if (i === j) { corrMatrix[i][j] = 1; continue; }
+        const ri = returns[i], rj = returns[j];
+        const mi = ri.reduce((a,b)=>a+b,0)/days, mj = rj.reduce((a,b)=>a+b,0)/days;
+        let cov = 0, vi = 0, vj = 0;
+        for (let k = 0; k < days; k++) {
+          cov += (ri[k]-mi)*(rj[k]-mj);
+          vi += (ri[k]-mi)**2; vj += (rj[k]-mj)**2;
+        }
+        cov /= (days-1); vi /= (days-1); vj /= (days-1);
+        corrMatrix[i][j] = (vi && vj) ? cov / Math.sqrt(vi*vj) : 0;
+      }
+    }
+    const cellSize = 40, startX = (w - stocks*cellSize)/2, startY = 60;
+    for (let i = 0; i < stocks; i++) {
+      for (let j = 0; j < stocks; j++) {
+        const c = corrMatrix[i][j];
+        let r,g,b;
+        if (c >= 0) { r=255; g=Math.floor(255*(1-c)); b=Math.floor(255*(1-c)); }
+        else { r=Math.floor(255*(1+c)); g=Math.floor(255*(1+c)); b=255; }
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(startX + j*cellSize, startY + i*cellSize, cellSize, cellSize);
+        ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(c.toFixed(2), startX + j*cellSize + cellSize/2, startY + i*cellSize + cellSize/2 + 4);
+      }
+    }
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
+    for (let i = 0; i < stocks; i++) {
+      ctx.fillText(`资产${i+1}`, startX + i*cellSize + cellSize/2, startY - 10);
+      ctx.fillText(`资产${i+1}`, startX - 40, startY + i*cellSize + cellSize/2 + 4);
+    }
+  }
+  function simulatePerformance() {
+    const rets = Array.from({length:500}, () => normalRandom(0.0004,0.012));
+    const nav = [1];
+    rets.forEach(r => nav.push(nav[nav.length-1]*(1+r)));
+    const meanD = rets.reduce((a,b)=>a+b,0)/500;
+    const stdD = Math.sqrt(rets.reduce((s,r)=>s+(r-meanD)**2,0)/500);
+    const annRet = meanD*252, annVol = stdD*Math.sqrt(252);
+    const sharpe = annVol ? annRet/annVol : 0;
+    let peak = nav[0], mdd = 0; const dds = [];
+    nav.forEach(v => { if (v>peak) peak=v; const dd = (v-peak)/peak; dds.push(dd); if (dd<mdd) mdd=dd; });
+    const calmar = mdd ? annRet/Math.abs(mdd) : 0;
+    document.getElementById('perfMetrics').innerHTML = `
+      <p>年化收益率：<strong>${(annRet*100).toFixed(2)}%</strong>，年化波动率：<strong>${(annVol*100).toFixed(2)}%</strong></p>
+      <p>夏普比率：<strong>${sharpe.toFixed(2)}</strong>，最大回撤：<strong>${(mdd*100).toFixed(2)}%</strong>，卡玛比率：<strong>${calmar.toFixed(2)}</strong></p>`;
+    const navC = document.getElementById('navCanvas'); if (navC) { const ctx=navC.getContext('2d'); const w=navC.width=navC.clientWidth||700; navC.height=220; ctx.clearRect(0,0,w,220); drawGrid(ctx,w,220); drawLine(ctx,nav,'#38bdf8',w,220,2); }
+    const ddC = document.getElementById('ddCanvas'); if (ddC) { const ctx=ddC.getContext('2d'); const w=ddC.width=ddC.clientWidth||700; ddC.height=120; ctx.clearRect(0,0,w,120); drawGrid(ctx,w,120); drawLine(ctx,dds,'#ef4444',w,120,2); }
+  }
+  function runBacktest() {
+    const fast = parseInt(document.getElementById('fastPeriod')?.value)||10;
+    const slow = parseInt(document.getElementById('slowPeriod')?.value)||30;
+    if (fast >= slow) { alert('快线周期小于慢线周期'); return; }
+    const prices = [100]; for (let i=1;i<200;i++) prices.push(Math.max(prices[i-1]+(Math.random()-0.48)*2.5,10));
+    const ma = (data,period) => {
+      const res = []; for (let i=0;i<data.length;i++) { if (i<period-1) res.push(null); else res.push(data.slice(i-period+1,i+1).reduce((a,b)=>a+b,0)/period); } return res;
+    };
+    const fma = ma(prices,fast), sma = ma(prices,slow);
+    let capital = 100000, pos = 0; const equity = [], signals = [];
+    for (let i=0;i<prices.length;i++) {
+      if (fma[i] && sma[i]) {
+        if (fma[i]>sma[i] && pos===0) { pos=1; signals.push({i,type:'buy'}); }
+        else if (fma[i]<sma[i] && pos===1) { pos=0; signals.push({i,type:'sell'}); }
+      }
+      if (i>0 && pos===1) capital *= prices[i]/prices[i-1];
+      equity.push(capital);
+    }
+    const pc = document.getElementById('priceCanvas'); if (pc) { const ctx=pc.getContext('2d'); const w=pc.width=pc.clientWidth||700; pc.height=300; ctx.clearRect(0,0,w,300); drawGrid(ctx,w,300); drawLine(ctx,prices,'#e2e8f0',w,300,1.5); drawLine(ctx,fma,'#38bdf8',w,300,1); drawLine(ctx,sma,'#f472b6',w,300,1); signals.forEach(s=>{ const x=20+(s.i/199)*(w-40); const y=300-10-((prices[s.i]-Math.min(...prices))/(Math.max(...prices)-Math.min(...prices))*(280)); ctx.beginPath(); ctx.arc(x,y,5,0,2*Math.PI); ctx.fillStyle=s.type==='buy'?'#10b981':'#ef4444'; ctx.fill(); ctx.strokeStyle='white'; ctx.stroke(); }); }
+    const ec = document.getElementById('equityCanvas'); if (ec) { const ctx=ec.getContext('2d'); const w=ec.width=ec.clientWidth||700; ec.height=150; ctx.clearRect(0,0,w,150); drawGrid(ctx,w,150); drawLine(ctx,equity,'#f59e0b',w,150,2); }
+  }
+  function checkQuiz(opt, correct) {
+    document.querySelectorAll('.quiz-option').forEach(e => { e.classList.remove('correct','incorrect'); e.style.pointerEvents='none'; });
+    const fb = document.getElementById('quizFeedback');
+    if (correct) { opt.classList.add('correct'); fb.textContent = '✅ 正确！幸存者偏差。'; fb.style.color='#10b981'; }
+    else { opt.classList.add('incorrect'); fb.textContent = '❌ 错误。正确答案是幸存者偏差。'; fb.style.color='#ef4444'; }
+  }
+  function calcKelly() {
+    const p = (parseFloat(document.getElementById('kellyP')?.value)||55)/100;
+    const b = parseFloat(document.getElementById('kellyB')?.value)||1.5;
+    const f = (b*p - (1-p))/b;
+    const el = document.getElementById('kellyResult');
+    if (el) {
+      if (f>0) { el.innerHTML = `凯利最优比例：<strong>${(f*100).toFixed(1)}%</strong>。 半凯利：${(f*50).toFixed(1)}%。`; el.style.color='#10b981'; }
+      else { el.textContent = '凯利比例为负或零，不该参与。'; el.style.color='#ef4444'; }
+    }
+  }
+  function drawEfficientFrontier() {
+    const rA = (parseFloat(document.getElementById('retA')?.value)||8)/100;
+    const sA = (parseFloat(document.getElementById('riskA')?.value)||15)/100;
+    const rB = (parseFloat(document.getElementById('retB')?.value)||12)/100;
+    const sB = (parseFloat(document.getElementById('riskB')?.value)||25)/100;
+    const corr = parseFloat(document.getElementById('corrAB')?.value)||0.2;
+    const cov = corr*sA*sB, varA=sA*sA, varB=sB*sB;
+    const pts = []; for (let w=0; w<=1.01; w+=0.01) { const wB=1-w; pts.push({w, ret:w*rA+wB*rB, std:Math.sqrt(w*w*varA + wB*wB*varB + 2*w*wB*cov)}); }
+    const minW = (varB-cov)/(varA+varB-2*cov);
+    const minPt = pts.find(p=>Math.abs(p.w-minW)<0.005);
+    const minRet = minPt ? minPt.ret : 0;
+    const frontier = pts.filter(p=>p.ret>=minRet);
+    let maxSh=-Infinity, maxW=0;
+    frontier.forEach(p=>{ if(p.std>0){ const sh=p.ret/p.std; if(sh>maxSh){ maxSh=sh; maxW=p.w; } } });
+    const canvas = document.getElementById('frontierCanvas'); if (!canvas) return;
+    const ctx = canvas.getContext('2d'); const w=canvas.width=canvas.clientWidth||700; canvas.height=300; ctx.clearRect(0,0,w,300); drawGrid(ctx,w,300);
+    const fStd = frontier.map(p=>p.std), fRet = frontier.map(p=>p.ret);
+    if (fStd.length>0) { drawLine(ctx,fStd,'#38bdf8',w,300,2); drawLine(ctx,fRet,'#38bdf8',w,300,2); }
+    const minStd = Math.sqrt(minW*minW*varA+(1-minW)*(1-minW)*varB+2*minW*(1-minW)*cov);
+    const plotX = (val,vals) => 20 + (val/Math.max(...vals,0.001))*(w-40);
+    const plotY = (val,vals) => 300-10-((val-Math.min(...vals,0))/(Math.max(...vals,0.001)-Math.min(...vals,0)))*280;
+    ctx.beginPath(); ctx.arc(plotX(minStd,fStd), plotY(minRet,fRet),6,0,2*Math.PI); ctx.fillStyle='#10b981'; ctx.fill(); ctx.strokeStyle='white'; ctx.stroke();
+    const maxStd = Math.sqrt(maxW*maxW*varA+(1-maxW)*(1-maxW)*varB+2*maxW*(1-maxW)*cov);
+    const maxRet = maxW*rA+(1-maxW)*rB;
+    ctx.beginPath(); ctx.arc(plotX(maxStd,fStd), plotY(maxRet,fRet),6,0,2*Math.PI); ctx.fillStyle='#ef4444'; ctx.fill(); ctx.stroke();
+  }
+  function runMonteCarloVar() {
+    const init = parseFloat(document.getElementById('mcInitial')?.value)||100000;
+    const mu = (parseFloat(document.getElementById('mcRet')?.value)||8)/100;
+    const sig = (parseFloat(document.getElementById('mcVol')?.value)||20)/100;
+    const days = parseInt(document.getElementById('mcDays')?.value)||30;
+    const conf = (parseFloat(document.getElementById('mcConf')?.value)||95)/100;
+    const drift = (mu - 0.5*sig*sig)/252, vol = sig/Math.sqrt(252);
+    const finals = []; const sample = [init];
+    for (let s=0;s<5000;s++) {
+      let p = init; for (let d=0;d<days;d++) p *= Math.exp(drift + vol*normalRandom(0,1));
+      finals.push(p); if (s===0) { let sp=init; for (let d=1;d<=days;d++) { sp*=Math.exp(drift+vol*normalRandom(0,1)); sample.push(sp); } }
+    }
+    finals.sort((a,b)=>a-b);
+    const varVal = init - finals[Math.floor((1-conf)*5000)];
+    const tail = finals.slice(0, Math.floor((1-conf)*5000));
+    const cvar = tail.length ? init - (tail.reduce((a,b)=>a+b,0)/tail.length) : 0;
+    document.getElementById('mcVarResult').innerHTML = `<p>${(conf*100).toFixed(0)}%置信度，${days}天VaR：<strong>$${varVal.toFixed(2)}</strong>，CVaR：<strong>$${cvar.toFixed(2)}</strong></p>`;
+    const canvas = document.getElementById('mcPathCanvas'); if (!canvas) return;
+    const ctx = canvas.getContext('2d'); const w=canvas.width=canvas.clientWidth||700; canvas.height=200; ctx.clearRect(0,0,w,200); drawGrid(ctx,w,200); drawLine(ctx,sample,'#f59e0b',w,200,2);
+  }
+  function runICAnalysis() {
+    const periods = 50, stocks = 100;
+    const factor = [], ret = [];
+    for (let t = 0; t < periods; t++) {
+      const f = [], r = [];
+      for (let s = 0; s < stocks; s++) {
+        f.push(normalRandom(0, 0.1));
+        r.push(0.02 * f[s] + normalRandom(0, 0.05));
+      }
+      factor.push(f); ret.push(r);
+    }
+    const ic = [];
+    for (let t = 0; t < periods; t++) {
+      const f = factor[t], r = ret[t];
+      const rank = arr => arr.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]).map((_,i,arr)=>{ arr[i][2]=i+1; return arr[i]; }).sort((a,b)=>a[1]-b[1]).map(x=>x[2]);
+      const rankF = rank(f), rankR = rank(r);
+      const n = stocks;
+      const d2 = rankF.reduce((sum, rf, i) => sum + (rf - rankR[i])**2, 0);
+      ic.push(1 - (6 * d2) / (n * (n*n - 1)));
+    }
+    const icMean = ic.reduce((a,b)=>a+b,0)/periods;
+    const icStd = Math.sqrt(ic.reduce((s,v)=>s+(v-icMean)**2,0)/periods);
+    const ir = icStd ? icMean / icStd : 0;
+    document.getElementById('icMetrics').innerHTML = `<p>IC 均值：<strong>${icMean.toFixed(4)}</strong>，IC 标准差：<strong>${icStd.toFixed(4)}</strong>，IR：<strong>${ir.toFixed(2)}</strong></p>`;
+    const canvas = document.getElementById('icCanvas'); if (!canvas) return;
+    const ctx = canvas.getContext('2d'); const w=canvas.width=canvas.clientWidth||700; canvas.height=200; ctx.clearRect(0,0,w,200); drawGrid(ctx,w,200); drawLine(ctx,ic,'#a78bfa',w,200,2);
+  }
+
+  renderSidebar();
+  window.addEventListener('load', initDefaultContent);
+  window.addEventListener('resize', () => {
+    const active = document.querySelector('.content-section.active');
+    if (active) {
+      const id = active.id;
+      if (id.includes('2.3')) { drawRandomWalks(); drawCorrelationHeatmap(); }
+      else if (id.includes('4.3')) simulatePerformance();
+      else if (id.includes('5.1')) runICAnalysis();
+      else if (id.includes('5.2')) runBacktest();
+      else if (id.includes('6.1')) drawEfficientFrontier();
+      else if (id.includes('6.5')) runMonteCarloVar();
+    }
+  });
+</script>
+</body>
+</html>
