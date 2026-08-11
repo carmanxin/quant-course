@@ -248,9 +248,6 @@ export default defineConfig({
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#00E5A0' }],
     ['meta', { name: 'description', content: 'FinTech 风格的量化交易学习平台' }],
-    // 优先使用本地 Pyodide（位于 /pyodide/pyodide.js，由 public/pyodide/ 静态发布）
-    // 在线时浏览器仍可通过下方 CDN 兜底（如果本地缺失）
-    ['script', { src: '/pyodide/pyodide.js' }],
   ],
   themeConfig: {
     sidebar,
@@ -276,32 +273,24 @@ export default defineConfig({
   markdown: {
     math: true,
     config(md) {
-      // ============ 自动给所有 python 代码块加「一键运行」按钮 ============
-      // 把 ```python ``` 块改写成 <CodeRunBlock :code-b64="...">...</CodeRunBlock>
+      // ============ 自动给所有 python 代码块加 StaticCodeBlock 容器 ============
+      // 把 ```python ``` 块改写成 <StaticCodeBlock code-b64="..." lang="...">...</StaticCodeBlock>
       // 默认 Shiki 高亮保留(由 Vue 渲染插槽 HTML 保留)
       const defaultFence = md.renderer.rules.fence
-      md.renderer.rules.fence = (tokens, idx, opts, env, slf) => {
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         const token = tokens[idx]
-        const info = (token.info || '').trim()
-        const langRaw = info.split(/\s+/)[0].toLowerCase()
-        const lang = langRaw.split('{')[0]
-        if (lang !== 'python' && lang !== 'py') {
-          return defaultFence!(tokens, idx, opts, env, slf)
+        const info = (token.info || '').trim().split(/\s+/)[0]
+        if (['python', 'py'].includes(info)) {
+          const codeB64 = Buffer.from(token.content, 'utf8').toString('base64')
+          const rendered = defaultFence!(tokens, idx, options, env, self)
+          return `<StaticCodeBlock code-b64="${codeB64}" lang="${info}">${rendered}</StaticCodeBlock>`
         }
-        // 教学片段逃生通道: ```python fragment 或 ```py fragment => 不包运行按钮
-        if (info.includes('fragment') || info.includes('no-run') || info.includes('display-only')) {
-          return defaultFence!(tokens, idx, opts, env, slf)
-        }
-        // 先获取默认 Shiki 渲染的 HTML
-        const highlighted = defaultFence!(tokens, idx, opts, env, slf)
-        // 把原始代码转 base64 作为 prop
-        const codeB64 = Buffer.from(token.content, 'utf-8').toString('base64')
-        return `<ClientOnly>\n<CodeRunBlock lang="python" code-b64="${codeB64}">\n${highlighted}\n</CodeRunBlock>\n</ClientOnly>\n`
+        return defaultFence!(tokens, idx, options, env, self)
       }
     },
   },
   // 排除非站点内容(便携包自身 + 内部研究报告)
-  srcExclude: ['_reports/**', 'portable/**', 'public/pyodide/**', 'tests/**'],
+  srcExclude: ['_reports/**', 'portable/**', 'tests/**'],
   ignoreDeadLinks: true,
   // 便携版输出位置（避免与 .vitepress/dist 的 safe-delete 冲突）
   outDir: process.env.QPORTABLE ? 'portable/dist' : '.vitepress/dist',
