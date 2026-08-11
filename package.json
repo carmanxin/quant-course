@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "vitepress build",
+    "build": "node scripts/precompute-py-outputs.mjs && vitepress build",
+    "precompute": "node scripts/precompute-py-outputs.mjs",
+    "marker:add": "python scripts/add-output-marker.py",
+    "tag:strip": "python scripts/strip-python-playground-tag.py",
     "preview": "vitepress preview"
   },
   "devDependencies": {
@@ -15,7 +18,6 @@
   "dependencies": {
     "echarts": "^5.6.0",
     "markdown-it-mathjax3": "^4.3.2",
-    "playwright": "^1.60.0",
-    "pyodide": "^0.29.4"
+    "playwright": "^1.60.0"
   }
 }
