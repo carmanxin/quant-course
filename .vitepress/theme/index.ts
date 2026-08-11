@@ -21,6 +21,7 @@ import TickerBar from '../../components/TickerBar.vue'
 import AnimatedButton from '../../components/AnimatedButton.vue'
 import MarketDashboard from '../../components/MarketDashboard.vue'
 import CodeRunBlock from '../../components/CodeRunBlock.vue'
+import StaticCodeBlock from '../../components/StaticCodeBlock.vue'
 
 export default {
   extends: DefaultTheme,
@@ -38,6 +39,7 @@ export default {
     app.component('PythonPlayground', PythonPlayground)
     app.component('RunLocally', RunLocally)
     app.component('CodeRunBlock', CodeRunBlock)
+    app.component('StaticCodeBlock', StaticCodeBlock)
     // FinTech 视觉组件
     app.component('FinTechHero', FinTechHero)
     app.component('TickerBar', TickerBar)
