@@ -1,0 +1,5 @@
+{
+  "text": "模拟样本: 252 天 年化波动率 22%\r\n实际log-ret std: 0.0132\r\n实际年化vol: 20.95%",
+  "svgs": [],
+  "error": "Traceback (most recent call last):\r\n  File \"<string>\", line 93, in <module>\r\n    open_, high, low, close = synth_ohlc(close)\r\n                              ~~~~~~~~~~^^^^^^^\r\n  File \"<string>\", line 82, in synth_ohlc\r\n    close_prev = np.concatenate([[close_price[0]], close_price[:-1]])\r\n                                  ~~~~~~~~~~~^^^\r\n  File \"C:\\Users\\xinhaoming\\.workbuddy\\binaries\\python\\versions\\3.13.12\\Lib\\site-packages\\pandas\\core\\series.py\", line 959, in __getitem__\r\n    return self._get_"
+}
