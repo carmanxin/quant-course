@@ -295,7 +295,7 @@ export default defineConfig({
           const codeB64 = Buffer.from(token.content, 'utf8').toString('base64')
           const rendered = defaultFence!(tokens, idx, options, env, self)
           // 运行结果 base64 内联进 output-b64（attr 安全，无转义地狱；组件端解码）
-          const outputB64 = inlineOutputB64(token.content)
+          const outputB64 = inlineOutputB64(token.content, env)
           const inline = outputB64
             ? ` output-b64="${outputB64}"`
             : ''
@@ -321,8 +321,16 @@ export default defineConfig({
           .replace(/[ \t]+$/gm, '')
           .trim()
       }
+      // 计算当前页面到站点根(code/)的相对前缀，供 svgs 路径相对化（file:// 可用）
+      function relPrefixFromEnv(env: any): string {
+        const rel = (env && (env.relativePath || env.page)) || ''
+        const parts = rel.split('/')
+        parts.pop() // 去掉文件名
+        return parts.map(() => '../').join('')
+      }
       // 构建期查找输出并 base64 内联；找不到返回 null（组件显示"暂无运行结果"）
-      function inlineOutputB64(code: string): string | null {
+      // svgs 里的 /code/... 绝对路径改写为相对路径（base='./' + file:// 场景）
+      function inlineOutputB64(code: string, env: any): string | null {
         try {
           const hash = fnv1a(normalizeCode(code))
           const index = JSON.parse(
@@ -330,11 +338,17 @@ export default defineConfig({
           )
           const name = index[hash]
           if (!name) return null
-          const out = fs.readFileSync(
-            path.join(__dirname, `../public/code/${name}.output.json`),
-            'utf8',
+          const out = JSON.parse(
+            fs.readFileSync(path.join(__dirname, `../public/code/${name}.output.json`), 'utf8'),
           )
-          return Buffer.from(out, 'utf8').toString('base64')
+          // 把 svgs 绝对路径改为相对当前页面的路径
+          if (Array.isArray(out.svgs)) {
+            const prefix = relPrefixFromEnv(env)
+            out.svgs = out.svgs.map((s: string) =>
+              s.replace(/^\/code\//, `${prefix}code/`),
+            )
+          }
+          return Buffer.from(JSON.stringify(out), 'utf8').toString('base64')
         } catch (e) {
           return null
         }

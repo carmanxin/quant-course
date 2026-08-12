@@ -14,7 +14,7 @@ const PAGES = [
   '/guide/m11-derivatives/11.1-greeks.html',
   '/guide/m20-interview-prep/20.1-math-stats.html',
 ]
-const HTTP_BASE = 'http://127.0.0.1:5189'
+const HTTP_BASE = process.env.BASE || 'http://127.0.0.1:5189'
 const FILE_MODE = process.env.FILE === '1'
 
 function toUrl(p) {

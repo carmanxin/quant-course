@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "node scripts/precompute-py-outputs.mjs && vitepress build",
+    "build": "node scripts/precompute-py-outputs.mjs && vitepress build && node scripts/relativize-dist.mjs",
     "precompute": "node scripts/precompute-py-outputs.mjs",
     "marker:add": "python scripts/add-output-marker.py",
     "tag:strip": "python scripts/strip-python-playground-tag.py",
