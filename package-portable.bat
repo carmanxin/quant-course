@@ -4,7 +4,7 @@ REM ============================================================
 REM QuantLab 一键打包便携版
 REM --------------------------------------------------------
 REM  流程：
-REM    1. 构建 dist/ （含本地 Pyodide）
+REM    1. 构建 dist/ （含代码示例 + 预计算结果）
 REM    2. 复制 dist/ 到 portable/dist/
 REM    3. 验证 portable/ 结构
 REM    4. 输出大小报告
@@ -26,7 +26,7 @@ if exist portable\dist (
 )
 
 REM ---- 3. 构建 dist/ ----
-echo  - 正在构建网站（含本地 Pyodide）...
+echo  - 正在构建网站（代码示例 + 预计算结果）...
 echo.
 call npm run build
 if %errorlevel% neq 0 (
@@ -71,7 +71,6 @@ echo.
 REM 用 PowerShell 计算目录大小
 powershell -NoProfile -Command "$size = (Get-ChildItem portable -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB; Write-Host ('  总体积: {0:N1} MB' -f $size)"
 powershell -NoProfile -Command "$size = (Get-ChildItem portable\dist -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB; Write-Host ('  dist/:  {0:N1} MB' -f $size)"
-powershell -NoProfile -Command "$size = (Get-ChildItem portable\pyodide -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB; Write-Host ('  pyodide/: {0:N1} MB' -f $size)"
 
 echo.
 echo  下一步：
