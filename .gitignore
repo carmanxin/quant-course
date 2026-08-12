@@ -9,3 +9,6 @@ public/pyodide/
 .workbuddy/automations/*/memory.md
 agents/__pycache__/
 *.pyc
+.vitepress/config.ts.timestamp-*.mjs
+.vitepress/.temp/
+.vitepress/cache/
