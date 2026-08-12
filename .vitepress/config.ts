@@ -289,8 +289,8 @@ export default defineConfig({
       }
     },
   },
-  // 排除非站点内容(便携包自身 + 内部研究报告)
-  srcExclude: ['_reports/**', 'portable/**', 'tests/**'],
+  // 排除非站点内容(便携包自身 + 内部研究报告 + spec/plan 等)
+  srcExclude: ['_reports/**', 'portable/**', 'tests/**', 'docs/superpowers/**'],
   ignoreDeadLinks: true,
   // 便携版输出位置（避免与 .vitepress/dist 的 safe-delete 冲突）
   outDir: process.env.QPORTABLE ? 'portable/dist' : '.vitepress/dist',

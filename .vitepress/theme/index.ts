@@ -12,7 +12,6 @@ import DualMABacktest from '../../components/DualMABacktest.vue'
 import EfficientFrontier from '../../components/EfficientFrontier.vue'
 import KellyCalc from '../../components/KellyCalc.vue'
 import MonteCarloVaR from '../../components/MonteCarloVaR.vue'
-import PythonPlayground from '../../components/PythonPlayground.vue'
 import RunLocally from '../../components/RunLocally.vue'
 
 // FinTech 风格定制组件
@@ -20,7 +19,6 @@ import FinTechHero from '../../components/FinTechHero.vue'
 import TickerBar from '../../components/TickerBar.vue'
 import AnimatedButton from '../../components/AnimatedButton.vue'
 import MarketDashboard from '../../components/MarketDashboard.vue'
-import CodeRunBlock from '../../components/CodeRunBlock.vue'
 import StaticCodeBlock from '../../components/StaticCodeBlock.vue'
 
 export default {
@@ -36,9 +34,6 @@ export default {
     app.component('EfficientFrontier', EfficientFrontier)
     app.component('KellyCalc', KellyCalc)
     app.component('MonteCarloVaR', MonteCarloVaR)
-    app.component('PythonPlayground', PythonPlayground)
-    app.component('RunLocally', RunLocally)
-    app.component('CodeRunBlock', CodeRunBlock)
     app.component('StaticCodeBlock', StaticCodeBlock)
     // FinTech 视觉组件
     app.component('FinTechHero', FinTechHero)
