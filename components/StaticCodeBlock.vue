@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 
 interface Output {
   text?: string
@@ -86,26 +86,64 @@ const sizeHint = computed(() => {
 
 const langLabel = computed(() => props.lang?.toUpperCase() || 'PYTHON')
 
-// 从源码首行提取 # @quantlab/output: <name>
-const outputName = computed(() => {
-  const first = rawLines.value[0] || ''
-  const m = first.match(/^#\s*@quantlab\/output:\s*([\w.\-]+)/)
-  return m ? m[1] : null
+// FNV-1a 32-bit hash（与 scripts/precompute-py-outputs.mjs 保持一致）
+function fnv1a(str: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16).padStart(8, '0')
+}
+
+// 归一化：去掉 marker、统一换行、去行尾空格、去首尾空白（与 precompute 一致）
+function normalizeCode(raw: string): string {
+  return raw
+    .replace(/^#\s*@quantlab\/output:\s*[\w.\-]+\s*\n?/, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+$/gm, '')
+    .trim()
+}
+
+// 内容 hash 作为查询键（fence 代码与 public/code/*.py 匹配的基础）
+const codeHash = computed(() => {
+  const code = decodedCode.value
+  return code ? fnv1a(normalizeCode(code)) : null
 })
+
+// _index.json 缓存：codeHash -> name
+let indexCache: Record<string, string> | null = null
+async function resolveOutputName(): Promise<string | null> {
+  if (!codeHash.value) return null
+  if (!indexCache) {
+    try {
+      const res = await fetch('/code/_index.json')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      indexCache = await res.json()
+    } catch (e) {
+      indexCache = {}
+    }
+  }
+  return indexCache[codeHash.value] || null
+}
 
 function onToggle(e: Event) {
   const t = e.target as HTMLDetailsElement
   isOpen.value = t.open
-  if (t.open && !output.value && !loading.value && outputName.value) {
+  if (t.open && !output.value && !loading.value) {
     loadOutput()
   }
 }
 
 async function loadOutput() {
-  if (!outputName.value) return
   loading.value = true
   try {
-    const res = await fetch(`/code/${outputName.value}.output.json`)
+    const name = await resolveOutputName()
+    if (!name) {
+      output.value = null
+      return
+    }
+    const res = await fetch(`/code/${name}.output.json`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     output.value = await res.json()
   } catch (e) {
