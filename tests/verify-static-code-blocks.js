@@ -1,7 +1,11 @@
 // tests/verify-static-code-blocks.js
-// Playwright 验证 5 个典型页面的 <StaticCodeBlock> 折叠块可用
-// 逻辑：展开页面所有折叠块，至少一个能加载出运行结果（text / svg / error 任一）
+// Playwright 验证 <StaticCodeBlock> 折叠块可用
+// 两种模式:
+//   默认:   http://127.0.0.1:5189 (需先起 dev/preview server)
+//   FILE=1: 直接用 file:// 打开 .vitepress/dist 的构建产物 (无需服务器, 覆盖真实便携场景)
+// 逻辑: 展开所有折叠块，至少一个能加载出运行结果（text / svg / error 任一）
 import { chromium } from 'playwright'
+import path from 'node:path'
 
 const PAGES = [
   '/guide/m01-overview/1.3-quant-mindset.html',
@@ -10,10 +14,20 @@ const PAGES = [
   '/guide/m11-derivatives/11.1-greeks.html',
   '/guide/m20-interview-prep/20.1-math-stats.html',
 ]
-const BASE = 'http://127.0.0.1:5189'
+const HTTP_BASE = 'http://127.0.0.1:5189'
+const FILE_MODE = process.env.FILE === '1'
+
+function toUrl(p) {
+  if (FILE_MODE) {
+    const fp = path.resolve('.vitepress/dist' + p)
+    return `file:///${fp}`
+  }
+  return HTTP_BASE + p
+}
 
 async function check(page, path) {
-  await page.goto(BASE + path, { waitUntil: 'networkidle' })
+  await page.goto(toUrl(path), { waitUntil: FILE_MODE ? 'load' : 'networkidle' })
+  await page.waitForTimeout(1200)
   const details = page.locator('details.scb-out')
   const detailsCount = await details.count()
   if (detailsCount === 0) throw new Error(`${path}: no details.scb-out`)
@@ -24,7 +38,7 @@ async function check(page, path) {
     throw new Error(`${path}: summary 文案不正确 (got "${summaryText}")`)
   }
 
-  // 展开所有折叠块，等输出加载
+  // 展开所有折叠块，等输出加载（file:// 下内联输出即时可见）
   await details.evaluateAll((els) => els.forEach((el) => (el.open = true)))
   await page.waitForTimeout(1500)
 
@@ -53,7 +67,7 @@ async function main() {
   try {
     const page = await browser.newPage()
     for (const p of PAGES) await check(page, p)
-    console.log(`[verify-static-code-blocks] all ${PAGES.length} pages OK`)
+    console.log(`[verify-static-code-blocks] ${FILE_MODE ? 'FILE://' : 'HTTP'} mode: all ${PAGES.length} pages OK`)
   } finally {
     await browser.close()
   }

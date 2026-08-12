@@ -1,4 +1,9 @@
 import { defineConfig } from 'vitepress'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const sidebar = [
     {
@@ -276,6 +281,12 @@ export default defineConfig({
       // ============ 自动给所有 python 代码块加 StaticCodeBlock 容器 ============
       // 把 ```python ``` 块改写成 <StaticCodeBlock code-b64="..." lang="...">...</StaticCodeBlock>
       // 默认 Shiki 高亮保留(由 Vue 渲染插槽 HTML 保留)
+      //
+      // 运行结果在构建期直接内联进 output-json prop:
+      //   1. 对 fence 内容算 FNV-1a hash（与组件端一致）
+      //   2. 查 public/code/_index.json（由 scripts/build-code-index.py 生成）
+      //   3. 命中则读对应 <name>.output.json 内联到组件
+      // 这样折叠块内容已写死在 HTML 里，浏览器无需 fetch，file:// 打开也能显示。
       const defaultFence = md.renderer.rules.fence
       md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         const token = tokens[idx]
@@ -283,9 +294,50 @@ export default defineConfig({
         if (['python', 'py'].includes(info)) {
           const codeB64 = Buffer.from(token.content, 'utf8').toString('base64')
           const rendered = defaultFence!(tokens, idx, options, env, self)
-          return `<StaticCodeBlock code-b64="${codeB64}" lang="${info}">${rendered}</StaticCodeBlock>`
+          // 运行结果 base64 内联进 output-b64（attr 安全，无转义地狱；组件端解码）
+          const outputB64 = inlineOutputB64(token.content)
+          const inline = outputB64
+            ? ` output-b64="${outputB64}"`
+            : ''
+          return `<StaticCodeBlock code-b64="${codeB64}" lang="${info}"${inline}>${rendered}</StaticCodeBlock>`
         }
         return defaultFence!(tokens, idx, options, env, self)
+      }
+
+      // FNV-1a 32-bit（与 StaticCodeBlock.vue / build-code-index.py 一致）
+      function fnv1a(str: string): string {
+        let h = 0x811c9dc5
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i)
+          h = Math.imul(h, 0x01000193)
+        }
+        return (h >>> 0).toString(16).padStart(8, '0')
+      }
+      // 归一化（与组件端 normalizeCode 一致）
+      function normalizeCode(raw: string): string {
+        return raw
+          .replace(/^#\s*@quantlab\/output:\s*[\w.\-]+\s*\n?/, '')
+          .replace(/\r\n/g, '\n')
+          .replace(/[ \t]+$/gm, '')
+          .trim()
+      }
+      // 构建期查找输出并 base64 内联；找不到返回 null（组件显示"暂无运行结果"）
+      function inlineOutputB64(code: string): string | null {
+        try {
+          const hash = fnv1a(normalizeCode(code))
+          const index = JSON.parse(
+            fs.readFileSync(path.join(__dirname, '../public/code/_index.json'), 'utf8'),
+          )
+          const name = index[hash]
+          if (!name) return null
+          const out = fs.readFileSync(
+            path.join(__dirname, `../public/code/${name}.output.json`),
+            'utf8',
+          )
+          return Buffer.from(out, 'utf8').toString('base64')
+        } catch (e) {
+          return null
+        }
       }
     },
   },

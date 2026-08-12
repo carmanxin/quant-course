@@ -56,16 +56,34 @@ const props = withDefaults(defineProps<{
   codeB64?: string
   lang?: string
   defaultOpen?: boolean
+  /** 构建期内联的运行结果 JSON 的 base64（来自 fence 钩子），优先于运行时 fetch */
+  outputB64?: string
 }>(), {
   codeB64: '',
   lang: 'python',
   defaultOpen: false,
+  outputB64: '',
 })
 
 const isOpen = ref(false)
 const copied = ref(false)
 const loading = ref(false)
-const output = ref<Output | null>(null)
+
+// 内联输出优先：构建期已写死，无需 fetch（file:// 也能显示）
+const inlineOutput = computed<Output | null>(() => {
+  if (!props.outputB64) return null
+  try {
+    const binary = atob(props.outputB64)
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
+    const json = new TextDecoder().decode(bytes)
+    return JSON.parse(json) as Output
+  } catch (e) {
+    return null
+  }
+})
+// 运行时 fetch 的 fallback（仅当无内联输出时触发）
+const fetchedOutput = ref<Output | null>(null)
+const output = computed(() => inlineOutput.value || fetchedOutput.value)
 
 const decodedCode = computed(() => {
   try {
@@ -130,7 +148,8 @@ async function resolveOutputName(): Promise<string | null> {
 function onToggle(e: Event) {
   const t = e.target as HTMLDetailsElement
   isOpen.value = t.open
-  if (t.open && !output.value && !loading.value) {
+  // 已有内联输出则无需 fetch；否则在展开时尝试运行时加载（fallback）
+  if (t.open && !output.value && !inlineOutput.value && !loading.value) {
     loadOutput()
   }
 }
@@ -140,14 +159,14 @@ async function loadOutput() {
   try {
     const name = await resolveOutputName()
     if (!name) {
-      output.value = null
+      fetchedOutput.value = null
       return
     }
     const res = await fetch(`/code/${name}.output.json`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    output.value = await res.json()
+    fetchedOutput.value = await res.json()
   } catch (e) {
-    output.value = null
+    fetchedOutput.value = null
   } finally {
     loading.value = false
   }
