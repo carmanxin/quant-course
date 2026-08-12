@@ -19,7 +19,7 @@ features:
   - title: 策略开发实战
     details: 双均线、统计套利、CTA 趋势、事件驱动、多因子组合、Kelly 仓位
   - title: Python 数据栈
-    details: NumPy · Pandas · Scikit-learn · XGBoost · 浏览器内 Pyodide 在线沙箱
+    details: NumPy · Pandas · Scikit-learn · XGBoost · 代码示例 + 预计算运行结果
   - title: 回测与绩效评估
     details: 回测引擎原理、交易成本建模、夏普 / Calmar / 最大回撤、统计检验
   - title: 投资组合优化

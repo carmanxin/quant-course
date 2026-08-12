@@ -53,12 +53,6 @@ if not exist portable\dist\index.html (
     pause
     exit /b 1
 )
-if not exist portable\pyodide\pyodide.js (
-    echo  X  portable\pyodide\pyodide.js 不存在
-    echo     请先 npm install pyodide@0.26.4 --no-save 然后重新打包
-    pause
-    exit /b 1
-)
 if not exist portable\serve.cjs (
     echo  X  portable\serve.cjs 不存在
     pause
