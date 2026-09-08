@@ -380,6 +380,32 @@ git push
 
 ---
 
+### 8.1 页面打开是 401 UNAUTHORIZED（加速区域规则）
+
+**症状**：部署显示成功，浏览器点控制台「预览」能打开，但直接访问 `https://xxx.edgeone.dev/` 是 401。
+响应体为 `Access Restricted or Authentication Expired`。
+
+**这不是部署失败，是 EdgeOne Pages 的域名访问规则**（官方文档 `pages.edgeone.ai/zh/document/domain-overview`）：
+
+| 项目加速区域 | 系统分配的域名 |
+|---|---|
+| 中国大陆可用区 / 全球（含中国大陆） | **只有控制台「预览」按钮生成的链接可访问，有效期 3 小时**，超时即 401 |
+| 全球（**不含**中国大陆） | 海外可直接访问，**中国大陆访问返回 401** |
+
+**判断自己在哪个区域**：看 401 响应体最后一行。
+若提示 `For "Global (MLC excluded)" projects, check your network environment`，
+且你在国内 → 就是"不含中国大陆"区域在拦国内 IP。
+
+**解法（唯一稳定路径）**：绑定自定义域名。
+
+- 域名**已备案** → 任意区域都行，国内访问正常
+- 域名**未备案** → 只能选「全球（不含中国大陆）」，国内仍会被拦 → 这种情况建议改用 Cloudflare Pages（§5）
+
+> 换句话说：**系统分配的 `*.edgeone.dev` 域名只能用于临时预览，不能当作正式访问地址。**
+> 若暂时没有域名，用 §3 路线 B 的思路把同样的产物部署到 Cloudflare Pages 即可免备案公开访问。
+
+---
+
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | **平台报「安装依赖失败」** | 平台自动 `npm install`（容器无 Python / Playwright 下 Chromium 超时 / dist 分支无 package.json） | 见 §8.0：框架预设改 `Other`、构建命令 `echo skip`、分支 `dist`；或直接传 ZIP |
@@ -387,6 +413,7 @@ git push
 | 部署后页面空白 | 路径用了绝对路径但部署在子目录 | 本项目就是绝对路径，确保部署在域名根目录；或用 `relativize-dist.mjs` 转相对路径 |
 | 案例没有运行结果 | CI 里没跑 precompute 或跑失败了 | 看 Actions 日志里 precompute 那一步；本地跑一遍把产物提交 |
 | EdgeOne 打开提示 401 / 未备案 | 用了腾讯云国内版 | 换 <https://edgeone.ai> 国际版 |
+| **页面打开是 401 UNAUTHORIZED** | **加速区域规则**（见 §8.1，最常见） | 系统分配的域名本就不能长期公开访问，需绑自定义域名 |
 | 部署报 "project not found" | 项目名不匹配 | CLI 传了 `-n quantlab`，检查 `vars.EDGEONE_PROJECT` |
 | `npx edgeone` 报命令不存在 | npm 拉包失败 | 重试；或在 workflow 里改成 `npm i -g edgeone && edgeone pages deploy ...` |
 | 国内某些运营商打不开 | 国际版节点对某些线路不友好 | 切 Cloudflare Pages 对比；或上自定义域名做分运营商解析 |

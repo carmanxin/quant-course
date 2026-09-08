@@ -81,12 +81,62 @@ QuantLab 是一个 122 章、24 万字、439 个 Python 案例的 VitePress 学�
 - Cloudflare Pages:用户反馈联通线路晚高峰 800ms+
 - Vercel/Netlify:`*.vercel.app`/`*.netlify.app` 域名被 DNS 污染
 
-### 2.2 选 EdgeOne Pages 国际版的理由
+### 2.2 ⚠️ 决定成败的隐藏约束：加速区域（2026-09-08 实测修正）
 
-1. **国内访问优于 Cloudflare**:EdgeOne 亚洲节点对联通/移动做专门优化,实测延迟 ~200ms,而 Cloudflare 联通线路经常 800ms+(实测来自迁移博主)
-2. **完全免费**:5GB 项目大小,本工程 79MB 远低于上限
-3. **无需备案**:国际版使用腾讯云国际 CDN,源站在海外
-4. **GitHub 集成完善**:与 Cloudflare Pages 逻辑一致,迁移成本低
+**这是选型时最容易漏掉、但直接决定"能不能访问"的一项。** EdgeOne Pages 创建项目时必须选加速区域，
+区域决定了系统分配的域名能否长期公开访问（官方文档 `pages.edgeone.ai/zh/document/domain-overview`）：
+
+| 加速区域 | 系统分配的域名（`*.edgeone.dev` 等） | 绑定自定义域名 |
+|---|---|---|
+| **中国大陆可用区** | ❌ **只能用控制台「预览」按钮生成的链接，有效期 3 小时，超时返回 401** | 需工信部备案 |
+| **全球可用区（含中国大陆）** | ❌ 同上，仅 3 小时预览链接 | 需工信部备案 |
+| **全球可用区（不含中国大陆）** | ❌ **中国大陆网络返回 401**（海外正常） | ✅ **无需备案** |
+
+**实测证据**（2026-09-08，`quant-course.edgeone.dev`）：
+
+```http
+HTTP/1.1 401 Authorization Required
+X-EOP-MSG: eo_time missing
+Server: edgeone makers
+```
+响应体：
+```
+401: UNAUTHORIZED
+Access Restricted or Authentication Expired.
+Site Visitor: Please contact the site administrator to obtain a valid access link.
+Site Owner: Click "Preview" in the console for a new link.
+            For "Global (MLC excluded)" projects, check your network environment.
+```
+
+**三条推论（推翻了初版 PRD 的乐观假设）**：
+
+1. **「免备案 + 国内可访问」在 EdgeOne Pages 上不成立**。不选中国大陆区→国内 401；
+   选了→只能靠 3 小时预览链接临时访问，等于不能公开分享。
+2. **初版 PRD 写的「国际版免备案、国内 200ms」是错的**，那是把「国际版账号（edgeone.ai 控制台）」
+   与「加速区域不含中国大陆」两件事混为一谈。账号国际版只解决"不强制实名"，不解决域名访问限制。
+3. **唯一稳定的公开访问路径 = 绑定自定义域名**。若域名已备案可任选区域；
+   若未备案只能选「全球（不含中国大陆）」，国内仍会被拦。
+
+**决策影响**：本项目的上线方式必须重新评估，见 §2.4。
+
+### 2.3 选 EdgeOne Pages 的理由（在"有已备案域名"前提下方才成立）
+
+1. **国内访问优于 Cloudflare**：EdgeOne 亚洲节点对联通/移动做专门优化，实测延迟 ~200ms，而 Cloudflare 联通线路经常 800ms+（实测来自迁移博主）
+2. **完全免费**：5GB 项目大小，本工程 79MB 远低于上限
+3. **GitHub 集成完善**：与 Cloudflare Pages 逻辑一致，迁移成本低
+
+> ⚠️ 上述优势的前提是**绑定一个已备案的自定义域名**。仅用系统分配域名时，
+> 无论是 3 小时预览链接还是国内 401，都不满足"培训站点长期可访问"的目标。
+
+### 2.4 修正后的方案选择
+
+| 方案 | 前提 | 国内访问 | 成本 | 结论 |
+|---|---|---|---|---|
+| **A. EdgeOne + 已备案自定义域名** | 有备案域名 | ★★★★★ | ¥0（域名已有） | **最优** |
+| **B. Cloudflare Pages 直接上线** | 无 | ★★★（联通晚高峰可能慢） | ¥0 | **无备案时的首选** |
+| C. EdgeOne + 未备案域名 | 已购域名未备案 | ❌ 401 | ¥0 | 不可行 |
+| D. 接受 3 小时预览链接 | 无 | 时断时续 | ¥0 | 仅临时演示 |
+| E. 走备案流程 | 有域名 + 愿意等 10-20 天 | ★★★★★ | 域名费 | 长期正解 |
 5. **支持 VitePress**:官方文档明确支持 React/Vue/VitePress 等主流框架
 6. **绑定邮箱即可用**:不需要绑卡、不需要手机号
 
