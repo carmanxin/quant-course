@@ -472,7 +472,9 @@ export default defineConfig({
     },
   },
   // 排除非站点内容(便携包自身 + 内部研究报告 + spec/plan 等)
-  srcExclude: ['_reports/**', 'portable/**', 'tests/**', 'docs/superpowers/**'],
+  // DEPLOY.md 是给维护者看的部署手册（含仓库结构、Secret 配置等运维信息），
+  // 不应作为站点页面对外展示，故从构建中排除。
+  srcExclude: ['_reports/**', 'portable/**', 'tests/**', 'docs/superpowers/**', 'DEPLOY.md'],
   ignoreDeadLinks: true,
   // 控制并发渲染数（默认 64 在 Windows 上易卡住；调到 8 缓解 file:// 兼容场景）
   buildConcurrency: 8,
