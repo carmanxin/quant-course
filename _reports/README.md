@@ -9,7 +9,20 @@
 | [`course-audit.md`](./course-audit.md) | 19,544 / 498 | **早期诊断版** — 主理人首轮自诊断(基于全量文件读取 + 字符/代码块统计) | 2026-07-14 15:30 |
 | [`research-report.md`](./research-report.md) | 99,224 / 593 | **正式研究报告** — 完整 5 阶段 Workflow A 产出 + 时效性补强轮 + P1/P2 扩充轮 + 风格统一轮(章节编号 1-8 阿拉伯数字统一 + 7 处承上启下衔接 + 14 处段首格式统一 + 7 个表格对齐声明) | 2026-07-15 10:30 |
 | [`delivery-round-2026-07-15.md`](./delivery-round-2026-07-15.md) | — | **2026-07-15 内容补强交付记录** — 16 个新章节实施明细 + 5 章规范化 + 构建错误修复 + config.ts 索引更新 | 2026-07-15 12:00 |
-| [`README.md`](./README.md) | — | 本文件,目录索引与文件关系说明 | 2026-07-15 10:30 |
+| [`WORK-REPORT.md`](./WORK-REPORT.md) | ~20 KB / 377 | **完整工作报告(2026-09-07)** — 工程定位/内容编排/技术架构/构建流水线/避坑清单/复用清单。可作为下份"培训学习工程"的复刻模板 | 2026-09-07 |
+| [`DEPLOY-PRD.md`](./DEPLOY-PRD.md) | ~16 KB / 399 | **线上部署 PRD** — 平台选型对比(7 个平台)/ EdgeOne Pages 推荐方案 / CI-CD / 域名 / 监控 / 回滚 / 验收 | 2026-09-07 |
+| [`DEPLOY-CHECKLIST.md`](./DEPLOY-CHECKLIST.md) | ~14 KB / 320 | **Day 0-7 上线实施清单** — 每天做什么/验收标准/决策记录表/紧急回滚/关键速查表 | 2026-09-08 |
+| [`README.md`](./README.md) | — | 本文件,目录索引与文件关系说明 | 2026-09-08 |
+
+### 根目录配套文件
+
+| 文件 | 角色 |
+|------|------|
+| [`/DEPLOY.md`](../DEPLOY.md) | **手把手部署手册**(3 条路线 + 故障排查表 + 一键体检脚本),照做即可上线 |
+| [`/.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) | GitHub Actions:构建 → EdgeOne Pages(主) + Cloudflare Pages(灾备) + dist 分支(保底) |
+| [`/requirements-ci.txt`](../requirements-ci.txt) | CI 专用精简 Python 依赖(约 400MB / 2-3 min),替代 3GB+ 的本地完整 requirements.txt |
+
+**部署三件套关系**:`DEPLOY-PRD.md`(为什么这么选)→ `DEPLOY.md`(怎么操作)→ `DEPLOY-CHECKLIST.md`(什么时间做什么)。
 
 ## 两份文件的关系
 

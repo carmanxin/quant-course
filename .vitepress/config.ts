@@ -304,6 +304,113 @@ export default defineConfig({
         return defaultFence!(tokens, idx, options, env, self)
       }
 
+      // ============ 小测验 → 交互式 QuizBlock ============
+      // 把「题目文本 + 若干 <div class="quiz-option">…</div>」转换成
+      // <QuizBlock question-b64 options-b64 answer explain-b64>
+      // 正确答案与解析来自 .vitepress/quiz-answers.json（key = 相对路径 + 题号）。
+      // 找不到答案的题目保持原样，不会退化成"点了没反应"。
+      let _quizCache: Record<string, Record<string, { answer: string; explain: string }>> | null = null
+      function loadQuizAnswers() {
+        if (_quizCache) return _quizCache
+        try {
+          _quizCache = JSON.parse(
+            fs.readFileSync(path.join(__dirname, 'quiz-answers.json'), 'utf8'),
+          )
+        } catch {
+          _quizCache = {}
+        }
+        return _quizCache!
+      }
+      function b64(s: string): string {
+        return Buffer.from(s, 'utf8').toString('base64')
+      }
+      const OPTION_RE = /<div\s+class="quiz-option"[^>]*>([\s\S]*?)<\/div>/g
+      const TITLE_RE = /^\s*\*\*题目\s*(\d+)\s*\*\*\s*[:：]?\s*/
+
+      md.core.ruler.push('quiz-block', (state) => {
+        const rel = (state.env as any)?.relativePath
+        if (!rel) return false
+        const answers = loadQuizAnswers()[String(rel).replace(/\\/g, '/')]
+        if (!answers) return false
+
+        const tokens = state.tokens
+        const out: typeof tokens = []
+        let quizIdx = 0
+        let changed = false
+
+        const isQuizBlock = (t: any) => t.type === 'html_block' && /class="quiz-option"/.test(t.content)
+
+        for (let i = 0; i < tokens.length; i++) {
+          const t = tokens[i] as any
+          if (!isQuizBlock(t)) { out.push(t); continue }
+
+          // 收集紧随其后的其它 quiz-option html_block（有些文件中间有空行会断块）
+          const blocks = [t]
+          let j = i + 1
+          while (j < tokens.length && isQuizBlock(tokens[j] as any)) {
+            blocks.push(tokens[j] as any); j++
+          }
+
+          // 从原始 HTML 里抠出每个选项
+          const options: string[] = []
+          for (const b of blocks) {
+            let m: RegExpExecArray | null
+            OPTION_RE.lastIndex = 0
+            while ((m = OPTION_RE.exec(b.content))) options.push(m[1].trim())
+          }
+          if (options.length < 2) { out.push(t); continue }
+
+          // 往前找题面：末尾的 paragraph 组 + 可选的 heading 组（heading 在前）
+          const qTokens: any[] = []
+          const takeGroup = (closeType: string, openType: string) => {
+            if (out.length < 3) return false
+            const c = out[out.length - 1], mid = out[out.length - 2], o = out[out.length - 3]
+            if (c.type !== closeType || o.type !== openType || mid.type !== 'inline') return false
+            qTokens.unshift(o, mid, c)
+            out.length -= 3
+            return true
+          }
+          takeGroup('paragraph_close', 'paragraph_open')
+          takeGroup('heading_close', 'heading_open')
+          if (!qTokens.length) { out.push(t); continue }
+
+          let qRaw = ''
+          for (const qt of qTokens) if (qt.type === 'inline') qRaw += (qRaw ? '<br>' : '') + qt.content
+          const numMatch = qRaw.match(TITLE_RE)
+          const num = numMatch ? numMatch[1] : String(++quizIdx)
+          qRaw = qRaw.replace(TITLE_RE, '')
+
+          const ans = answers[String(num)]
+          if (!ans) {
+            // 无答案数据 → 原样输出，避免破坏已有可交互版本
+            out.push(...qTokens, ...blocks)
+            i = j - 1
+            continue
+          }
+
+          // 题面 / 选项 / 解析都走 markdown inline，让 $...$ 公式正常渲染
+          const qHtml = md.renderInline(qRaw)
+          const optHtml = options.map((o) => md.renderInline(o.replace(/\s*\n\s*/g, ' ').trim()))
+          const explainHtml = md.renderInline(ans.explain)
+
+          const attrs = [
+            `num="${num}"`,
+            `question="${b64(qHtml)}"`,
+            `options="${b64(JSON.stringify(optHtml))}"`,
+            `answer="${ans.answer}"`,
+            `explain="${b64(explainHtml)}"`,
+          ].join(' ')
+          const quizToken = new state.Token('html_block', '', 0)
+          quizToken.content = `<QuizBlock ${attrs}></QuizBlock>\n`
+          out.push(quizToken)
+          changed = true
+          i = j - 1
+        }
+
+        if (changed) state.tokens = out
+        return false
+      })
+
       // FNV-1a 32-bit（与 StaticCodeBlock.vue / build-code-index.py 一致）
       function fnv1a(str: string): string {
         let h = 0x811c9dc5
@@ -330,17 +437,26 @@ export default defineConfig({
       }
       // 构建期查找输出并 base64 内联；找不到返回 null（组件显示"暂无运行结果"）
       // svgs 里的 /code/... 绝对路径改写为相对路径（base='./' + file:// 场景）
+      // 缓存 _index.json 与每个 *.output.json，避免每 fence 都做 fs.readFileSync（Windows 慢）
+      let _indexCache: Record<string, string> | null = null
+      const _outputCache = new Map<string, any>()
       function inlineOutputB64(code: string, env: any): string | null {
         try {
           const hash = fnv1a(normalizeCode(code))
-          const index = JSON.parse(
-            fs.readFileSync(path.join(__dirname, '../public/code/_index.json'), 'utf8'),
-          )
-          const name = index[hash]
+          if (!_indexCache) {
+            _indexCache = JSON.parse(
+              fs.readFileSync(path.join(__dirname, '../public/code/_index.json'), 'utf8'),
+            )
+          }
+          const name = _indexCache[hash]
           if (!name) return null
-          const out = JSON.parse(
-            fs.readFileSync(path.join(__dirname, `../public/code/${name}.output.json`), 'utf8'),
-          )
+          let out = _outputCache.get(name)
+          if (!out) {
+            out = JSON.parse(
+              fs.readFileSync(path.join(__dirname, `../public/code/${name}.output.json`), 'utf8'),
+            )
+            _outputCache.set(name, out)
+          }
           // 把 svgs 绝对路径改为相对当前页面的路径
           if (Array.isArray(out.svgs)) {
             const prefix = relPrefixFromEnv(env)
@@ -358,6 +474,8 @@ export default defineConfig({
   // 排除非站点内容(便携包自身 + 内部研究报告 + spec/plan 等)
   srcExclude: ['_reports/**', 'portable/**', 'tests/**', 'docs/superpowers/**'],
   ignoreDeadLinks: true,
+  // 控制并发渲染数（默认 64 在 Windows 上易卡住；调到 8 缓解 file:// 兼容场景）
+  buildConcurrency: 8,
   // 便携版输出位置（避免与 .vitepress/dist 的 safe-delete 冲突）
   outDir: process.env.QPORTABLE ? 'portable/dist' : '.vitepress/dist',
 })

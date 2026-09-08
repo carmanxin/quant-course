@@ -51,54 +51,7 @@ features:
 
 </div>
 
-<!--
-================================================================
-以下为内部视觉规范与组件库示例,只对维护者开放,不在站点展示。
-如需查看源码请直接看 .vitepress/theme/style.css 与 components/
-================================================================
 
-## 组件库预览 · 按钮交互效果
-
-下面展示 FinTech 主题中的所有按钮变体。鼠标悬停查看 **光斑扫描 + 缩放发光** 动效:
-
-<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:24px 0;padding:24px;background:var(--ft-bg-soft);border-radius:16px;border:1px solid var(--ft-border)">
-
-<ClientOnly>
-  <AnimatedButton variant="primary" arrow to="/guide/">进入课程</AnimatedButton>
-  <AnimatedButton variant="mint" arrow>立即体验</AnimatedButton>
-  <AnimatedButton variant="cyan" arrow>开始计算</AnimatedButton>
-  <AnimatedButton variant="purple" arrow>查看策略</AnimatedButton>
-  <AnimatedButton variant="pink" arrow>风险预警</AnimatedButton>
-  <AnimatedButton variant="gold" arrow>胜率分析</AnimatedButton>
-  <AnimatedButton variant="outline" arrow>更多模块</AnimatedButton>
-  <AnimatedButton variant="primary" size="lg" arrow>大尺寸主按钮</AnimatedButton>
-  <AnimatedButton variant="primary" size="sm">小型</AnimatedButton>
-</ClientOnly>
-
-</div>
-
-## 关键视觉规范
-
-```css
-/* 主品牌色 - 乐观绿(上涨) */
---ft-brand:   #00E5A0   /* Electric Mint */
---ft-brand-2: #00D4FF   /* Cyber Cyan    */
---ft-brand-3: #7C3AED   /* Royal Purple  */
---ft-brand-4: #FF0080   /* Hot Pink      */
-
-/* 多空语义色 */
---ft-bull:    #00E5A0   /* 多 - 涨 */
---ft-bear:    #FF4D6D   /* 空 - 跌 */
-
-/* 阴影发光 */
-box-shadow: 0 0 32px rgba(0, 229, 160, .45);
-
-/* Aurora 渐变 */
-background: linear-gradient(135deg, #00E5A0 0%, #00D4FF 35%, #7C3AED 70%, #FF0080 100%);
-```
-
-内规结束
--->
 
 ## 开始学习
 
@@ -110,23 +63,4 @@ background: linear-gradient(135deg, #00E5A0 0%, #00D4FF 35%, #7C3AED 70%, #FF008
 
 ⚡ **面试冲刺** · 专攻 [模块 20·面试准备](/guide/m20-interview-prep/20.1-math-stats)
 
-<style scoped>
-.vp-features-mini {
-  margin: 32px 0;
-  border: 1px solid var(--ft-border);
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--ft-surface);
-  box-shadow: 0 8px 24px rgba(13,26,56,.06);
-}
-.vp-features-mini table {
-  border: none !important;
-  border-radius: 0 !important;
-  margin: 0;
-}
-.vp-features-mini th {
-  background: linear-gradient(135deg, rgba(0,229,160,.08), rgba(0,212,255,.06)) !important;
-  border-bottom: 2px solid var(--ft-brand) !important;
-  font-weight: 700;
-}
-</style>
+

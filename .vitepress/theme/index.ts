@@ -20,6 +20,7 @@ import TickerBar from '../../components/TickerBar.vue'
 import AnimatedButton from '../../components/AnimatedButton.vue'
 import MarketDashboard from '../../components/MarketDashboard.vue'
 import StaticCodeBlock from '../../components/StaticCodeBlock.vue'
+import QuizBlock from '../../components/QuizBlock.vue'
 
 export default {
   extends: DefaultTheme,
@@ -35,6 +36,7 @@ export default {
     app.component('KellyCalc', KellyCalc)
     app.component('MonteCarloVaR', MonteCarloVaR)
     app.component('StaticCodeBlock', StaticCodeBlock)
+    app.component('QuizBlock', QuizBlock)
     // FinTech 视觉组件
     app.component('FinTechHero', FinTechHero)
     app.component('TickerBar', TickerBar)

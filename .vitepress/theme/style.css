@@ -886,3 +886,23 @@ tr:hover td { background: rgba(0, 229, 160, .04); }
   .card   { padding: 20px !important; }
   .VPFeature { padding: 20px 16px !important; }
 }
+
+/* ---------- 31. 课程亮点表格（首页 index.md 用） ---------- */
+.vp-features-mini {
+  margin: 32px 0;
+  border: 1px solid var(--ft-border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ft-surface);
+  box-shadow: 0 8px 24px rgba(13, 26, 56, .06);
+}
+.vp-features-mini table {
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0;
+}
+.vp-features-mini th {
+  background: linear-gradient(135deg, rgba(0, 229, 160, .08), rgba(0, 212, 255, .06)) !important;
+  border-bottom: 2px solid var(--ft-brand) !important;
+  font-weight: 700;
+}

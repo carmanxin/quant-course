@@ -1,0 +1,7 @@
+{
+  "text": "=== 聚类结果 ===\r\n聚类 1 (2个资产): ['Asset_D', 'Asset_E']\r\n聚类 2 (1个资产): ['Asset_A']\r\n聚类 3 (1个资产): ['Asset_B']\r\n聚类 4 (1个资产): ['Asset_C']\r\n\r\n✅ 已识别 4 个聚类群组",
+  "svgs": [
+    "/code/8e70e3fb.svgs/8e70e3fb-0.svg",
+    "/code/8e70e3fb.svgs/8e70e3fb-1.svg"
+  ]
+}

@@ -1,5 +1,4 @@
 {
-  "text": "模拟样本: 252 天 年化波动率 22%\r\n实际log-ret std: 0.0132\r\n实际年化vol: 20.95%",
-  "svgs": [],
-  "error": "Traceback (most recent call last):\r\n  File \"<string>\", line 93, in <module>\r\n    open_, high, low, close = synth_ohlc(close)\r\n                              ~~~~~~~~~~^^^^^^^\r\n  File \"<string>\", line 82, in synth_ohlc\r\n    close_prev = np.concatenate([[close_price[0]], close_price[:-1]])\r\n                                  ~~~~~~~~~~~^^^\r\n  File \"C:\\Users\\xinhaoming\\.workbuddy\\binaries\\python\\versions\\3.13.12\\Lib\\site-packages\\pandas\\core\\series.py\", line 959, in __getitem__\r\n    return self._get_"
+  "text": "模拟样本: 252 天 年化波动率 22%\r\n实际log-ret std: 0.0132\r\n实际年化vol: 20.95%\r\n\r\n============================================================\r\n【1】5 种 HV 在最新一天的水平 (年化)\r\n============================================================\r\n  HV_simple      :  18.40%\r\n  HV_ewma        :  19.61%\r\n  HV_parkinson   :  21.22%\r\n  HV_gk          :  22.04%\r\n  HV_yz          :  21.33%\r\n\r\n============================================================\r\n【2】VIX 指数简化构造 (近期 + 远期 OTM-Put 加权)\r\n============================================================\r\n  VIX 估算: 70.88  (基于近月/次月 OTM Put)\r\n  历史分位数(<20:平静 / 20-30:正常 / >30:紧张): 当前在紧张区间",
+  "svgs": []
 }

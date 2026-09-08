@@ -1,0 +1,5 @@
+{
+  "text": "",
+  "svgs": [],
+  "error": "Traceback (most recent call last):\r\n  File \"<string>\", line 171, in run_unit_tests\r\n    fn()\r\n    ~~^^\r\n  File \"<string>\", line 202, in test_portfolio_cash_flow\r\n    assert abs(pf.equity - 1_000_000) < 1  # 市值不变(刚买入)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError\r\n\r\nDuring handling of the above exception, another exception occurred:\r\n\r\nTraceback (most recent call last):\r\n  File \"<string>\", line 268, in <module>\r\n    run_unit_tests()\r\n    ~~~~~~~~~~~~~~^^\r\n  File \"<string>\", line 174,"
+}

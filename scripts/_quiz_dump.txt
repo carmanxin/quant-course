@@ -1,0 +1,1381 @@
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.1-greeks.md
+==============================================================================
+**题目 1**:关于 Delta 的描述,以下哪个最准确?
+
+<div class="quiz-option">
+A. Delta 就是期权到期实值的概率
+</div>
+<div class="quiz-option">
+B. Delta 是 $\partial V/\partial S$,近似等于风险中性测度下的实值概率,但不完全相同
+</div>
+<div class="quiz-option">
+C. Delta 是常数,等于行权价内含的概率
+</div>
+<div class="quiz-option">
+D. Delta 与 Gamma 无关
+</div>
+
+**题目 2**:Gamma 的符号对 Long Straddle 和 Short Strangle:
+
+<div class="quiz-option">
+A. 都是正的
+</div>
+<div class="quiz-option">
+B. 都是负的
+</div>
+<div class="quiz-option">
+C. Long Straddle 为正, Short Strangle 为负
+</div>
+<div class="quiz-option">
+D. 看市场决定
+</div>
+
+**题目 3**:Delta 中性的组合在标的大涨时:
+
+<div class="quiz-option">
+A. 一定不赚钱
+</div>
+<div class="quiz-option">
+B. 因为 Gamma > 0, Delta 会自动增加并产生 Gamma Scalping 收益(否则因 Gamma < 0 而亏损)
+</div>
+<div class="quiz-option">
+C. 立即被强制平仓
+</div>
+<div class="quiz-option">
+D. Delta 保持为零
+</div>
+
+
+## 实战练习
+
+1. **完整 Greeks 计算**: 编写 `bs_all_greeks(S, K, T, r, sigma)` 函数,包含一阶(Delta/Gamma/Theta/Vega/Rho)和二阶(Vomma/Vanna/Charm/Speed/Color)。对 100 个不同 (S, K, T) 组合绘制 7 张 Greeks 热图。
+
+2. **二阶 Greeks vs 一阶 Greeks 数量级对比**: 在 ATM Call 30 天到期下,计算 Delta ≈ 0.50, Gamma ≈ 0.04, Vanna ≈ -1.4, Vomma ≈ 7.0, Charm ≈ -0.15。理解这些数字的含义和数量级,**为做市商对冲参数设置提供直觉**。
+
+3. **Gamma Scalping 实现**: 模拟一条 60 天的标的价格路径(S_0=100, σ=20%),持有 Long Straddle 并每日重新调整 Delta 到 0。统计:
+   - Gamma 收益(0.5 × Γ × (ΔS)² 加总)
+   - Theta 损失
+   - 净收益
+   - 注意:**只有当波动足够大时,Gamma 收益才能跑赢 Theta 损失**。
+
+4. **二阶 Greeks 矩阵对冲**: 设计一个 3 阶希腊字母对冲组合(同时管理 Delta/Gamma/Vega)。使用两个不同到期日的期权腿,求解每个腿的持仓数量,使三个希腊字母都接近 0。
+
+## 延伸阅读
+
+- Hull, J.C. (2018). *Options, Futures, and Other Derivatives*. 第 8 章(Ch 17-19)深入讨论 Greeks 计算与对冲。
+- Natenberg, S. (1994). *Option Volatility and Pricing*. 交易员视角的 Greeks 应用。
+- Taleb, N.N. (1997). *Dynamic Hedging*. Wiley. Gamma Scalping 和二阶 Greeks 的经典参考。
+- Wilmott, P. (2006). *Paul Wilmott on Quantitative Finance*. 数学严密但偏工程视角。
+- Castagna, A. (2017). *FX Options and Smile Risks*. Wiley. 关于 Vanna/Volga 在外汇期权的应用,适合做市商。
+- 国泰君安/中信证券《场外期权估值与对冲实务》。中文场景下的实用参考。
+
+## 本章要点
+
+- **Greeks 是期权风险管理的仪表盘**:Delta 是方向、Gamma 是曲率、Theta 是时间、Vega 是波动率。
+- **ATM 期权 Gamma 最大**,深度 OTM/ITM 期权 Gamma 接近 0;临近到期时 ATM Gamma "爆炸"增长。
+- **Greeks 是动态变化的**,必须持续监控和调整;剧烈行情下 Greeks 可能在秒级内颠覆性变化。
+- **Delta 中性 ≠ 风险中性**:还需要管理 Gamma、Vega、Theta 暴露——后者通过动态对冲或跨产品组合实现。
+- **二阶 Greeks(Vomma/Vanna/Charm/Speed/Color)** 让做市商和对冲基金能在风险的多维度上进行精细化管理。
+- **Gamma Scalping 是 Long Vol 策略的核心收益来源**:Gamma 收益 = 0.5 × Γ × (ΔS)² - Theta 损失 × 时间 - 交易成本。
+- **A 股实战**:50ETF 主力合约的 Greeks 变化最快,做市商必须高频监控;远月 + 深度 OTM 流动性差,大仓位时可能出现"无法调整"的尴尬。
+
+---
+
+下一章 11.2 将进入 **波动率曲面与套利**,讲解如何把单个期权的价格推广到整条波动率曲线,识别曲面中的套利空间。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.10-china-listed-options.md
+==============================================================================
+**题目 1**:A 股场内期权相比美股期权,溢价的隐含波动率偏度有什么特殊性?
+
+<div class="quiz-option">
+A. 与 S&P 500 几乎一样,略左偏
+</div>
+<div class="quiz-option">
+B. 左尾偏度比 S&P 500 更负,因为散户"买保险"心理 + 机构对冲工具不足
+</div>
+<div class="quiz-option">
+C. 完全对称(无偏斜)
+</div>
+<div class="quiz-option">
+D. 右尾偏度更突出,反映上涨预期
+</div>
+
+**题目 2**:50ETF 上长期看,以下哪个策略表现最佳?
+
+<div class="quiz-option">
+A. Long Straddle
+</div>
+<div class="quiz-option">
+B. Protective Put
+</div>
+<div class="quiz-option">
+C. Covered Call(年化 7-10%,胜率 78%)
+</div>
+<div class="quiz-option">
+D. Long Butterfly
+</div>
+
+**题目 3**:50ETF 期权的"主力合约"通常是?
+
+<div class="quiz-option">
+A. 当月 + 下月合约(流动性最佳)
+</div>
+<div class="quiz-option">
+B. 隔季合约(最远期)
+</div>
+<div class="quiz-option">
+C. 季度合约(3/6/9/12 月到期)
+</div>
+<div class="quiz-option">
+D. 当周合约(到期日最近)
+</div>
+
+
+## 实战练习
+
+1. **8 大策略对比回测**: 使用 akshare 获取 50ETF 与 300ETF 在 2022-2024 年的日线数据,编写完整回测代码,统计 8 个策略在三年间的年化收益、夏普、最大回撤。验证"Covered Call 最稳健、Long Straddle 长期亏损"的结论。
+
+2. **波动率偏度分析**: 获取 50ETF 期权某月合约的全部 OTM Call/Put 报价,绘制隐含波动率曲线。重点观察:**和 S&P 500 同期曲线相比,A 股左偏是否更严重?**
+
+3. **事件驱动策略**: 选定一个具体事件(如 2024 年 9 月美联储议息会议、双 11 财报季),在事件前 5 天买入 ATM Straddle,事件日平仓。统计 5 次事件的平均收益和最大亏损。
+
+4. **商品期权季节性**: 选取豆粕、白糖两个品种,分析 5 年内每个月的平均波动率,识别"季节性高 IV 期"。在每年季节性高 IV 月份实施卖出跨式,统计胜率与年化收益。
+
+5. **大宗交易 + Long Call 套保**: 模拟大宗交易折价 2% 买入 100 万份 50ETF 的场景,计算"6 个月 OTM 5% Call"作为对冲工具的总成本、上行最大收益、下行最大损失、盈亏平衡点。
+
+## 延伸阅读
+
+- Hull, J.C. (2018). *Options, Futures, and Other Derivatives*. Chapter 11-13 全面介绍波动率与组合策略。
+- 上海证券交易所 / 中国金融期货交易所规则文本(每个交易所官网下载)。 50ETF 期权 / 沪深 300 股指期权合约规格的权威来源。
+- 上交所股票期权市场月度报告(http://www.sse.com.cn/market/options/monthlyReport/)。包含市场整体数据与策略效果统计。
+- Liu, J., Pan, J. & Wang, T. (2022). "Implied Volatility in Chinese ETF Options Market." 中国 A 股期权市场 IV 偏度的实证分析。
+- 广发证券 / 国泰君安 / 中信证券 期权策略月度报告。提供 A 股期权策略的最新数据和实证总结。
+- Bhardwaj, R., Gorton, G. & Roukny, M. (2016). "Informational Inefficiency of the Chinese Options Market." 中国期权市场效率实证。
+
+## 本章要点
+
+- A 股期权市场已经形成**"50ETF/300ETF/500ETF + 商品 + 股指"** 完整产品体系,日均成交 600 万张。
+- **8 大策略在 A 股的适配性不同**:Covered Call、Iron Condor 最优,Long Straddle/Strangle 不适合长期持有。
+- **A 股期权特殊性**: 涨跌停、熔断、T+0、散户主导、偏度极端,这些都影响策略选择。
+- **VRP 长期为正**(IV 比 HV 高 3-5%),意味着**卖方策略长期占优**——这是 A 股策略选择的核心起点。
+- **行业差异显著**:ETF 期权(50ETF 最成熟)、股指期权(大乘数)、商品期权(高 IV)各有特色。
+- **风控是核心**: 当 IV 偏低时做"卖出",当 IV 偏高时做"对冲",不要逆周期。
+- **量化研究方向**: 波动率曲面统计套利、跨品种 IV 套利、事件驱动的波动率扩张策略是 A 股期权量化研究的主流方向。
+
+---
+
+**模块十一·期权与衍生品定价进阶 全部 10 章已完毕**。读者应在此基础上:
+- 选择最适合自己的策略组合(建议从 Covered Call + Iron Condor 起步)
+- 实证自家券商能获取的期权品种与流动性
+- 严格管理 Gamma/Vega 暴露,不要裸卖裸买跨式
+- 期权不是高杠杆的"彩票",而是精细化的风险管理工具
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.2-vol-surface.md
+==============================================================================
+**题目 1**:波动率偏斜(Volatility Skew)的根本原因之一?
+
+<div class="quiz-option">
+A. 投资者偏好看涨期权
+</div>
+<div class="quiz-option">
+B. BS 模型过高估计 OTM Call 价格
+</div>
+<div class="quiz-option">
+C. 杠杆效应 + 崩盘恐惧溢价 + 投资者大量买入 OTM Put 造成左尾 IV 升高
+</div>
+<div class="quiz-option">
+D. 随机过程的几何特征
+</div>
+
+**题目 2**:关于 VIX 期限结构,以下哪个说法错误?
+
+<div class="quiz-option">
+A. Contango 表示远期 IV > 近期 IV
+</div>
+<div class="quiz-option">
+B. Backwardation 表示近期 IV > 远期 IV
+</div>
+<div class="quiz-option">
+C. Backwardation 必然意味着危机正在进行
+</div>
+<div class="quiz-option">
+D. VIX 期货期限结构反映了市场对未来波动的预期
+</div>
+
+**题目 3**:SVI 参数化的核心约束之一是?
+
+<div class="quiz-option">
+A. 必须满足维纳过程
+</div>
+<div class="quiz-option">
+B. 必须不存在 butterfly / calendar arbitrage
+</div>
+<div class="quiz-option">
+C. 参数必须小于 5
+</div>
+<div class="quiz-option">
+D. 与 SABR 一致
+</div>
+
+
+## 实战练习
+
+1. **IV 曲线绘制**: 获取 50ETF 某月合约的全部 OTM Put/Call 报价(用 akshare),反推 IV,绘制以 log-moneyness 为横轴、IV 为纵轴的曲线。观察是否呈现**典型的左偏形态**(SKEW < 0)。
+
+2. **SVI 校准实现**: 使用 `scipy.optimize` 对某天的 50ETF 30 天到期合约的全部 OTM 报价做 SVI 拟合(优化 5 个参数 $(a, b, \rho, m, \sigma)$)。绘制拟合曲线 vs 实际报价,以及无套利约束的"安全区"。
+
+3. **Calendar Spread 套利**: 编写代码检测同一行权价、不同到期日的期权之间是否存在**日历价差套利**(违反 $\sigma^2(K, T) \cdot T$ 单调递增性)。当找到套利机会时,绘制理论套利 PnL。
+
+4. **VIX 期限结构分析**: 下载 VIX/VXV(3 个月 VIX)/VVIX(VIX 自身的 IV)历史数据,绘制近 5 年的期限结构散点图,识别**Backwardation 与 Contango 的转换点**,结合 SPX 走势标记重要事件。
+
+## 延伸阅读
+
+- Gatheral, J. (2006). *The Volatility Surface*. Wiley. 波动率曲面参数化的经典教材。
+- Hagan, P. et al. (2002). "Managing Smile Risk." Willmott Magazine. SABR 模型的原始论文。
+- Cont, R. & Fonseca, J. (2002). "Dynamics of Implied Volatility Surfaces." Quantitative Finance. 关于曲面动态的经验研究。
+- Bergomi, L. (2016). *Smile Dynamics III*. 关于 volatility-of-volatility 风险的综述。
+- 上交所股票期权市场月度报告(http://www.sse.com.cn/market/options/monthlyReport/)。A 股市场 50ETF 期权曲面结构。
+- Guyon, J. & Roukny, M. (2018). "Implied Volatility Surface Simplicity." 关于曲面参数化复杂度的讨论。
+
+## 本章要点
+
+- **波动率曲面**由 行权价、到期日两个维度共同决定,IV 在每个 (K, T) 网格上都可能不同。
+- **波动率偏斜(Skew)** 在股票指数期权中通常是负的(左尾 IV > 右尾 IV),源于杠杆效应 + 崩盘恐惧溢价 + 保险需求。
+- **波动率期限结构**存在 Contango 与 Backwardation 两种形态,反映市场对未来波动的预期。
+- **无套利约束**包括:no calendar arbitrage(总方差单调递增)、no butterfly arbitrage(隐含概率密度非负)。
+- **SVI** 是 5 参数参数化方法,在校准速度和套利约束上表现优异;**SABR** 在利率/外汇期权更常用,Hagan 近似解析。
+- **波动率交易策略**包括 VIX 均值回归、做多波动率、做空波动率;但做空波动率在尾部事件中风险巨大。
+- **A 股 50ETF 曲面**具有较强的左偏特征(SKEW 通常 -3 ~ -8),与 S&P 500 类似但更极端。
+
+---
+
+下一章 11.3 将进入 **奇异期权与结构化产品**,讲解路径依赖期权、亚式期权、雪球等近年大热的产品结构与定价。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.3-exotic-options.md
+==============================================================================
+**题目 1**:雪球产品的本质是?
+
+<div class="quiz-option">
+A. 一个保本的高收益债券
+</div>
+<div class="quiz-option">
+B. 类似定期存款
+</div>
+<div class="quiz-option">
+C. 投资者卖出敲入/敲出期权的 OTC 结构,票息来自承担敲入风险
+</div>
+<div class="quiz-option">
+D. 看涨期权的简单包装
+</div>
+
+**题目 2**:亚式期权和普通期权最关键的差异是?
+
+<div class="quiz-option">
+A. 亚式期权只能用蒙特卡洛定价
+</div>
+<div class="quiz-option">
+B. 亚式期权用平均价代替到期价,降低了波动率,价格更便宜
+</div>
+<div class="quiz-option">
+C. 亚式期权行权方式不同
+</div>
+<div class="quiz-option">
+D. 亚式期权没有敲入/敲出
+</div>
+
+**题目 3**:关于障碍期权的描述,以下哪个错误?
+
+<div class="quiz-option">
+A. Knock-out 在触及障碍时失效
+</div>
+<div class="quiz-option">
+B. Pin Risk 是障碍附近 Greeks 的不连续行为
+</div>
+<div class="quiz-option">
+C. 障碍期权一定是欧式期权
+</div>
+<div class="quiz-option">
+D. Knock-in 在触及障碍时才生效
+</div>
+
+
+## 实战练习
+
+1. **雪球模拟 1000 路径**: 编写蒙特卡洛模拟,模拟 1000 条价格路径(S_0=100, 1 年期限, 敲出 105, 敲入 80),统计:
+   - 平均敲出时间(平均持有期)
+   - 敲入亏损分布
+   - 期望票息 vs 平均损失
+
+2. **亚式期权 vs 普通期权价差**: 在相同参数下,对 30 天到期的普通 Call 和亚式 Call 各做 100,000 路径蒙特卡洛定价,绘制它们在 S_0 ∈ [90, 110] 范围的价格对比。
+
+3. **雪球 + 50ETF 历史回测**: 用 50ETF 2020-2024 年的真实日线数据构造"假设持有雪球"组合,统计: 平均敲出时间、敲入亏损概率、最大单笔损失。
+
+4. **回望期权定价**: 用蒙特卡洛给一个 floating-strike 回望 Call 定价,对比 BS 公式的 ATM Call 价,理解"回望权"的隐含价值。
+
+## 延伸阅读
+
+- Haug, E.G. (2007). *Complete Guide to Option Pricing Formulas*. McGraw-Hill. 几乎所有奇异期权的解析/MC 定价公式大全。
+- Wilmott, P. (2006). *Paul Wilmott on Quantitative Finance*. 蒙特卡洛方法的工程化讨论。
+- Korn, R., Korn, E. & Krois, E. (2010). *Monte Carlo Methods and Models in Finance*. 蒙特卡洛在金融的具体应用。
+- Carr, P., Madan, D. (1998). "Towards a Theory of Volatility Smiles." 奇异期权与隐含波动率曲面的关系。
+- 国泰君安证券《雪球产品结构与定价》(2024 年报告)。A 股市场最新结构化产品研究。
+- 中信证券《大雪球与凤凰产品对比》。不同结构化产品策略与风险对比。
+
+## 本章要点
+
+- **奇异期权**不是"奇技淫巧",而是大规模 OTC 市场的核心工具,也是结构化产品的基本积木。
+- **障碍期权**:依赖标的资产是否触及障碍水平,定价需要连续的"是否被敲出"判断;实际接近障碍时 Greeks 会发生跳变(Pin Risk)。
+- **亚式期权**:用平均价代替到期价,大幅降低成本(典型 30-40% 折扣),是商品期权和货币对冲的主流。
+- **回望期权**:让持有者以最优价行权,期权费昂贵,适用于"已经发生但还想抓住"的极端行情。
+- **雪球产品**:OTC 结构化产品,投资者卖出看跌期权和获得票息,承担标的大跌的敲入风险。看似高收益实则是"高风险换高收益"。
+- **蒙特卡洛方法**是奇异期权定价的"通用引擎"——只要写出 pay-off 函数,几乎都能 MC。但收敛速度 $O(1/\sqrt{N})$ 是瓶颈,**方差缩减是关键**(见 11.5 章)。
+
+---
+
+下一章 11.4 将从"奇异"回到"标准",讲解 **二叉树与有限差分法**——期权定价的两大数值方法,适用于美式期权和精确欧式定价。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.4-tree-fdm.md
+==============================================================================
+**题目 1**:CRR 二叉树的核心是?
+
+<div class="quiz-option">
+A. 三叉树替代
+</div>
+<div class="quiz-option">
+B. 离散化的二叉树结构,节点价格通过 $u$/$d$ 因子上下调整,概率 $p$ 通过风险中性定价
+</div>
+<div class="quiz-option">
+C. 直接对 BS 公式离散
+</div>
+<div class="quiz-option">
+D. 自适应网格
+</div>
+
+**题目 2**:Crank-Nicolson FDM 的优势是?
+
+<div class="quiz-option">
+A. 实现最简单
+</div>
+<div class="quiz-option">
+B. 无条件稳定 + 二阶时间精度
+</div>
+<div class="quiz-option">
+C. 总是优于 BS 解析解
+</div>
+<div class="quiz-option">
+D. 不需要矩阵求解
+</div>
+
+**题目 3**:美式期权最适合用?
+
+<div class="quiz-option">
+A. 蒙特卡洛 LS 方法
+</div>
+<div class="quiz-option">
+B. 二叉树(天然支持提前行权)
+</div>
+<div class="quiz-option">
+C. Crank-Nicolson FDM
+</div>
+<div class="quiz-option">
+D. 解析公式 + 调整
+</div>
+
+
+## 实战练习
+
+1. **CRR 收敛性分析**: 对 1 年期 ATM Call ($S_0=K=100$, $r=3\%$, $\sigma=20\%$), 分别用 $n=10, 50, 100, 500, 1000$ 计算价格,绘制"$n$ vs 价格"图,观察**振荡收敛**现象。
+
+2. **三方法对比**: 编写函数 `crr_call`, `implicit_fdm_call`, `crank_nicolson_call`,对比欧式 Call 的价格(对比 BS 解析解)和计算耗时(直接测量 wall-clock 时间)。理解**精度 vs 速度**的权衡。
+
+3. **美式 Put 提前行权边界**: 编写代码计算 6 个月到期的美式看跌期权的**最优行权边界曲线**(在 (S, t) 平面上),绘制行权边界与标的价/到期时间的关系。
+
+4. **数值稳定性测试**: 隐式 FDM 在粗网格(50×50)下应给出稳定答案,但显式 FDM 在同样网格下**可能发散**。用代码验证:**找到显式 FDM 不稳定的参数范围**,理解稳定性条件。
+
+5. **三叉树 vs 二叉树**: 实现基本的三叉树模型,与 CRR 二叉树对比: 当步数较多时,差异是否显著? 哪些期权类型下三叉树明显更准?
+
+## 延伸阅读
+
+- Hull, J.C. (2018). *Options, Futures, and Other Derivatives*. Chapter 21 详细介绍二叉树。
+- Glasserman, P. (2003). *Monte Carlo Methods in Financial Engineering*. Springer. 虽以蒙特卡洛为主,但第 5 章专门讲解 FDM 与树方法。
+- Wilmott, P., Howison, S. & Dewynne, J. (1995). *The Mathematics of Financial Derivatives*. Cambridge. FDM 的数学完整参考。
+- Brennan, M. & Schwartz, E. (1977). "The Valuation of American Put Options." Journal of Finance. 美式期权数值定价的奠基论文。
+- Hull, J. & White, A. (1990). "Valuing Derivative Securities Using the Explicit Finite-Difference Method." 显式 FDM 的经典论文。
+
+## 本章要点
+
+- **二叉树方法**: 离散化的二项过程,反向递推期权价值,**天然支持美式期权**。CRR 是最常用形式。
+- **显式 FDM**: 实现最简单,但有**严格的稳定性条件** $\Delta t \leq \frac{(\Delta S)^2}{\sigma^2 S_{\max}^2}$。
+- **隐式 FDM**: 需要逐时间步求解三对角矩阵,但**无条件稳定**。
+- **Crank-Nicolson**: 显式+隐式平均,精度 $O(\Delta t^2)$,无条件稳定,是**欧式高精度定价首选**。
+- **美式期权**最常用的数值方法是二叉树;FDM 处理美式需 PSOR 或 Brennan-Schwartz 算法。
+- **路径依赖期权**(亚式/障碍)用二叉树/FDM 都不方便,应使用蒙特卡洛(详见 11.5)。
+- **实务选择**: 美式 → 二叉树;欧式精确定价 → Crank-Nicolson FDM;路径依赖 → 蒙特卡洛。
+
+---
+
+下一章 11.5 将进入 **蒙特卡洛定价进阶**,讲解方差缩减、对偶变量、控制变量、Longstaff-Schwartz 等加速技巧。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.5-mc-pricing.md
+==============================================================================
+**题目 1**:蒙特卡洛方法的核心收敛速度为?
+
+<div class="quiz-option">
+A. $O(1/N)$
+</div>
+<div class="quiz-option">
+B. $O(1/\sqrt{N})$
+</div>
+<div class="quiz-option">
+C. $O(1/N^2)$
+</div>
+<div class="quiz-option">
+D. $O(e^{-N})$
+</div>
+
+**题目 2**:对偶变量法的本质是?
+
+<div class="quiz-option">
+A. 增加一倍路径
+</div>
+<div class="quiz-option">
+B. 利用 pay-off 关于 $S_T$ 的单调性,用配对路径 + 平均降低方差
+</div>
+<div class="quiz-option">
+C. 改变概率分布
+</div>
+<div class="quiz-option">
+D. 减去解析近似
+</div>
+
+**题目 3**:Longstaff-Schwartz 方法的核心思路是?
+
+<div class="quiz-option">
+A. 直接对历史数据回归
+</div>
+<div class="quiz-option">
+B. 增加大量路径
+</div>
+<div class="quiz-option">
+C. 从后向前反向递推,用回归函数逼近每一时间步的"持有价值",判断是否提前行权
+</div>
+<div class="quiz-option">
+D. 用 BS 近似代替
+</div>
+
+
+## 实战练习
+
+1. **对偶变量加速测试**: 编写 BS Call 的 MC 定价函数,比较标准 MC 与对偶变量法的收敛速度。绘制"$N$ vs 标准误差"图(用 5 个 $N$ 阶梯),观察对偶变量是否真的"减半"了误差。
+
+2. **几何 vs 算术亚式期权**: 用对偶变量 + 控制变量(以几何亚式作为控制变量)为算术亚式期权定价。验证:**控制变量将误差降低 5-20 倍**,对比不开控制变量的效果。
+
+3. **重要性采样 on 深度 OTM 期权**: 选 $K=120$(深度 OTM)的 30 天到期的 Call(标的价格 $S_0=100$)。分别用:
+   - 标准 MC (1M 路径)
+   - 重要性采样(漂移调整到 $K$) (200K 路径)
+   
+   对比两种方法的精度差异。
+
+4. **LSM 美式 Put 价格收敛**: 用 LSM 美式 Put,测试不同的基函数(常数、$S$、$S^2$、$S^3$、Laguerre 多项式)。绘制"基函数 vs 价格"图,理解**过拟合**与**精度提升**之间的取舍。
+
+5. **多资产篮子期权**: 实现 5 资产篮子期权的定价(相关系数矩阵 5×5),对比 FDM(无法实现)与 MC(可实现)。
+
+## 延伸阅读
+
+- Glasserman, P. (2003). *Monte Carlo Methods in Financial Engineering*. Springer. 蒙特卡洛在金融领域的权威教材。
+- Longstaff, F.A. & Schwartz, E.S. (2001). "Valuing American Options by Simulation: A Simple Least-Squares Approach." Review of Financial Studies. LSM 的原始论文。
+- Boyle, P. (1977). "Options: A Monte Carlo Approach." Journal of Financial Economics. 蒙特卡洛定价期权的最早论文。
+- Broadie, M. & Kaya, O. (2006). "Exact Simulation of Stochastic Volatility and Other Affine Jump Diffusion Models." 高效模拟随机波动率模型。
+- Jäckel, P. (2002). *Monte Carlo Methods in Finance*. Wiley. 偏工程视角,讲解随机数生成、方差缩减技巧。
+- 拟蒙特卡洛参考:Niederreiter, H. (1992). *Random Number Generation and Quasi-Monte Carlo Methods*. SIAM. 关于低差异序列的理论基础。
+
+## 本章要点
+
+- **蒙特卡洛** 是路径依赖期权、多资产期权定价的"通用引擎",$O(1/\sqrt{N})$ 收敛速度是其主要局限。
+- **对偶变量法** 利用 pay-off 关于 $S_T$ 的单调性,简单且常给出 2-4 倍加速。
+- **控制变量法** 利用相关解析解(几何亚式)降低方差,典型加速 5-20 倍,是最常用的方差缩减技术。
+- **重要性采样** 改概率分布让稀有事件高频发生,适合深度 OTM/ITM、障碍等尾部定价。
+- **拟蒙特卡洛** 用低差异序列(Sobol、Halton)替代随机数,可获得 5-30 倍加速,但对高维问题效果减弱。
+- **Longstaff-Schwartz 方法** 用反向递推 + 回归逼近"持有价值",用 MC 定价美式期权;但**倾向于低估**真实价值。
+- **多资产美式/百慕大期权** LSM 仍然适用,但基函数数量需指数增长,会遭遇维数灾难,实务中需谨慎处理。
+- **实务选择**: 欧式单资产 → BS(优先)或对偶变量 MC;欧式多资产 → Cholesky MC;美式单资产 → LSM;美式多资产 → LSM 改良或 PSOR。
+
+至此,模块十一的 **量化计算工具链** 已经完整。从 Black-Scholes 定价、Greeks,到波动率曲面、奇异期权,再到期权数值方法(二叉树、FDM、MC),读者应具备完整的**期权定价工程能力**。
+
+**11.6-11.10 章将进一步把上述工具应用于中国市场**:场内期权合约(11.6)、IV vs HV(11.7)、波动率策略(11.8)、套保实战(11.9)、中国 A 股期权 8 大策略(11.10)。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.6-options-market.md
+==============================================================================
+**题目 1**:50ETF 期权(510050)的合约乘数是多少?
+
+<div class="quiz-option">
+A. 1000 份
+</div>
+<div class="quiz-option">
+B. 10000 份
+</div>
+<div class="quiz-option">
+C. 100 份
+</div>
+<div class="quiz-option">
+D. 1 份
+</div>
+
+**题目 2**:以下哪一类账户持仓 ETF 期权不设上限?
+
+<div class="quiz-option">
+A. 个人投资者
+</div>
+<div class="quiz-option">
+B. 一般机构
+</div>
+<div class="quiz-option">
+C. 做市商
+</div>
+<div class="quiz-option">
+D. 套保目的机构
+</div>
+
+**题目 3**:A 股 ETF 期权与股指期权最关键的区别是什么?
+
+<div class="quiz-option">
+A. 涨跌停幅度不同
+</div>
+<div class="quiz-option">
+B. 合约乘数大小不同
+</div>
+<div class="quiz-option">
+C. 交割方式(实物 ETF vs 现金)不同,直接影响对冲手段
+</div>
+<div class="quiz-option">
+D. 行权价间隔不同
+</div>
+
+
+## 实战练习
+
+1. **合约规格查询**:访问上交所期权主页(http://www.sse.com.cn/option_prices/),列出 510050、510300、510500 三只 ETF 期权合约的当前主力合约,对比它们的最小变动价位、行权价间距、合约乘数。
+
+2. **报价观察**:使用 akshare / choice / iFinD 等数据源,获取 50ETF 期权某到期月份的全部合约报价,绘制隐含波动率曲线(以行权价为横轴),观察是否呈现"波动率偏斜"。
+
+3. **做市商模拟**:模拟一个 ATM 期权做市商,在收到客户"卖出 5 张 Call"的订单后,用多少份 50ETF 现货做 delta 中性对冲?如果对冲完客户继续"卖出 5 张 Put", 对冲策略如何调整?
+
+## 延伸阅读
+
+- Hull, J.C. (2018). *Options, Futures, and Other Derivatives*. Chapter 1-3 介绍场内期权市场和交易制度。
+- 上海证券交易所期权交易规则(2023 年修订)。最权威的合约规格与制度说明,可从 sse.com.cn 下载。
+- 中金所股指期权合约规格。建议直接读交易所原始文件,避免第三方解读的过时信息。
+- CBOE Options Institute(http://www.cboe.com/education)。介绍 SPX/VIX 期权的入门教材。
+- 大商所/郑商所期权培训资料。商品期权入门必读,介绍农产品-能源-金属三大类的差异。
+
+## 本章要点
+
+- A 股场内期权已形成 **ETF + 商品 + 股指** 三足鼎立格局,合约乘数最小变动单位 0.0001 元(对应 1 元/张),核心品种为 50ETF、300ETF、500ETF、豆粕、白糖等。
+- 期权交易制度与股票有 **T+0、涨跌停、保证金、做市商** 四大显著差异,这些差异直接决定了策略的实施成本与风险管理方式。
+- 海外期权市场以 **CBOE SPX/个股/VIX、KOSPI 200、恒生指数期权** 为代表,流动性、对冲便利性、定价合理性各有特点,A 股期权市场仍处于快速成长期。
+- **做市商制度** 是期权市场流动性的关键,理解做市商的报价行为和库存管理是策略制定的基础。
+- **合约乘数 10000** 意味着每张期权名义金额约 2-3 万元(50ETF 现价),与股票投资额并非一个量级,需要认真评估风险承受能力。
+- 任何进入期权市场的交易者,**先吃透交易制度,再研究策略**,这是安全交易的前提。
+
+---
+
+接下来 11.7 章将介绍 **隐含波动率与历史波动率的差异**,这是期权交易的核心估值工具。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.7-iv-vs-hv.md
+==============================================================================
+**题目 1**:当 IV > HV 时,市场参与者倾向于?
+
+<div class="quiz-option">
+A. 大量买入期权,因为预期未来波动放大
+</div>
+<div class="quiz-option">
+B. 卖期权更有利,因为市场"付了过多"的预期波动
+</div>
+<div class="quiz-option">
+C. 与策略无关,主要看方向
+</div>
+<div class="quiz-option">
+D. 加杠杆买入,放大收益
+</div>
+
+**题目 2**:Yang-Zhang HV 估计方法相比简单标准差的优势在于?
+
+<div class="quiz-option">
+A. 计算更快
+</div>
+<div class="quiz-option">
+B. 只用 close 数据
+</div>
+<div class="quiz-option">
+C. 充分利用日内信息(HL + 隔夜跳空 + OC),估计效率更高
+</div>
+<div class="quiz-option">
+D. 适合加密货币
+</div>
+
+**题目 3**:50ETF 期权市场上,通常 30 天 ATM 期权的隐含波动率?
+
+<div class="quiz-option">
+A. 比 20 天历史波动率略高(2-5 个百分点),反映风险溢价
+</div>
+<div class="quiz-option">
+B. 与 HV 完全相等
+</div>
+<div class="quiz-option">
+C. 总是低于 HV
+</div>
+<div class="quiz-option">
+D. 没有相关性
+</div>
+
+
+## 实战练习
+
+1. **HV 五种对比**:下载 50ETF 2023 年的日 K 线(用 akshare:`ak.fund_etf_hist_em("510050")`),分别用 5 种方法计算 20 天 HV,观察它们的差异及其背后的原因。在波动大的时段(如 8 月底),哪种方法对日间跳空最敏感?
+
+2. **IV-HV 差回测**:取 50ETF 期权某月合约每日收盘价,反推每个交易日的 IV(假设 ATM),与同期 20 天 HV 比较,统计 IV-HV 差的分布。在差值 > 5% 时,持有"卖出跨式"组合 5 天后收益如何?
+
+3. **波动率锥绘制**:用 2020-2024 年 50ETF 日线数据,绘制 7/30/60/90/120/250 天窗口的 HV 锥图,用 5%/25%/50%/75%/95% 五条分位数带展现。标注当下 HV 在锥图中的位置,以及对应 IV 的位置。
+
+4. **VIX 历史分位**:下载 SPX 1990-2024 年日线,计算 20 天 HV,对比 VIX 收盘价的 5 年滚动分位数。观察 VIX 在 80+ 的历史时点(2008/10、2020/03、2022/01)。
+
+## 延伸阅读
+
+- Carr, P. & Wu, L. (2009). "Variance Risk Premiums." Review of Financial Studies. 关于 IV-HV 长期为正的最经典研究。
+- Gatheral, J. (2006). *The Volatility Surface*. Wiley. 第 1-2 章讲解 IV 提取和 HV 计算方法。
+- Cont, R. (2001). "Empirical Properties of Asset Returns: Stylized Facts and Statistical Issues." Quantitative Finance. 关于 HV 的统计学性质。
+- Brandt, M. & Diecidue, E. (2014). "Volatility Forecasting." Handbook of Volatility Models. 多种 HV 方法的对比。
+- 波动率锥实战可参见 tastytrade 团队的研究报告(https://www.tastytrade.com/research)。
+
+## 本章要点
+
+- **HV 反映过去,IV 反映预期**。两者永远存在差异,这个差异叫**波动率风险溢价**(VRP),长期为正。
+- **5 种 HV 计算方法**中,YZ (Yang-Zhang) 利用 OHLC 信息最充分,效率最高;EWMA 适合动态风险管理;简单标准差用于在线计算最方便。
+- **IV 通过 BS 反推得到**:从期权市场价格反解 σ,核心是牛顿迭代法 + Vega 数值。
+- **VIX 是市场对未来 30 天波动率的预期**,由一系列 OTM 期权价格加权得出,不是模型假设的产物,完全从市场提炼。
+- **波动率锥** 是策略制定的"地图":当前 IV 处于历史锥体的哪个分位数,直接决定了策略方向。
+- **IV-HV 差为正时倾向卖期权,为负时倾向买期权**,这是学术界和市场广泛证实的规律。
+- **波动率交易的核心是均值回归思维**:VRP 长期为正提供了统计优势,但极端尾部事件(如 VIX 突破 50)可能摧毁"看起来稳赚"的策略。
+
+---
+
+接下来 11.8 章将基于本章的波动率视角,介绍 **波动率交易策略**(跨式、宽跨式、蝶式、铁鹰式等)的实战构建。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.8-vol-trading.md
+==============================================================================
+**题目 1**:做空 ATM 跨式(Short Straddle)的最大理论收益?
+
+<div class="quiz-option">
+A. 理论无限
+</div>
+<div class="quiz-option">
+B. (K2-K1) × 10000
+</div>
+<div class="quiz-option">
+C. 2 × ATM 期权权利金 × 10000(总收入权利金)
+</div>
+<div class="quiz-option">
+D. 0(永远不赚钱)
+</div>
+
+**题目 2**:Iron Condor 相比 Short Strangle 增加了哪两腿?
+
+<div class="quiz-option">
+A. 在两侧各加一个更远 OTM 期权作"保护腿"
+</div>
+<div class="quiz-option">
+B. 在中间增加一个 ATM 期权
+</div>
+<div class="quiz-option">
+C. 增加跨期合约
+</div>
+<div class="quiz-option">
+D. 加期货多头
+</div>
+
+**题目 3**:长 Long Straddle 的特征?
+
+<div class="quiz-option">
+A. 正 Theta 负 Vega
+</div>
+<div class="quiz-option">
+B. 赌标的盘整
+</div>
+<div class="quiz-option">
+C. Δ中性, Γ>0(强烈正), ν>0(强烈正), Θ<0(每天衰减)
+</div>
+<div class="quiz-option">
+D. 最大亏损无限
+</div>
+
+
+## 实战练习
+
+1. **策略对比回测**:用 akshare 获取 50ETF 2024 年的日线数据,每月初构造下列 4 个策略,持有到月初或到期: (a) Long Straddle (b) Short Strangle (c) Iron Condor (d) Covered Call。统计年化收益、夏普、最大回撤。
+
+2. **GREEKS 动态监控**:构造一个 Iron Condor 持仓(S=2.800, 卖出 2.85C+2.75P, 买入 2.95C+2.65P)。每天收盘后计算组合的 Delta/Gamma/Vega/Theta,绘制 30 天的 GREEKS 时序图,观察到期前 7 天的 Gamma 急剧变化。
+
+3. **Vega 择时**:用 11.7 章计算的 IV-HV 差设计一个信号: 当 IV-HV > 5% 时卖出跨式, < 0% 时买入跨式。在 50ETF 期权 2022-2023 数据上回测,看纯多波动率(买跨式)是否长期亏损。
+
+4. **雪球 + 期权组合**:对比雪球产品的票息与 Iron Condor 的预期收益,在不同波动率环境下哪个更优?(用蒙特卡洛模拟 1000 条路径,统计均值与方差。)
+
+## 延伸阅读
+
+- Hull, J.C. (2018). *Options, Futures, and Other Derivatives*. Chapter 11 详细介绍各组合希腊字母与 PnL 归因。
+- Natenberg, S. (1994). *Option Volatility and Pricing*. 交易员视角的波动率策略大全。
+- Sinclair, E. (2010). *Volatility Trading*. Wiley. 系统讲解各类波动率交易策略。
+- tastytrade 公开研究(https://www.tastytrade.com/research): 实证统计 8 大策略胜率与期望收益。
+- 国泰君安/中信证券 50ETF 期权策略月度报告。覆盖国内市场最新数据与策略效果。
+
+## 本章要点
+
+- **波动率交易的两大阵营**: Long Vol(Gamma 阳, Vega 阳, Theta 阴) vs Short Vol(Gamma 阴, Vega 阴, Theta 阳)。
+- **8 大策略的演进**: 从单边 Long Call/Put → 价差(Spread)→ 中性(Straddle/Strangle)→ 锁定型(Butterfly/Iron Condor)。
+- **Delta 中性 ≠ 风险中性**: 还需要管理 Gamma、Vega、Theta 暴露。GREEKS 叠加是策略调整的核心。
+- **Vega 是波动率策略的"主战场"**: 每个策略的 Vega 暴露决定了它在 IV 上涨/下跌中的相对表现。
+- **A 股实证**: Long Straddle 长期亏损(因为 VRP), Short Strangle 在高 IV 时盈利, Iron Condor 与 Covered Call 是最适合长期持有的策略。
+- **职业交易员的核心工作**: 持续监控 Delta 中性 + 调整 Gamma 暴露 + 评估 IV 走势方向。
+
+---
+
+接下来 11.9 章将把策略思维应用于实际套保,讲解 **Delta/Gamma/Vega 三种套保在 A 股实战**。
+
+
+==============================================================================
+### FILE: guide/m11-derivatives\11.9-hedging-practice.md
+==============================================================================
+**题目 1**:Delta 中性的组合在标的价格大涨时会发生什么?
+
+<div class="quiz-option">
+A. 完全对冲,组合价值不变
+</div>
+<div class="quiz-option">
+B. 立即变成 delta 多头
+</div>
+<div class="quiz-option">
+C. 因为 Gamma > 0, Delta 自动变为正值,组合隐含方向多头收益
+</div>
+<div class="quiz-option">
+D. 立即爆仓
+</div>
+
+**题目 2**:备兑开仓(Covered Call)的下行风险与纯持有股票相比如何?
+
+<div class="quiz-option">
+A. 大很多,因为卖出 Put 加大损失
+</div>
+<div class="quiz-option">
+B. 完全一样(下行风险等价),但收入权利金
+</div>
+<div class="quiz-option">
+C. 小很多,因为卖掉 Put 就锁定了下行
+</div>
+<div class="quiz-option">
+D. 看运气
+</div>
+
+**题目 3**:做期权动态 Delta 套保成本最高的是?
+
+<div class="quiz-option">
+A. Theta 衰减
+</div>
+<div class="quiz-option">
+B. Vega 风险
+</div>
+<div class="quiz-option">
+C. 频繁调整的交易费 + Gamma 漂移时的跟踪误差
+</div>
+<div class="quiz-option">
+D. 时间成本
+</div>
+
+
+## 实战练习
+
+1. **静态 vs 动态对冲成本对比**: 用 50ETF 2024 年日线数据,选定一支 ATM Put 持仓 (虚拟),比较两种套保方案:
+   - 静态:只在开仓时调整一次 Delta
+   - 动态:每天收盘调整 Delta 到 0
+   统计:动态对冲的总交易费、最终 PnL、最大回撤。
+
+2. **大宗交易 + Long Call 套保**: 假设大宗交易折价 2% 买入 100 万份 50ETF, 同时买入 100 张 6 个月 OTM 5% Call (权利金约 0.15 元/份)。
+   - 计算最大下行损失
+   - 计算盈亏平衡点
+   - 模拟 6 个月后 50ETF 在不同价位的最终损益
+
+3. **现货 + 卖出 OTM Put 的备兑策略**: 每月初持有 100 万份 50ETF,卖出当月 OTM 3% 的 Put,在 2024 年回测,统计年化收益与最大回撤。
+
+4. **Gamma Scalping 实操**: 仿真 "Long ATM Straddle + 每日动态 Delta 中性对冲" 策略,代码实现完整,模拟 30 天,统计收益构成(Gamma 收益、Theta 损失、交易成本)。
+
+## 延伸阅读
+
+- Hull, J.C. (2018). *Options, Futures, and Other Derivatives*. Chapter 16 讲动态对冲与 Black-Scholes 的实现。
+- Taleb, N.N. (1997). *Dynamic Hedging*. Wiley. 大佬级著作,讲解 Gamma 套保与对冲实务。
+- Bakshi, G., Cao, C. & Chen, Z. (1997). "Empirical Performance of Alternative Option Pricing Models." Journal of Finance.
+- Wilmott, P. (2006). *Paul Wilmott on Quantitative Finance*. 第 11-12 章是 Delta/Gamma 套保的数学完整参考。
+- 国泰君安证券"股指期权套保实务"研究报告(2022)。可直接用于 A 股实操。
+- 中国金融期货交易所(CFFEX)发布的"沪深 300 股指期权套保手册"。
+
+## 本章要点
+
+- **Delta 套保** 是基础,消除方向性风险但留下 Gamma/Vega 风险。
+- **Gamma 套保** 锁定"价格波动后的 Delta 变化",是动态对冲的核心。
+- **Vega 套保** 是高级形式,适合做市商、对冲基金等专业机构,普通投资者不必须。
+- **A 股 50ETF 上,套保通常不是"买保险",而是"动态调整 + 卖出期权收费"的综合方案**。
+- **静态 vs 动态套保**: 静态成本低但失效快,动态精度高但成本高;实务中按组合 Gamma 大小决定频率。
+- **大宗交易场景**:用长期 OTM Call 做"价格保险"是最优解,既控制下行,又保留上行空间。
+- **Gamma Scalping** 是 Long Vol 策略的常见辅助: 当波动率足够大, Gamma 收益 >> Theta 损失。
+- **真正的"完全对冲"等于完全放弃方向收益**——套保总是有代价,关键是代价是否合算。
+
+---
+
+接下来 11.10 章是本模块的 **综合应用**——把希腊字母、波动率曲面、奇异期权、套保、策略等所有知识应用到 **50ETF 期权 8 大经典策略在中国 A 股的实证**。
+
+
+==============================================================================
+### FILE: guide/m20-interview-prep\20.6-real-interviews.md
+==============================================================================
+## 小测验
+
+### 经典概率题：三门问题
+
+你先选 1 号门。主持人知道奖品位置，一定会在另外两扇门中打开一扇有羊的门，并且一定给你换门机会。应如何选择？
+
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-206').textContent='错误：主持人的动作携带信息，坚持获胜概率仍是 1/3。'">A. 坚持，因为剩余两扇门各有 1／2 概率</div>
+<div class="quiz-option" onclick="this.style.borderColor='#10b981';document.getElementById('quiz-206').textContent='正确：换门获胜等价于初选错误，概率为 2／3。'">B. 换门，因为初选错误概率为 2／3</div>
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-206').textContent='错误：只有在主持人规则不同或信息不完整时才需要重算。'">C. 无所谓，两者概率完全相同</div>
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-206').textContent='错误：增加门数不改变基本结论，主持人的知情排除会集中概率。'">D. 无法判断，必须至少有四扇门</div>
+<p id="quiz-206" class="result-text">点击选项查看解析。</p>
+
+<details>
+<summary>追问：如果主持人随机开门呢？</summary>
+
+若主持人不知道奖品位置并随机打开另一扇门，可能开出汽车。题目若条件在“主持人碰巧开出羊”之后，必须按新机制做贝叶斯更新，不能直接套用 $2/3$。关键不是门，而是主持人策略。
+
+</details>
+
+## 实战练习
+
+以下题目可以直接用于模拟面试。建议由同伴计时并按 `CLEAR` 协议追问。
+
+### 练习 1｜Citadel Securities 风格｜概率｜8 分钟
+
+不断抛公平硬币，直到出现 `HTH`。求期望抛掷次数。
+
+**追问**：改成 `HHH` 后为什么答案不同？请用状态机验证。
+
+**评分点**：重叠前后缀、递推方程、结果审计。
+
+### 练习 2｜Jane Street 风格｜博弈｜10 分钟
+
+两个信封分别有 $x$ 和 $2x$ 元。你随机拿到一个并看到 100 元，是否应该交换？
+
+**追问**：缺失的先验是什么？给定合理先验后如何计算？
+
+**评分点**：识别“无先验不能算后验”，避免错误期望论证。
+
+### 练习 3｜Two Sigma 风格｜统计｜15 分钟
+
+一个新因子在 2018—2024 年日频样本上 ICIR 为 1.3，但 2025 年完全失效。设计排查清单。
+
+**追问**：你只能再做三个实验，会选哪三个？
+
+**评分点**：数据泄漏、市场漂移、试验历史、成本和容量。
+
+### 练习 4｜Optiver／IMC 风格｜做市｜6 分钟
+
+你对某指数收盘点位的估值为 3200，标准差为 20。请报双边价。面试官连续买入你的 ask 两次后，你如何更新？
+
+**追问**：你的库存上限是多少？什么信息会让你停止报价？
+
+**评分点**：报价、数量、订单流更新和风控。
+
+### 练习 5｜幻方风格｜数学与 ML｜15 分钟
+
+特征数 10000、样本数 2000，如何构建可泛化模型？
+
+**追问**：正则化、特征筛选和降维如何选择？如何防止筛选泄漏？
+
+**评分点**：高维统计、嵌套验证、稳定性与计算复杂度。
+
+### 练习 6｜九坤／明汯风格｜A 股策略｜15 分钟
+
+构造一个隔夜反转因子，并说明下单时间、可得数据、交易成本和容量评估。
+
+**追问**：一字涨停、停牌、ST、次新股和 T+1 分别如何处理？
+
+**评分点**：时间轴、可交易池、冲击成本和组合约束。
+
+### 练习 7｜衍复风格｜数据研究｜12 分钟
+
+供应商把历史财报字段按最新更正值全部回填。你会如何发现并修复问题？
+
+**追问**：如何给自动化数据测试设计断言？
+
+**评分点**：版本化、公告时间、快照、回放和审计日志。
+
+### 练习 8｜行为面｜8 分钟
+
+讲一次你否定自己研究结论的经历。
+
+**追问**：你最初为何没发现问题？流程上做了什么永久改进？
+
+**评分点**：承担责任、证据具体、结果量化、不甩锅。
+
+### 模拟面试评分卡
+
+| 维度 | 1 分 | 3 分 | 5 分 |
+|---|---|---|---|
+| 澄清假设 | 直接作答 | 能补充主要条件 | 主动识别信息机制与目标函数 |
+| 数学推导 | 结论错误 | 主线正确但跳步 | 推导完整并检查边界 |
+| 代码实现 | 不可运行 | 正确但缺少测试 | 正确、可读、复杂度清楚 |
+| 市场映射 | 只讲公式 | 能联系一个场景 | 讨论订单流、成本、容量和风险 |
+| 沟通 | 长时间沉默 | 能解释主要步骤 | 结构清晰，能接住追问 |
+
+## 延伸阅读
+
+1. Jane Street，`Probability and Markets Guide`：公开的概率与市场思维材料。
+2. Timothy Crack，*Heard on the Street*：量化面试概率、统计与 Brain Teasers 题集。
+3. Mark Joshi，*Quant Job Interview Questions and Answers*：衍生品 Quant 经典准备材料。
+4. Larry Harris，*Trading and Exchanges*：理解做市、订单类型和市场微观结构。
+5. David Aronson，*Evidence-Based Technical Analysis*：数据挖掘偏差与统计验证。
+6. Glassdoor、LeetCode Discuss 与各高校就业复盘：只用于识别题型趋势，需交叉验证年份、岗位和地区。
+
+## 本章要点
+
+1. 公司题型标签用于确定训练优先级，不应被包装成官方逐字真题。
+2. `CLEAR` 协议能把澄清、建模、推导、审计和业务映射压缩成稳定回答结构。
+3. Citadel Securities、Jane Street、Optiver 和 IMC 更强调概率直觉、报价与实时更新。
+4. Two Sigma 类研究面重点考察数据泄漏、多重检验、实验设计和样本外可信度。
+5. 幻方、九坤、明汯、衍复等国内机构会深入追问 A 股交易机制、数据时间戳与策略落地。
+6. 每个结论都应接受解析推导、边界条件和可运行代码的三重检查。
+7. 模拟面试的目标不是背中答案，而是在规则变化和连续追问下保持正确推理。
+
+
+==============================================================================
+### FILE: guide/m20-interview-prep\20.7-cpp-quant.md
+==============================================================================
+## 小测验
+
+### 在 32 核机器上，合理的线程数是多少？
+
+假设你要为实时定价任务设置工作线程，但尚未获得任务的等待比例、NUMA 拓扑和延迟目标。最佳回答是什么？
+
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-207').textContent='错误：32 只是候选起点，OS 和关键服务也需要 CPU。'">A. 固定为 32，因为一核一线程永远最优</div>
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-207').textContent='错误：64 假设超线程对工作负载有线性收益。'">B. 固定为 64，因为每个核心都有两个硬件线程</div>
+<div class="quiz-option" onclick="this.style.borderColor='#10b981';document.getElementById('quiz-207').textContent='正确：CPU-bound 可从可用物理核心数附近起测；I／O-bound 可更高，最终看吞吐和尾延迟。'">C. 没有固定答案；先分类负载、预留核心，再基准测试</div>
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-207').textContent='错误：单线程可能最稳定，但没有证据表明它满足吞吐目标。'">D. 固定为 1，因为多线程一定引入抖动</div>
+<p id="quiz-207" class="result-text">点击选项查看解析。</p>
+
+<details>
+<summary>面试官继续追问时怎么答？</summary>
+
+CPU-bound、无共享状态的批计算，可从 28—30 个线程起测，为 OS、行情和风控预留核心；若做了 CPU affinity 或服务独占，可测试 32。I／O-bound 可以超过核心数。需要比较 16、24、28、30、32、48、64 等配置的吞吐、P99.9、上下文切换、cache miss 与功耗，而不是只看平均耗时。
+
+</details>
+
+## 实战练习
+
+以下题目可直接用于 60—90 分钟模拟面试。每题先澄清约束，再写不变量和复杂度，最后编码。
+
+| 题目 | 时限 | 主任务 | 必答追问 |
+|---|---:|---|---|
+| 并发计数器 | 10 分钟 | 用 mutex、atomic、thread-local reduction 实现 | `fetch_add(relaxed)` 何时足够 |
+| 死锁排查 | 12 分钟 | 为 OrderBook／RiskBook 画 wait-for graph 并修复 | `scoped_lock` 如何避免死锁 |
+| 内存序 | 15 分钟 | 证明 ready 发布模式的 happens-before | 多生产者时 bool 是否足够 |
+| False Sharing | 10 分钟 | 设计硬件计数器实验并解释 padding | `vector::reserve` 是否有帮助 |
+| Order Book | 35 分钟 | 新增、撤单、部分成交、best bid／ask | 如何按订单号平均 $O(1)$ 撤单 |
+| SPSC Queue | 25 分钟 | 用 $2^k$ 环形数组实现 push／pop | 非平凡析构类型如何处理 |
+| Memory Pool | 25 分钟 | 固定大小对象池与耗尽策略 | 跨线程释放如何影响 locality |
+| 线程安全 LRU | 30 分钟 | 实现 get／put／size 并压力测试 | linearization point 在哪里 |
+| Singleton | 10 分钟 | Meyers Singleton，再改依赖注入 | 为什么后者更容易测试 |
+| 性能分析 | 15 分钟 | 平均延迟下降但 P99.9 恶化时决策 | 上线前还需要哪些数据 |
+
+**Order Book 验收条件**：价格用整数 tick；相同价格按 sequence 成交；空档位及时删除；订单数量不得为负；快照回放结果确定。
+
+### C++ 知识图谱
+
+<div class="chart-container" style="padding:16px;">
+<details><summary>并发正确性</summary>thread／jthread → mutex／condition_variable → atomic → happens-before → lock-free 进展保证。</details>
+<details><summary>内存与生命周期</summary>RAII → smart pointer → 对齐 → allocator／memory pool → 迭代器与对象失效。</details>
+<details><summary>低延迟性能</summary>基准测量 → cache line／NUMA → branch prediction → SIMD → P99／P99.9 尾延迟。</details>
+<details><summary>交易数据结构</summary>Order Book → SPSC Queue → LRU Cache → Timer Wheel → 快照与确定性回放。</details>
+<p class="result-text">展开节点，并为每条路径准备“定义—代码—量化场景—测试”四层回答。</p>
+</div>
+
+### 典型题目自评清单
+
+| 检查项 | 未达标 | 达标标准 |
+|---|---|---|
+| 需求澄清 | 直接编码 | 说明线程模型、容量、阻塞与生命周期 |
+| 正确性 | 只跑 happy path | 写出不变量、边界和并发测试 |
+| 复杂度 | 只说大 O | 同时讨论分配、cache 和常数项 |
+| 内存模型 | 只背术语 | 能画 happens-before |
+| 性能 | 凭直觉优化 | 有基线、分位数和硬件计数器 |
+| 工程性 | 代码能编译即可 | RAII、明确 ownership、可停止、可测试 |
+
+## 延伸阅读
+
+1. Anthony Williams，*C++ Concurrency in Action*：线程、同步原语与 C++ 内存模型。
+2. Scott Meyers，*Effective Modern C++*：移动语义、智能指针和并发条款。
+3. Jeff Preshing，*Preshing on Programming*：acquire-release、无锁结构与内存序文章。
+4. Agner Fog，*Optimizing Software in C++*：处理器、cache、分支与 SIMD 优化手册。
+5. Martin Thompson，*Mechanical Sympathy*：硬件友好的低延迟系统设计。
+6. C++ Core Guidelines：资源管理、并发和性能的工程准则。
+
+## 本章要点
+
+1. C++ 量化面试考察的是资源、并发和延迟取舍，而不只是语法熟练度。
+2. mutex 是正确且常用的默认方案；无锁结构必须先明确 SPSC／MPSC／MPMC 和进展保证。
+3. acquire-release 的核心是建立 happens-before，memory order 选择必须服务于同步证明。
+4. cache line、false sharing、分支预测和 SIMD 都需要由测量驱动，不能凭口号优化。
+5. 32 核机器没有固定“正确线程数”，应按负载、预留核心、NUMA 和尾延迟实测。
+6. Order Book、SPSC Queue、Memory Pool、线程安全 LRU 和 Singleton 是可直接复用的高频练习。
+7. 性能验收必须同时看正确性、吞吐和 P99／P99.9 尾延迟。
+
+
+==============================================================================
+### FILE: guide/m20-interview-prep\20.8-resume-portfolio.md
+==============================================================================
+## 小测验
+
+### 一页纸研究应该控制在多少字以内？
+
+对于求职附件中的中文 One-Pager，最佳经验范围是什么？
+
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-208').textContent='错误：200 字通常不足以交代数据、验证、风险和复现。'">A. 不超过 200 字，越短越专业</div>
+<div class="quiz-option" onclick="this.style.borderColor='#10b981';document.getElementById('quiz-208').textContent='正确：通常控制在 600—1000 中文字，并配 1—2 张高信息密度图表。'">B. 约 600—1000 中文字，整体保持一页</div>
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-208').textContent='错误：3000 字更像短报告，失去 One-Pager 的筛选效率。'">C. 至少 3000 字，方法越完整越好</div>
+<div class="quiz-option" onclick="this.style.borderColor='#ef4444';document.getElementById('quiz-208').textContent='错误：没有绝对字数法规，但一页与高信息密度是明确约束。'">D. 完全没有限制，只看排版</div>
+<p id="quiz-208" class="result-text">点击选项查看解析。</p>
+
+<details>
+<summary>英文 One-Pager 如何调整？</summary>
+
+可控制在约 400—700 个英文词，仍以一页为硬约束。图表标题必须能独立表达结论，正文避免重复读图。
+
+</details>
+
+## 实战练习
+
+### 案例 1｜截面质量—预期差因子 One-Pager
+
+**标题**：质量—预期差组合在行业／市值中性化后仍保留稳定的 A 股截面预测能力
+
+**研究问题**：盈利质量与分析师预期修正能否提供互补信息，还是只是小市值和行业暴露的替代变量？
+
+**数据**：2016—2024 年 A 股日行情、财务公告和分析师一致预期；按公告时间构建 Point-in-Time 快照，排除上市不足 120 日、ST、长期停牌和交易日不可成交标的。2016—2022 年研究，2023—2024 年锁定留出。
+
+**方法**：质量因子由应计、现金流和盈利稳定性组成；预期差由一致预期的 20 日修正构成。截面 winsorize、标准化后做行业与对数市值中性化，以单因子、等权复合和线性正则模型为基准。
+
+**结果**：锁定样本 Rank IC 为 0.034，ICIR 为 0.71；月频十分组多空组合扣除双边 20 bps 后年化 Sharpe 为 1.31。相比纯质量基准，复合模型 Sharpe 增量为 0.27。
+
+**机制**：质量过滤降低“预期上修但兑现能力弱”的假阳性，预期差为慢频财务信息提供更新。收益主要来自中等流动性股票，而非最小市值组。
+
+**风险与容量**：财报季换手和拥挤度上升；当组合参与率超过 15% ADV 时冲击明显。2024 年下半年在高波动小盘反弹阶段相对弱。
+
+**下一步**：加入公告文本意外度；对预期修正做分析师覆盖偏差校正；用逐笔模拟重估财报季成交成本。
+
+**复现**：`commit 8f3c2d1`，`configs/holdout.yaml`，固定随机种子 42。
+
+**简历 STAR 描述**：
+
+> 针对 A 股财务因子暴露漂移问题，构建 Point-in-Time 质量—预期差模型并实施行业／市值中性化；在锁定的 2023—2024 年样本上实现 Rank IC 0.034，扣除双边 20 bps 后多空 Sharpe 1.31，容量测试识别出 15% ADV 后的显著冲击拐点。
+
+### 案例 2｜日内订单簿失衡 One-Pager
+
+**标题**：多档订单簿失衡仅在短时高撤单环境中具有可交易预测力
+
+**研究问题**：五档 Order Flow Imbalance 对未来 1—10 秒中间价变化的预测，是否在延迟和手续费后仍可交易？
+
+**数据**：三个月逐笔委托与成交，纳秒时间戳统一到交易所序列；剔除开收盘集合竞价、熔断和数据断档。按交易日 walk-forward，禁止随机切分相邻 tick。
+
+**方法**：构造一至五档 OFI、队列不平衡、撤单强度和短期波动；以中间价随机游走、单档失衡和逻辑回归为基准。标签为未来 1、3、5、10 秒 mid-price move，特征计算截止决策时刻。
+
+**结果**：五档模型在 3 秒标签上的样本外 AUC 为 0.557，高于单档基准 0.019；加入 80 微秒决策延迟和完整费用后，仅最高置信度 5% 信号具有正期望，日均机会约 140 次。
+
+**机制**：预测力集中于一侧撤单加速且对侧队列稳定的状态，单纯静态深度失衡容易被快速补单反转。
+
+**风险与容量**：排队位置估计误差是最大不确定性；新闻时段预测准确率上升但成交质量恶化。策略容量受最优档可成交量限制。
+
+**下一步**：建立 queue-reactive 成交模型；按消息类型做消融；评估跨场所领先—滞后。
+
+**复现**：公开仓库只含合成盘口 fixture，真实数据受许可证限制；核心测试覆盖消息回放确定性与时间泄漏。
+
+**简历 STAR 描述**：
+
+> 基于逐笔委托重建五档订单簿并研究 1—10 秒价格响应；通过按交易日 walk-forward 与 80 微秒延迟回放，将五档 OFI 在 3 秒标签上的样本外 AUC 提升至 0.557，并识别出仅最高置信度 5% 信号在完整费用后保持正期望。
+
+### 案例 3｜可复现研究平台 One-Pager
+
+**标题**：配置驱动与时间轴测试把因子复现周期从两天缩短到 40 分钟
+
+**问题**：团队 notebook 分散、数据版本不一致，同一因子由不同研究员复现时结果偏差可达 15%。
+
+**目标**：建立最小研究平台，使数据快照、特征、组合、成本与报告可由单一配置复现，并自动阻断时间泄漏。
+
+**方案**：将 notebook 中稳定逻辑迁入 `src/`；用 YAML 冻结实验；结果记录数据版本、Git commit 和环境 hash；CI 在脱敏 fixture 上运行时间轴、权重、成本和确定性测试。
+
+**结果**：选取 12 个历史因子回放，复现通过率从 58% 提升到 100%；标准实验从人工两天缩短到 40 分钟；时间轴断言在上线前发现 3 处公告日回填问题。
+
+**工程取舍**：没有自研调度系统，复用现有 CI 和对象存储；大数据计算仍走内部集群，本地 fixture 只验证语义正确性。
+
+**风险**：fixture 不能覆盖真实数据的全部长尾；配置过多可能造成实验矩阵失控，因此为正式结果设置冻结目录和 reviewer 门禁。
+
+**下一步**：增加数据 schema 演进检查、benchmark regression 和自动 One-Pager 产出。
+
+**复现**：公开 demo 包含合成数据、8 个核心测试和一条端到端 smoke workflow。
+
+**简历 STAR 描述**：
+
+> 针对量化研究结果不可复现问题，搭建配置驱动的因子研究流水线与 CI 时间轴测试；在 12 个历史因子上将复现通过率从 58% 提升至 100%，将标准实验周期由两天降至 40 分钟，并在上线前捕获 3 处财务公告回填泄漏。
+
+### Project Deep Dive 模拟题
+
+1. 你的标签为什么这样定义？改变持有期后结论如何变化？
+2. 哪个数据字段最容易泄漏？请打开对应测试。
+3. 你的基准为什么公平？是否对复杂模型给予更多调参预算？
+4. 报告的最好结果经历了多少次试验？如何控制多重检验？
+5. 成本模型中最脆弱的参数是什么？翻倍后策略是否仍成立？
+6. 哪个市场状态下失效最明显？这是否推翻原始机制？
+7. 如果只能保留一张图，你保留哪张，为什么？
+8. 哪一项结果由你个人完成，哪一项依赖团队？
+9. 代码规模扩大十倍后，哪个模块先需要重构？
+10. 如果明天上线，你拒绝上线的三个条件是什么？
+
+### 发布前 15 分钟检查
+
+| 项目 | 问题 | 通过标准 |
+|---|---|---|
+| 简历 | 每个数字能否定位 | 有结果文件、图表或 commit |
+| One-Pager | 首屏能否看懂结论 | 标题、结果、边界完整 |
+| GitHub | 新环境能否运行 | README 命令通过 |
+| 数据 | 是否有发布权限 | 公开、合成或脱敏且有说明 |
+| 代码 | 随机打开是否可讲 | 核心模块有不变量和测试 |
+| 展示 | 30 秒／3 分钟是否演练 | 不超时且结论一致 |
+| 诚信 | 是否暗示未发生的上线或业绩 | 措辞准确、边界明确 |
+
+## 延伸阅读
+
+1. William Zinsser，*On Writing Well*：压缩表达、删除空话和提高信息密度。
+2. Chip Heath、Dan Heath，*Made to Stick*：让结论具体、可信且容易记住。
+3. GitHub Docs，`About READMEs` 与 `GitHub Actions`：仓库入口和持续集成实践。
+4. Google Engineering Practices，`Code Review Developer Guide`：代码评审的可读性与变更边界。
+5. Marcos López de Prado，*Advances in Financial Machine Learning*：purged cross-validation、回测过拟合与研究验证。
+6. Howard Marks，投资备忘录写作：从事实、判断、风险到决策的结构化表达。
+
+## 本章要点
+
+1. 项目包装的本质是压缩证据，不是夸大收益或堆砌工具名。
+2. One-Pager 应在一页、约 600—1000 中文字内回答假设、数据、方法、结果、机制、风险与复现。
+3. 简历 bullet 要用 STAR 压缩问题、个人动作和量化结果，并明确样本外、成本与容量边界。
+4. GitHub 仓库至少应具备清晰 README、模块化源码、测试、冻结配置、结果报告和最小 CI。
+5. 学术、工程、策略和管理方向应选择不同证据，不要用同一份项目描述覆盖所有岗位。
+6. Deep Dive 应主动展示失败实验、代码测试和失效状态，以证明研究可信度。
+7. 所有公司、数据、业绩、上线状态和个人贡献必须真实、可定位、可解释。
+
+
+==============================================================================
+### FILE: guide/m01-overview\1.5-industry-2026.md
+==============================================================================
+### 📝 测验 1:中国量化中性策略在 2024 Q3 集体回撤的主要原因
+
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！雪球敲入 + DMA 杠杆强平 + 风格切换三因素叠加,本质是基差结构周期性波动与衍生品风险传染。'">A. 雪球敲入 + DMA 杠杆强平 + 市场风格快速切换</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。模型失效只是表象,真正的核心是对冲成本波动与衍生品市场流动性事件。'">B. 量化模型集体失效,因子预测能力骤降</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。监管因素是间接的,直接触发是雪球敲入带动的对冲盘连锁反应。'">C. 监管全面收紧导致策略无法继续运行</div>
+<p id="quizFeedback" style="margin-top:8px;font-weight:600;"></p>
+
+### 📝 测验 2:下面哪个数据最能反映"行业格局健康度"?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。AUM 是规模而非质量,反映的是行业扩张速度而非健康度。'">A. 量化私募总 AUM 增速</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！集中度与风险调整后收益组合最能反映行业健康度——既避免头部过度集中,也反映回报质量。'">B. 头部机构 HHI 集中度 + 风险调整后收益中位数</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。百亿机构数是规模指标,无法反映收益质量。'">C. 百亿量化私募数量</div>
+<p id="quizFeedback2" style="margin-top:8px;font-weight:600;"></p>
+
+### 📝 测验 3:为什么中国量化的"策略集中度"比海外更高?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。海外量化也存在技术领先,但不是集中度主因。'">A. 中国技术落后,只能做几种简单策略</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！A 股 T+1、涨跌停、融券受限、衍生品品种少等制度约束直接限制了策略空间,使 50%+ 集中于中性+指增。'">B. T+1 / 涨跌停 / 融券受限 / 衍生品品种稀缺</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。海外散户结构并非主因,且美股同样以机构为主。'">C. 中国散户主导导致策略同质化</div>
+<p id="quizFeedback3" style="margin-top:8px;font-weight:600;"></p>
+
+## 实战练习
+
+1. **机构深度调研**(可交付物:1,500 字报告 + 1 张策略对比表)
+   选择一家中国百亿量化私募(建议:幻方、九坤、明汯、衍复、灵均、诚奇、金锝),通过公开资料(基金业协会备案、朝阳永续、第三方访谈)梳理其:① 成立年份与 AUM 演变;② 策略分布(中性/指增/CTA/股票多头占比);③ 团队规模与背景;④ 2024-2025 年代表产品收益与回撤;⑤ 差异化护城河。
+
+2. **海外对标分析**(可交付物:AUM 对比表 + 1 张策略矩阵图)
+   选 1 家海外巨头(Citadel / Millennium / AQR / Two Sigma 中任选),与 1 家中国头部私募做"5 维度对比":AUM、策略集中度、Pod 团队架构(海外) vs 投研组架构(国内)、技术栈(Rust/Polars/DuckDB 使用深度)、监管沟通模式。
+
+3. **行业指标监测仪表盘**(可交付物:Python 数据脚本 + 月度更新模板)
+   用 `yfinance` 或 `akshare` 拉取以下数据,搭建个人量化行业指标看板:① 中证 500/1000 ETF 规模;② 股指期货基差(月度均值);③ 融券余额;④ 两融余额;⑤ 中证 A500 ETF 头部产品规模。每周/月更新一次,观察指标拐点。
+
+## 延伸阅读
+
+- 中基协(AMAC)季度私募备案月报:2024-2026 中国量化行业一手数据
+- 招商证券 / 国泰君安 / 中信证券 年度私募策略年报:头部机构业绩与策略分布
+- PivotalPath / HFM / eVestment 行业研究:全球对冲基金 AUM 与业绩指数
+- Citadel 2024 Investor Letter、Millennium 2024 Investor Letter、AQR 2024 因子研究合集
+- 《Asset Management at the Speed of Light》—— Larry Tabb,行业基础设施演进
+- [2025-2026 中国量化行业复盘与展望](http://www.100wjjw.com/knowledgeinfo/2545.html):开源研报网
+
+## 本章要点
+
+- 全球量化 2024-2026 头部格局由美系 Citadel / Millennium / Bridgewater / AQR / Two Sigma 主导,AUM 在 100-630 亿美元区间
+- 中国量化私募总规模从 2020 年的 800 亿元飙升至 2026 年初的 1.8 万亿元,百亿机构突破 60 家,但 2024 Q3 中性策略集体回撤暴露出基差波动与衍生品风险传染的脆弱性
+- 海外与国内量化在 AUM、策略集中度、监管、衍生品可获得性上差异显著,**理解"中国特色制度约束"比照搬海外因子库更重要**
+- A 股量化成交量占比 25-30%,显著低于美股 60-70%,行业仍在扩张期,**真正的内卷集中在头部 5 家之间**,差异化策略仍有空间
+- 2025 年中证 A500 ETF 一年扩张至 2,000 亿规模,但与中证 1000/2000 指增形成"宽基梯队",**分散化配置仍有意义**
+- 因子半衰期在中国普遍比海外短(高频量价因子不到 3 个月),**拥挤度监控必须前置到策略配置项**
+- 衡量行业健康度的核心指标是 **HHI 集中度 + 风险调整后收益中位数**,而非单纯 AUM 增速或机构数量
+
+
+==============================================================================
+### FILE: guide/m01-overview\1.6-career-map.md
+==============================================================================
+### 📝 测验 1:Quant Researcher 与 Quant Developer 的核心差异?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。两者都需要写代码,只是数量和侧重点不同。'">A. Researcher 不写代码,Developer 不做研究</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！Researcher 重数学与金融,产出是 alpha 因子与策略报告;Developer 重工程与系统,产出是可上线的高性能代码。'">B. Researcher 重数学与金融,产出 alpha;Developer 重工程与系统,产出生产代码</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。两者都需要金融知识,只是应用场景不同。'">C. Researcher 只需要金融,Developer 只需要工程</div>
+<p id="quizFeedback" style="margin-top:8px;font-weight:600;"></p>
+
+### 📝 测验 2:2026 年量化招聘最显著的变化是?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。C++ 仍是重要技能,但不是 2026 年最显著变化。'">A. 全面转向 C++ 单一语言</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。远程办公有所增加但并非最显著变化。'">B. 招聘门槛大幅降低,接受更多转行者</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！AI Agent 工程师从 2024 年的 5% 跃升至 2026 年的 28%,起薪同比 +15-25%,面试转向现场实战。'">C. LLM Agent / Rust / AI 工程能力成为准入门票,面试转向现场实战</div>
+<p id="quizFeedback2" style="margin-top:8px;font-weight:600;"></p>
+
+### 📝 测验 3:作为新人,你应该优先选哪个岗位切入?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。PM 通常需要 5+ 年研究/交易经验,不适合新人。'">A. 直接应聘 Portfolio Manager</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！从 Researcher 或 Developer 切入,积累 3-5 年后再决定是否转 PM 是最稳健路径。'">B. 从 Quant Researcher 或 Quant Developer 切入,积累 3-5 年后再决定转 PM 或专精</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。ML/AI 工程师虽是热门岗位,但要求较高的工程基础,纯新人直接进入门槛偏高。'">C. 直接应聘 ML/AI Engineer</div>
+<p id="quizFeedback3" style="margin-top:8px;font-weight:600;"></p>
+
+## 实战练习
+
+1. **个人能力雷达自评**(可交付物:1 张个人雷达图 + 1,000 字差距分析)
+   根据本章节的 5 维度模型,为自己当前的能力评分(1-10)。对照目标岗位的雷达图,找出 **3 个最大差距**,制定 6-12 个月的提升计划。可用本节的代码模板生成可视化雷达图。
+
+2. **JD 拆解实战**(可交付物:1 张 JD 拆解表)
+   选 3 家头部量化私募(建议:幻方、九坤、衍复、Citadel、Jane Street 中任选),抓取其最新 JD,按以下维度拆解:① 必备技能 vs 加分技能;② 数学/编程/金融/沟通/工程化 5 维度各占多少比例;③ 显性的学历 / 工作年限要求;④ 隐性的能力倾向(如"aggressive""collaborative""fast-paced")。总结"3 家机构的共同要求"与"差异化要求"。
+
+3. **职业路径模拟**(可交付物:1 张 5 年规划甘特图)
+   选一个目标岗位,设计 5 年发展路径:第 1 年学什么、第 2-3 年做什么项目、第 3-5 年如何选择跳槽/晋升。每半年设一个可验证的里程碑(如"完成 3 个 IC > 0.03 的因子"或"独立维护 1 个生产策略")。建议用 Notion / Obsidian 模板记录。
+
+## 延伸阅读
+
+- 《Heard on the Street》—— Timothy Falcon Crack,定量面试圣经(Math 部分)
+- 《A Practical Guide to Quantitative Finance Interviews》—— Xinfeng Zhou,中文面试指南
+- 《Advances in Financial Machine Learning》—— Lopez de Prado,第 1-3 章研究员视角
+- WorldQuant BRAIN 平台(https://platform.worldquantbrain.com):免费发布 alpha 因子获取实战经验
+- Lean / Qlib / Nautilus Trader GitHub:阅读头部开源框架的贡献者画像
+- [Levels.fyi](https://www.levels.fyi) 与 Glassdoor:海外量化薪资数据
+- [QuantStart](https://www.quantstart.com):研究员/工程师转型文章合集
+- [2025-2026 中国量化人才市场报告](https://www.fxbaogao.com/detail/5346204)
+
+## 本章要点
+
+- 量化机构由 7 大岗位组成:Researcher / Developer / Trader / PM / Data Engineer / Risk / ML Engineer,每个岗位在 5 维度模型上有不同侧重
+- **Quant Researcher 重数学与金融**,**Quant Developer 重工程与系统**,**PM 重金融与沟通**,**ML/AI Engineer 重数学与编程**
+- 2025-2026 招聘市场出现三大变化:AI Agent 工程师需求激增、AI 工程师起薪 +15-25%、面试转向"2 小时 OOS 数据 + LLM API 全流程实战"
+- 职业路径有 4 条主线:研究员路线(技术深度)、开发路线(工程深度)、交易路线(执行专精)、跨职能 PM 路线,**新人从 Researcher/Developer 切入是稳健路径**
+- 头部机构对学历的容忍度在抬升,**关键能力是"能否端到端完成一个因子从研究到上线"**,而非单纯学历背景
+- 衡量岗位价值不看"薪资最高",而看"成长空间 + mentor 质量 + 接触核心策略的机会"
+- 2026 年**LLM Agent、Rust、Polars/DuckDB**等技能正从"加分项"变成"准入门票"
+
+
+==============================================================================
+### FILE: guide/m01-overview\1.7-learning-roadmap.md
+==============================================================================
+### 📝 测验 1:12 个月内能否成为合格的 Quant Researcher?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。12 个月可以从入门到初级研究员,但合格通常需要 2-3 年专精。'">A. 一定能,只要每周学 40 小时</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！12 个月可以做到初级研究员水平(能独立完成因子研究),但合格(能产出 IC > 0.03 的因子)通常需要 18-24 个月、累计 1,500+ 小时。'">B. 可以做到初级水平,但合格通常需要 18-24 个月与 1,500+ 累计小时</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。12 个月虽然不能到资深,但完全可以达到初级研究员水平。'">C. 不可能,至少需要 5 年</div>
+<p id="quizFeedback" style="margin-top:8px;font-weight:600;"></p>
+
+### 📝 测验 2:5 大误区中,"杀伤力最大但最易被忽略"的是?
+
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！数据泄漏往往在不知不觉中发生(用了未来函数、未做时序隔离),一旦发生整个回测失效,且非常难检测。'">A. 数据泄漏(杀伤力 9.5,检测难度 3.0)</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。过度拟合虽然杀伤力大,但检测相对容易(样本外测试可发现)。'">B. 过度拟合</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。忽视交易成本可见且可量化,不属于最易忽略的范畴。'">C. 忽视交易成本</div>
+<p id="quizFeedback2" style="margin-top:8px;font-weight:600;"></p>
+
+### 📝 测验 3:回撤期最危险的决策是?
+
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。坚持系统是正确的,但前提是策略本身没有失效。'">A. 严格按系统执行,不情绪化决策</div>
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.textContent='✅ 正确！回撤期最容易犯的错是加仓摊薄成本,这违反凯利原则且放大风险敞口。'">B. 加仓摊薄成本,期待均值回归</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。及时归因复盘是正确做法,不是最危险决策。'">C. 立即停止策略,不做归因</div>
+<p id="quizFeedback3" style="margin-top:8px;font-weight:600;"></p>
+
+## 实战练习
+
+1. **个人 12 个月学习计划**(可交付物:1 张甘特图 + 1,500 字计划书)
+   根据本章的 4 阶段路线图,结合自身情况(在职/脱产、每周可用时长、前置基础),制定一份详细的 12 个月学习计划。每阶段明确:① 周学时;② 核心内容;③ 里程碑产出;④ 评估标准。建议用 Notion / Obsidian 模板持续追踪。
+
+2. **GitHub 项目包装实战**(可交付物:1 个高质量 GitHub 仓库)
+   选 1 个你最感兴趣的项目(因子研究 / 回测引擎 / 数据管道 / LLM Agent 集成),按以下标准打磨:① README 包含项目背景、架构图、快速上手;② 代码有完整注释和单元测试;③ 至少 3 个 demo notebook;④ 提交记录规范。**目标**:Stars > 20,被至少 2 个行业大 V 推荐。
+
+3. **回撤期心理建设日记**(可交付物:连续 3 个月每月 1 篇的反思)
+   在模拟盘或实盘中,刻意记录每月最大回撤时的情绪与决策。每月底写一篇 500-1,000 字反思:① 本月最大回撤是多少?② 我的决策是否符合预设规则?③ 哪些"非理性决策"需要修正?④ 下月如何改进?
+
+4. **30 资源学习清单实战**(可交付物:1 张资源学习进度表)
+   从 TOP 30 资源清单中,选 10 个本季度要学习的资源,明确:① 阅读/学习顺序;② 每项预计时长;③ 学完的产出(笔记/代码/分享)。建议加入 1-2 个读书小组或学习社群,互相监督。
+
+## 延伸阅读
+
+- 《Advances in Financial Machine Learning》第 11-16 章—— Lopez de Prado,关于回测过度拟合与多重检验校正的经典
+- 《Algorithmic and High-Frequency Trading》—— Cartea, Jaimungal, Penalva,执行与微观结构
+- 《Expected Returns》—— Antti Ilmanen,跨资产收益来源的深度剖析
+- 《The Deflated Sharpe Ratio》—— Bailey & Lopez de Prado (2014),量化研究的统计基础
+- 《Your Money or Your Life》—— Vicki Robin,虽非量化书但关于资金管理的思维
+- WorldQuant BRAIN 平台(https://platform.worldquantbrain.com):实战因子开发与同行学习
+- GitHub `awesome-quant` 仓库:开源资源聚合
+- Notion / Obsidian 学习模板:研究日志与项目追踪
+
+## 本章要点
+
+- **0 基础到求职** 的 12 个月路径分 4 阶段:筑基期(0-3 月)、策略开发期(3-6 月)、工程化与 AI 期(6-9 月)、求职准备期(9-12 月)
+- **每个阶段必须有可交付物**(GitHub 代码、研究报告、回测引擎),没有产出的学习等于没学
+- **TOP 30 学习资源** 涵盖教材、课程、开源、论文、数据、社区 6 类,根据阶段选择合适难度
+- 5 大常见误区:过度拟合、幸存者偏差、忽视交易成本、策略拥挤、数据泄漏,每个都有明确的检测与防御手段
+- **数据泄漏** 是杀伤力最大但最难检测的陷阱,必须从第 1 天就建立时序隔离的训练/测试集习惯
+- **回撤期心理建设** 的 4 道防线:预设熔断、定期归因、资金节奏、同伴支持
+- 学习期望要现实:**12 个月可达初级研究员**,合格通常需 18-24 个月与 1,500+ 累计小时
+- 入门 90% 的新手应聚焦中低频策略(持仓 3-15 天),**HFT 与深度学习应在 2-3 年后再考虑**
+
+
+==============================================================================
+### FILE: guide/m04-backtest/4.4-pitfalls.md
+==============================================================================
+## 小测验
+
+在回测中使用当前标普500成分股做历史分析，主要引入什么偏差？
+
+<div class="quiz-option" onclick="this.style.background='#065f46';this.style.borderColor='#10b981';this.nextElementSibling.nextElementSibling.textContent='✅ 正确！幸存者偏差。'">A. 幸存者偏差</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.textContent='❌ 错误。正确答案是幸存者偏差。'">B. 前视偏差</div>
+<div class="quiz-option" onclick="this.style.background='#7f1d1d';this.style.borderColor='#ef4444';this.nextElementSibling.previousElementSibling.textContent='❌ 错误。正确答案是幸存者偏差。'">C. 数据挖掘偏差</div>
+<p id="quizFeedback" style="margin-top:8px;font-weight:600;"></p>
+
+### 更多自测题
+

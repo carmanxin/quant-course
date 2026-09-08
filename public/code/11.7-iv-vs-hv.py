@@ -67,7 +67,7 @@ def synth_ohlc(close_price, vol_daily=0.014):
     """根据 close-price 模拟日内 OHLC"""
     n = len(close_price)
     daily_range = np.abs(np.random.randn(n)) * vol_daily * close_price
-    close_prev = np.concatenate([[close_price[0]], close_price[:-1]])
+    close_prev = np.concatenate([[close_price.iloc[0]], close_price.iloc[:-1].values])
     open_ = close_prev + np.random.randn(n) * vol_daily * close_price * 0.3
     high = np.maximum(open_, close_price) + np.abs(np.random.randn(n)) * daily_range * 0.5
     low = np.minimum(open_, close_price) - np.abs(np.random.randn(n)) * daily_range * 0.5

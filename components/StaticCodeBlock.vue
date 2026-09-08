@@ -13,9 +13,17 @@
       </div>
     </div>
 
-    <div class="scb-code">
-      <slot />
-    </div>
+    <details class="scb-code-wrap" :open="codeOpen" @toggle="onCodeToggle">
+      <summary class="scb-code-summary">
+        <span class="scb-code-icon">📄</span>
+        <span class="scb-code-title">此处有展示代码</span>
+        <span class="scb-code-meta">{{ lineCount }} 行 · {{ sizeHint }}</span>
+        <span class="scb-code-toggle">{{ codeOpen ? '收起 ▲' : '展开 ▼' }}</span>
+      </summary>
+      <div class="scb-code">
+        <slot />
+      </div>
+    </details>
 
     <details class="scb-out" :open="defaultOpen" @toggle="onToggle">
       <summary class="scb-out-summary">
@@ -35,6 +43,7 @@
               loading="lazy"
             />
           </div>
+          <div v-if="output.note" class="scb-out-note">{{ noteText }}</div>
           <div v-if="output.error" class="scb-out-error">⚠ {{ output.error }}</div>
         </template>
         <div v-else class="scb-out-empty">⚠ 暂无运行结果</div>
@@ -50,6 +59,7 @@ interface Output {
   text?: string
   svgs?: string[]
   error?: string
+  note?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -61,11 +71,13 @@ const props = withDefaults(defineProps<{
 }>(), {
   codeB64: '',
   lang: 'python',
+  // 代码区与运行结果区都默认折叠，读者按需展开
   defaultOpen: false,
   outputB64: '',
 })
 
 const isOpen = ref(false)
+const codeOpen = ref(false)
 const copied = ref(false)
 const loading = ref(false)
 
@@ -91,6 +103,72 @@ const decodedCode = computed(() => {
   } catch (e) {
     return ''
   }
+})
+
+// ---- "代码片段" note 的智能阐释 ----
+// 当输出是"本段为代码片段（仅展示函数/类定义）"时，根据代码内容生成目的说明，
+// 而不是生硬地只显示"仅为片段"。
+const FRAGMENT_NOTE = '本段为代码片段（仅展示函数/类定义，未提供运行入口，无需运行）'
+
+function extractDoc(lines: string[], i: number): string {
+  for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+    const t = lines[j].trim()
+    if (t === '') continue
+    if (t.startsWith('"""') || t.startsWith("'''")) {
+      let content = t.slice(3)
+      let k = j
+      while (!/(["']{3})$/.test(content) && k < Math.min(i + 10, lines.length - 1)) {
+        k++
+        content += '\n' + lines[k].trim()
+        if (/(["']{3})$/.test(lines[k].trim())) break
+      }
+      content = content.replace(/^(["']{3})\s*/, '').replace(/\s*(["']{3})$/, '').trim()
+      const firstLine = content.split('\n')[0].trim().split('。')[0]
+      if (/^(Parameters|Args|Arguments|Returns|Return|Note|Examples|Notes|Attributes|属性|参数|返回|示例|注意|说明|:param|:type|:return|:raises)/i.test(firstLine)) return ''
+      return firstLine.length > 60 ? firstLine.slice(0, 60) + '…' : firstLine
+    }
+    if (t.startsWith('#')) {
+      const c = t.replace(/^#+\s*/, '').trim()
+      return c.length > 60 ? c.slice(0, 60) + '…' : c
+    }
+    // def 跨行签名/函数体其他行：跳过继续找 docstring/注释
+  }
+  return ''
+}
+
+function describeFragment(code: string): string {
+  const lines = code.split('\n')
+  const items: { name: string; kind: string; desc: string }[] = []
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^(?:def|class)\s+([A-Za-z_]\w*)/)
+    if (m) {
+      const kind = lines[i].startsWith('class') ? '类' : '函数'
+      const desc = extractDoc(lines, i)
+      items.push({ name: m[1], kind, desc })
+    }
+  }
+  if (!items.length) return ''
+  const described = items.filter((x) => x.desc).map((x) => `${x.kind} \`${x.name}\`（${x.desc}）`)
+  const undescribed = items.filter((x) => !x.desc).map((x) => `${x.kind} \`${x.name}\``)
+  let explain = `本段代码定义了 ${items.length} 个函数/类：`
+  if (described.length) explain += described.join('、')
+  if (undescribed.length) {
+    if (described.length) explain += '，以及 ' + undescribed.join('、')
+    else explain += undescribed.join('、')
+  }
+  explain += '。该片段为教学展示（未包含独立运行的输入数据），可在实战练习中结合真实数据调用。'
+  return explain
+}
+
+// 展开结果区时展示的 note 文本：fragment note → 智能阐释；其余原样
+const noteText = computed(() => {
+  const note = output.value?.note
+  if (!note) return ''
+  if (note === FRAGMENT_NOTE) {
+    const explain = describeFragment(decodedCode.value)
+    if (explain) return '📘 ' + explain
+  }
+  return '📘 ' + note
 })
 
 const rawLines = computed(() => decodedCode.value.split('\n'))
@@ -152,6 +230,10 @@ function onToggle(e: Event) {
   if (t.open && !output.value && !inlineOutput.value && !loading.value) {
     loadOutput()
   }
+}
+
+function onCodeToggle(e: Event) {
+  codeOpen.value = (e.target as HTMLDetailsElement).open
 }
 
 async function loadOutput() {
@@ -246,6 +328,40 @@ async function copyCode() {
   color: var(--ft-brand, #00E5A0);
 }
 .scb-code { position: relative; }
+.scb-code-wrap {
+  border-bottom: 1px solid var(--vp-c-divider, #e2e8f0);
+}
+.scb-code-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  background: var(--vp-c-bg, white);
+  color: var(--vp-c-text-1, #1f2937);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background .15s;
+}
+.scb-code-summary:hover {
+  background: rgba(0, 229, 160, .05);
+}
+.scb-code-summary::-webkit-details-marker { display: none; }
+.scb-code-icon { font-size: 14px; }
+.scb-code-title { color: var(--ft-brand, #00E5A0); font-weight: 700; }
+.scb-code-meta {
+  font-size: 12px;
+  color: var(--vp-c-text-3, #94a3b8);
+  font-family: 'SF Mono', 'JetBrains Mono', Consolas, monospace;
+  margin-left: auto;
+}
+.scb-code-toggle {
+  font-size: 12px;
+  color: var(--vp-c-text-2, #5a6c8c);
+  white-space: nowrap;
+}
 .scb-code :deep(pre.shiki),
 .scb-code :deep(pre.vp-code-block) {
   margin: 0 !important;
@@ -321,9 +437,26 @@ async function copyCode() {
   font-family: 'SF Mono', 'JetBrains Mono', Consolas, monospace;
   white-space: pre-wrap;
 }
+.scb-out-note {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(56, 142, 230, 0.08);
+  border: 1px solid rgba(56, 142, 230, 0.3);
+  color: #2c5d8f;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
 :global(html.dark) .scb {
   background: var(--vp-c-bg-soft, #1a1a1a);
   border-color: var(--vp-c-divider, #2d3748);
+}
+:global(html.dark) .scb-code-summary {
+  background: var(--vp-c-bg, #0f1117);
+  color: #e7eaf6;
+}
+:global(html.dark) .scb-code-summary:hover {
+  background: rgba(0, 229, 160, .08);
 }
 :global(html.dark) .scb-btn {
   background: rgba(255,255,255,.06);

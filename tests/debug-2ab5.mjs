@@ -1,0 +1,11 @@
+import { readFileSync } from 'node:fs'
+const text = readFileSync('public/code/_auto/2ab5dad7.py', 'utf8')
+const codeBody = text.replace(/^#\s*@quantlab\/output:\s*[\w.\-]+\s*\n?/, '')
+console.log('--- codeBody ---')
+console.log(codeBody)
+const isPureDefinition = /^\s*(def |class |@|\s+# )/.test(codeBody) && !/^\s*(import |from )/m.test(codeBody)
+console.log('isPureDefinition:', isPureDefinition)
+const hasDefOrClass = /^\s*(def |class )/m.test(codeBody)
+console.log('hasDefOrClass:', hasDefOrClass)
+const needsScaffold = /\b(df|prices|signal|stock1|stock2)\b/.test(codeBody) && !/^\s*(df|prices|signal|stock1|stock2)\s*=/m.test(codeBody)
+console.log('needsScaffold:', needsScaffold)

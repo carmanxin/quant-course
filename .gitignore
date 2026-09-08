@@ -1,14 +1,27 @@
+# === 依赖 ===
 node_modules/
-.vitepress/dist/
+
+# === VitePress 构建产物与历史残留 ===
+# 说明：构建时会把旧 dist 重命名保留（安全删除策略），历史上累积了
+# dist / dist_old_* / dist.bak.* / _dist_old* /.temp.bak.* 等约 20 个目录，
+# 单个约 79MB。以下用通配前缀一次性覆盖，避免逐条列举遗漏。
+.vitepress/dist*/
+.vitepress/_dist*/
+.vitepress/.temp*/
+.vitepress/_.temp*/
+portable/dist*/
+portable/_dist*/
 .vitepress/cache/
-.vitepress/.temp/
-.vitepress/_dist_old/
-portable/dist/
+.vitepress/config.ts.timestamp-*.mjs
+
+# === 打包/离线产物（构建生成，本地留用，不进仓库）===
+QuantLab-离线单文件.html
+quantlab-dist.zip
+
+# === 运行时数据 ===
 public/pyodide/
 .superpowers/sdd/
-.workbuddy/automations/*/memory.md
+scripts/__pycache__/
 agents/__pycache__/
 *.pyc
-.vitepress/config.ts.timestamp-*.mjs
-.vitepress/.temp/
-.vitepress/cache/
+.workbuddy/automations/*/memory.md

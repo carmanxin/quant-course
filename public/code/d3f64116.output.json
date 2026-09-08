@@ -1,0 +1,4 @@
+{
+  "text": "--- strategies_2022_2024 (dict) ---\r\ndict n=8 keys=['Covered Call (备兑开仓)', 'Protective Put (保险策略)', 'Bull Call Spread (牛市价差)', 'Iron Condor (铁鹰式)', 'Long Straddle (跨式做多)', 'Long Strangle (宽跨式做多)', 'Bear Put Spread (熊市价差)', 'Long Butterfly (蝶式)']",
+  "svgs": []
+}

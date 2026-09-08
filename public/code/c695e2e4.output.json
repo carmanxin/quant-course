@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\ndune_query_example = '\\n    -- 每日活跃地址数\\n    SELECT\\n        date_trunc(\\'day\\', block_time) AS day,\\n        COUNT(DISTINCT \"from\") AS active_senders,\\n        COUNT(DISTINCT \"to\") AS active_receivers\\n    FROM ethereum.t\r\n--- fetch_eth_transactions(...) ---",
+  "svgs": []
+}

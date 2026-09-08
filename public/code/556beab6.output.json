@@ -1,0 +1,4 @@
+{
+  "text": "CUSUM策略偏移检测:\r\n\r\n正常期:\r\n  第7天: 检测到 UPWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第15天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第20天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第27天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第38天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n\r\n恶化期:\r\n  第5天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第10天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第16天: 检测到 UPWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第23天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第28天: 检测到 UPWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第34天: 检测到 UPWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第35天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)\r\n  第40天: 检测到 DOWNWARD_SHIFT (C+=0.0000, C-=0.0000)",
+  "svgs": []
+}

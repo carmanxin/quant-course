@@ -1,0 +1,4 @@
+{
+  "text": "threads= 1, speedup=1.00x\r\nthreads= 2, speedup=1.85x\r\nthreads= 4, speedup=3.23x\r\nthreads= 8, speedup=5.13x\r\nthreads=16, speedup=7.27x\r\nthreads=30, speedup=9.04x\r\nthreads=32, speedup=9.20x\r\nthreads=64, speedup=10.60x",
+  "svgs": []
+}

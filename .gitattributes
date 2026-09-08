@@ -1,0 +1,16 @@
+# 统一换行符处理：仓库内一律存 LF，检出时不自动转换
+# 避免 Windows 上 git add 时刷出上千行 "LF will be replaced by CRLF" 警告
+* text=auto eol=lf
+
+# 二进制资源不做任何换行转换
+*.svg  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.zip  binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary

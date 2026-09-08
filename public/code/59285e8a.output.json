@@ -1,0 +1,4 @@
+{
+  "text": "fold=1, train=0:499, test=505:604\r\nfold=2, train=0:599, test=605:704\r\nfold=3, train=0:699, test=705:804\r\nfold=4, train=0:799, test=805:904",
+  "svgs": []
+}

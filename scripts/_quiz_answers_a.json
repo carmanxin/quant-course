@@ -1,0 +1,58 @@
+{
+  "guide/m11-derivatives/11.1-greeks.md": {
+    "1": {
+      "answer": "B",
+      "explain": "Delta 定义为 $\\Delta=\\partial V/\\partial S$，BS 下等于 $\\Phi(d_1)$；风险中性实值概率却是 $\\Phi(d_2)$，两者相差 $\\sigma\\sqrt{T}$。A 混淆了 $N(d_1)$ 与 $N(d_2)$；C 错，Delta 随 $S,T,\\sigma$ 变化；D 错，Gamma 就是 $\\partial\\Delta/\\partial S$。"
+    },
+    "2": {
+      "answer": "C",
+      "explain": "Gamma 为 $\\partial^2V/\\partial S^2$，看涨看跌同号，符号只由持仓方向决定：买入为正、卖出为负。Long Straddle 买 Call+Put，两腿 Gamma 皆正；Short Strangle 卖 OTM Call+Put，两腿皆负。A、B 把方向相反的仓位当成同号；D 错，符号由持仓结构确定，不由行情决定。"
+    },
+    "3": {
+      "answer": "B",
+      "explain": "Delta 中性只消掉一阶项，标的大涨后 $\\Delta$ 会按 $\\Gamma\\Delta S$ 漂移。$\\Gamma>0$ 时 Delta 自动变正，反复再对冲可赚 $\\frac12\\Gamma(\\Delta S)^2$，即 Gamma Scalping；$\\Gamma<0$ 则反向亏损。A 错，波动够大即可覆盖 Theta；D 错，Delta 漂移正是 Gamma 的含义；C 无依据。"
+    }
+  },
+  "guide/m11-derivatives/11.2-vol-surface.md": {
+    "1": {
+      "answer": "C",
+      "explain": "负偏斜来自三股需求侧力量：杠杆效应（股价跌则杠杆升、波动变大）、崩盘恐惧溢价，以及机构持续买入 OTM Put 做保险推高左尾 IV。A 方向反了，偏好看涨会抬高右尾；B 错，BS 假设波动率为常数，曲面非平正是 BS 失效的证据；D 错，几何布朗运动只给出平曲面。"
+    },
+    "2": {
+      "answer": "C",
+      "explain": "A、B 是两种形态的定义，D 也对。错在 C 的“必然”：Backwardation 只说明近期 IV 高于远期，财报、大选、议息等短窗口事件同样顶高近端 IV，事件过后即回落，市场并非危机中。把形态等同危机，会在 2008、2020 这类高波动区间反复误判。"
+    },
+    "3": {
+      "answer": "B",
+      "explain": "SVI 用 $(a,b,\\rho,m,\\sigma)$ 拟合总方差，校准须优先保证无套利：calendar 要求总方差对 $T$ 单调递增，butterfly 要求 $\\partial^2C/\\partial K^2=e^{-rT}f(K)\\ge0$，插值点与边界仍需复查。A 错，SVI 是静态参数化；C 错，参数恰为 5 个；D 错，SABR 是另一套模型。"
+    }
+  },
+  "guide/m11-derivatives/11.3-exotic-options.md": {
+    "1": {
+      "answer": "C",
+      "explain": "雪球是投资者向券商卖出带敲出/敲入条款的奇异期权的 OTC 结构，票息是承担敲入风险的补偿：跌破 70-80% 敲入线且未敲出，就要承担本金亏损。A 错，它不保本；B 错，不是存款、无存款保险；D 错，核心是卖出看跌与障碍结构，不是看涨的包装。"
+    },
+    "2": {
+      "answer": "B",
+      "explain": "亚式期权把 payoff 换成 $\\max(\\bar S-K,0)$，平均化让 $\\bar S$ 的方差远小于 $S_T$，故价格通常只有普通期权的 60-70%。A 错，几何平均亚式有解析解，算术平均也可用 PDE 或矩匹配；C 错，行权方式通常仍为欧式；D 错，有无障碍不是关键区分点。"
+    },
+    "3": {
+      "answer": "C",
+      "explain": "障碍条款与行权方式相互独立、可自由组合，既有欧式也有美式、百慕大式障碍期权，故 C 错。A 正确，Knock-out 触及即失效，到期在价内也归零；B 正确，Pin Risk 就是障碍附近 Delta/Gamma/Vega 跳变；D 正确，Knock-in 须先触及障碍才激活，否则归零。"
+    }
+  },
+  "guide/m11-derivatives/11.4-tree-fdm.md": {
+    "1": {
+      "answer": "B",
+      "explain": "CRR 用 $u=e^{\\sigma\\sqrt{\\Delta t}}$、$d=1/u$ 离散价格过程，风险中性概率 $p=(e^{r\\Delta t}-d)/(u-d)$，再从到期 payoff 反向递推。A 错，三叉树是另一类方法；C 错，它离散的是价格过程而非 BS 公式；D 错，自适应网格属于 FDM 的概念。"
+    },
+    "2": {
+      "answer": "B",
+      "explain": "Crank-Nicolson 取显式与隐式的平均，对时间导数用中心差分，故无条件稳定且具 $O(\\Delta t^2,\\Delta S^2)$ 二阶时间精度。A 错，显式 FDM 实现最简单；C 错，数值解只是逼近解析解，谈不上优于；D 错，每步仍需解三对角方程组。"
+    },
+    "3": {
+      "answer": "B",
+      "explain": "二叉树每个节点都能比较持有价值与行权价值，取 $V=\\max(V_{hold},V_{exercise})$，天然支持提前行权，也能直接读出美式 Put 的行权边界。A 错，LSM 需回归估计且倾向低估，多用于多资产；C 错，FDM 处理美式要加 PSOR；D 错，美式无闭式解。"
+    }
+  }
+}

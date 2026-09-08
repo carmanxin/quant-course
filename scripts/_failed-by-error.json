@@ -1,0 +1,312 @@
+{
+  "0": [
+    {
+      "hash": "11.7-iv-vs-hv",
+      "md": "?"
+    }
+  ],
+  "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()": [
+    {
+      "hash": "44224404",
+      "md": "guide\\m07-execution\\7.4-hft.md"
+    },
+    {
+      "hash": "903a68f8",
+      "md": "guide\\m11-derivatives\\11.9-hedging-practice.md"
+    },
+    {
+      "hash": "dae3dad6",
+      "md": "guide\\m09-live-trading\\9.5-compliance.md"
+    },
+    {
+      "hash": "e2a70d9d",
+      "md": "guide\\m10-frontier\\10.3-dark-pool.md"
+    }
+  ],
+  "'numpy.ndarray' object has no attribute 'pdf'": [
+    {
+      "hash": "74416110",
+      "md": "guide\\m11-derivatives\\11.1-greeks.md"
+    },
+    {
+      "hash": "6c68e095",
+      "md": "guide\\m11-derivatives\\11.1-greeks.md"
+    }
+  ],
+  "'stock1'": [
+    {
+      "hash": "83320534",
+      "md": "guide\\m05-strategies\\5.3-stat-arb.md"
+    }
+  ],
+  "only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays ": [
+    {
+      "hash": "06d65cd0",
+      "md": "guide\\m04-backtest\\4.10-walk-forward.md"
+    },
+    {
+      "hash": "dc6be893",
+      "md": "guide\\m04-backtest\\4.8-synthetic-data.md"
+    }
+  ],
+  "Dot product shape mismatch, (252, 5) vs (3,)": [
+    {
+      "hash": "0838d39e",
+      "md": "guide\\m04-backtest\\4.9-multi-strategy.md"
+    },
+    {
+      "hash": "23fe1b3d",
+      "md": "guide\\m04-backtest\\4.9-multi-strategy.md"
+    },
+    {
+      "hash": "2928d335",
+      "md": "guide\\m04-backtest\\4.9-multi-strategy.md"
+    }
+  ],
+  "name 'bs' is not defined": [
+    {
+      "hash": "095a9ebc",
+      "md": "guide\\m11-derivatives\\11.10-china-listed-options.md"
+    },
+    {
+      "hash": "1d6fdbac",
+      "md": "guide\\m11-derivatives\\11.8-vol-trading.md"
+    },
+    {
+      "hash": "ca7a69d3",
+      "md": "guide\\m11-derivatives\\11.8-vol-trading.md"
+    },
+    {
+      "hash": "cbd9aba2",
+      "md": "guide\\m11-derivatives\\11.10-china-listed-options.md"
+    }
+  ],
+  "unsupported format string passed to numpy.ndarray.__format__": [
+    {
+      "hash": "0d661a4c",
+      "md": "guide\\m12-fixed-income\\12.2-duration-convexity.md"
+    }
+  ],
+  "'numpy.ndarray' object has no attribute 'rolling'": [
+    {
+      "hash": "186c6f2e",
+      "md": "guide\\m04-backtest\\4.3-metrics.md"
+    },
+    {
+      "hash": "e63df021",
+      "md": "guide\\m11-derivatives\\11.7-iv-vs-hv.md"
+    }
+  ],
+  "only 0-dimensional arrays can be converted to Python scalars": [
+    {
+      "hash": "2236723f",
+      "md": "guide\\m09-live-trading\\9.4-monitoring.md"
+    }
+  ],
+  "'numpy.ndarray' object has no attribute 'cov'": [
+    {
+      "hash": "25c7ffe4",
+      "md": "guide\\m06-portfolio\\6.2-risk-parity.md"
+    }
+  ],
+  "'position'": [
+    {
+      "hash": "2d26e684",
+      "md": "guide\\m04-backtest\\4.2-cost-model.md"
+    }
+  ],
+  "name 'heston_generator' is not defined": [
+    {
+      "hash": "30a56e33",
+      "md": "guide\\m04-backtest\\4.8-synthetic-data.md"
+    }
+  ],
+  "'numpy.ndarray' object has no attribute 'iterrows'": [
+    {
+      "hash": "3ef351dd",
+      "md": "guide\\m04-backtest\\4.1-engine.md"
+    }
+  ],
+  "No module named 'gym'": [
+    {
+      "hash": "4d36d716",
+      "md": "guide\\m10-frontier\\10.1-rl.md"
+    }
+  ],
+  "'momentum'": [
+    {
+      "hash": "4e941d98",
+      "md": "guide\\m03-python-data\\3.5-visualization.md"
+    }
+  ],
+  "name 'ExecutionHandler' is not defined": [
+    {
+      "hash": "52d75f35",
+      "md": "?"
+    }
+  ],
+  "name 'List' is not defined": [
+    {
+      "hash": "5444cfe3",
+      "md": "guide\\m04-backtest\\4.10-walk-forward.md"
+    },
+    {
+      "hash": "ce641deb",
+      "md": "guide\\m04-backtest\\4.10-walk-forward.md"
+    }
+  ],
+  "'numpy.ndarray' object has no attribute 'results'": [
+    {
+      "hash": "571d2314",
+      "md": "guide\\m10-frontier\\10.5-final-project.md"
+    }
+  ],
+  "Invalid classes inferred from unique values of `y`.  Expected: [ 0  1  2  3  4  5  6  7  8  9 10 11 ": [
+    {
+      "hash": "5747d7d6",
+      "md": "guide\\m08-ml-alt-data\\8.1-supervised.md"
+    }
+  ],
+  "name 'jump_diffusion_generator' is not defined": [
+    {
+      "hash": "5aa92625",
+      "md": "guide\\m04-backtest\\4.8-synthetic-data.md"
+    }
+  ],
+  "No module named 'torch'": [
+    {
+      "hash": "5f13143d",
+      "md": "guide\\m10-frontier\\10.2-gen-ai.md"
+    }
+  ],
+  "No module named 'kafka'": [
+    {
+      "hash": "6aa053af",
+      "md": "guide\\m09-live-trading\\9.1-system-design.md"
+    },
+    {
+      "hash": "7b970d7f",
+      "md": "guide\\m09-live-trading\\9.1-system-design.md"
+    }
+  ],
+  "'rank'": [
+    {
+      "hash": "6bfb0230",
+      "md": "guide\\m08-ml-alt-data\\8.4-alt-data.md"
+    }
+  ],
+  "name 'trades' is not defined": [
+    {
+      "hash": "6faa7e9a",
+      "md": "guide\\m01-overview\\1.4-challenges.md"
+    }
+  ],
+  "name 'bs_greeks' is not defined": [
+    {
+      "hash": "71d9afc4",
+      "md": "guide\\m11-derivatives\\11.6-options-market.md"
+    }
+  ],
+  "operands could not be broadcast together with shapes (252,) (251,)": [
+    {
+      "hash": "740434af",
+      "md": "guide\\m03-python-data\\3.5-visualization.md"
+    }
+  ],
+  "name 'bs_call' is not defined": [
+    {
+      "hash": "7bf097f3",
+      "md": "guide\\m11-derivatives\\11.9-hedging-practice.md"
+    }
+  ],
+  "Unable to coerce to Series, length must be 5: given 100": [
+    {
+      "hash": "7f9e15b7",
+      "md": "guide\\m05-strategies\\5.6-multi-factor.md"
+    }
+  ],
+  "Index frequency is None. Pass it as `freq` or define it globally under `settings.array_wrapper`.": [
+    {
+      "hash": "85aaf930",
+      "md": "?"
+    }
+  ],
+  "0.25000000000000006 is not in list": [
+    {
+      "hash": "88c4697f",
+      "md": "guide\\m01-overview\\1.3-quant-mindset.md"
+    }
+  ],
+  "Expected 2D array, got 1D array instead:": [
+    {
+      "hash": "8ffef95e",
+      "md": "guide\\m08-ml-alt-data\\8.2-unsupervised.md"
+    }
+  ],
+  "'date'": [
+    {
+      "hash": "909c9f9c",
+      "md": "guide\\m05-strategies\\5.1-factors.md"
+    }
+  ],
+  "'LassoCV' object has no attribute 'coef_path_'": [
+    {
+      "hash": "9683e18f",
+      "md": "?"
+    }
+  ],
+  "name 'FeatureDefinition' is not defined": [
+    {
+      "hash": "b127eb37",
+      "md": "guide\\m17-data-engineering\\17.5-feature-store.md"
+    }
+  ],
+  "'numpy.ndarray' object has no attribute 'cdf'": [
+    {
+      "hash": "bcace6ea",
+      "md": "guide\\m11-derivatives\\11.7-iv-vs-hv.md"
+    }
+  ],
+  "'eps_actual'": [
+    {
+      "hash": "be5f3491",
+      "md": "guide\\m05-strategies\\5.5-event-driven.md"
+    }
+  ],
+  "maximum supported dimension for an ndarray is currently 64, found 100": [
+    {
+      "hash": "c45a8ece",
+      "md": "guide\\m06-portfolio\\6.4-constraints.md"
+    }
+  ],
+  "periods must be an integer, got [-0.63738713  1.18901653  1.42050425 -0.57074629 -0.83235557  0.4714": [
+    {
+      "hash": "c9912da4",
+      "md": "guide\\m11-derivatives\\11.7-iv-vs-hv.md"
+    }
+  ],
+  "No module named 'websocket'": [
+    {
+      "hash": "d69d98d1",
+      "md": "guide\\m09-live-trading\\9.2-data-pipeline.md"
+    }
+  ],
+  "<BusinessDay> is a non-fixed frequency": [
+    {
+      "hash": "e312aee7",
+      "md": "guide\\m04-backtest\\4.6-frameworks-comparison.md"
+    }
+  ],
+  "No module named 'redis'": [
+    {
+      "hash": "f0e63e65",
+      "md": "guide\\m09-live-trading\\9.2-data-pipeline.md"
+    }
+  ],
+  "name 'impermanent_loss' is not defined": [
+    {
+      "hash": "fa30d21a",
+      "md": "guide\\m13-crypto\\13.4-dex-mm.md"
+    }
+  ]
+}
