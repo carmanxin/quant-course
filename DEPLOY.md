@@ -31,17 +31,17 @@ npm run build
 
 | 路线 | 做法 | 耗时 | 适合 |
 |---|---|---|---|
-| **A. GitHub Actions 自动部署**（推荐） | push 代码 → 自动构建 → 自动上线 | 首次 40 分钟，之后每次 push 全自动 | 长期维护 |
+| **A. GitHub Actions 构建 + 平台 Git 集成分发**（✅ 当前采用） | push → Actions 构建并推 `dist` 分支 → 平台（Cloudflare）直接发那份产物 | 首次 30 分钟，之后全自动 | **长期维护，推荐** |
 | **B. 控制台手动传 ZIP** | 本地 `npm run build` → 打包 → 拖上传 | 首次 15 分钟，每次更新 5 分钟 | 只想快点上线看看 |
-| **C. 平台 Git 集成** | 平台直接拉仓库自己构建 | 首次 30 分钟 | **不推荐**（见 0.3） |
+| **C. 平台自己从源码构建** | 平台拉仓库跑 `npm install && npm run build` | — | **不可行**（见 0.3） |
 
-### 0.3 为什么不推荐 C（平台自己构建）
+### 0.3 为什么不能让平台自己构建
 
 EdgeOne Pages 和 Cloudflare Pages 的构建容器里**没有 Python**，跑不了 `precompute`，439 个案例的运行结果会全部丢失，页面只剩代码没有输出。
+此外平台还会自行 `npm install`，本项目历史上有 `playwright` 会触发 150MB Chromium 下载，在国内网络的容器里极易超时（即「安装依赖失败」）。
 
-路线 A 之所以可行，是因为 **GitHub Actions 的 runner 有 Python**，我们在那里构建完，再把成品交给平台。
-
-> 如果你确实想用 C，必须先在本地跑好 `precompute`，把 `public/code/` 产物提交进仓库，然后把平台的构建命令改成 `npx vitepress build`（跳过 precompute）。可行，但不如 A 省事。
+正确分工：**GitHub Actions 的 runner 有 Python，在那里构建完 → 推到 `dist` 分支 → 平台只负责分发**。
+所以平台侧的配置必须是「**不构建**」：框架预设 `None`/静态、构建命令留空。
 
 ---
 
@@ -282,15 +282,56 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 
 ---
 
-## 5. 灾备镜像：Cloudflare Pages
+## 5. 主站：Cloudflare Pages
 
-配好 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID` 两个 secret 后，工作流会自动同步部署到 `https://quantlab.pages.dev`。
+> **为什么改用它做主站**（2026-09-08 决策）：EdgeOne Pages 系统分配的域名受加速区域限制，
+> 要么只能靠 3 小时预览链接、要么国内直接 401（详见 §8.1）。Cloudflare Pages 无此限制，
+> `*.pages.dev` 域名长期有效、免备案、国内可直连。
 
-**什么时候用**：EdgeOne 出故障，或者你发现联通用户访问 EdgeOne 慢。
+### 5.1 关键限制：不能用拖拽上传
 
-**切换方式**（如果有自定义域名）：把域名的 CNAME 从 EdgeOne 指到 `quantlab.pages.dev`，等 DNS 生效（5-30 分钟）。
+| 上传方式 | 文件数上限 | 本工程（4393 个文件） |
+|---|---|---|
+| 控制台拖拽 ZIP | **1,000** | ❌ 超限 4 倍多 |
+| Wrangler CLI | 20,000 | ✅ 可以 |
+| **Git 集成** | 无此限制 | ✅ **推荐** |
 
-如果没自定义域名，直接把 `quantlab.pages.dev` 这个链接发给用户即可。
+单文件上限均为 25 MiB，本工程最大 2.3 MiB，没问题——**卡住的是文件数量，不是体积**。
+
+### 5.2 配置步骤（Git 集成，约 5 分钟，不需要任何 Token）
+
+1. 登录 <https://dash.cloudflare.com> → 左侧 **Workers & Pages**
+2. **Create** → **Pages** → **Connect to Git**
+3. 授权 GitHub，选中 `carmanxin/quant-course`
+4. 开始设置（**这四项是成败关键**）：
+
+| 配置项 | 填什么 | 说明 |
+|---|---|---|
+| Production branch | **`dist`** | 不是 master！dist 分支根目录就是构建好的 120 个页面 |
+| Framework preset | **None** | 让它别检测框架、别装依赖 |
+| Build command | **留空** | 留空 = 不构建 |
+| Build output directory | **留空** | 留空 = 直接把分支根目录当站点发布 |
+
+5. **Save and Deploy**，等 1-2 分钟，拿到 `https://quantlab.pages.dev`
+
+> 构建命令和输出目录**都留空**，Cloudflare 会直接把 `dist` 分支根当站点发布——
+> 这正是我们要的：产物已经在仓库里了，不需要平台再构建（它容器里也没 Python）。
+
+### 5.3 以后怎么更新
+
+全自动：你或 AI `git push` → GitHub Actions 构建 → 推 `dist` 分支 → Cloudflare 自动拉取部署。
+不需要手动干预，也不需要在 Cloudflare 配任何密钥。
+
+### 5.4 备选：用 API Token 让 Actions 直接推
+
+如果想让 GitHub Actions 直接用 Wrangler 推（不依赖 Cloudflare 拉 GitHub），
+在仓库 Settings → Secrets 里配这两个，工作流里的 `deploy-cloudflare` job 就会自动生效：
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+> 注意：**两种方式二选一**。如果已经在 Cloudflare 配了 Git 集成，就别再配 Token，
+> 否则同一次 push 会触发两次部署。
 
 ---
 
@@ -412,7 +453,7 @@ git push
 | Actions 在 precompute 步骤超时 | 503 个代码块在 2 核 runner 上跑不完 | 把 `public/code` 提交进仓库（CI 会自动跳过）；或调大 `timeout-minutes` |
 | 部署后页面空白 | 路径用了绝对路径但部署在子目录 | 本项目就是绝对路径，确保部署在域名根目录；或用 `relativize-dist.mjs` 转相对路径 |
 | 案例没有运行结果 | CI 里没跑 precompute 或跑失败了 | 看 Actions 日志里 precompute 那一步；本地跑一遍把产物提交 |
-| EdgeOne 打开提示 401 / 未备案 | 用了腾讯云国内版 | 换 <https://edgeone.ai> 国际版 |
+| 平台域名打开是 401 / 提示备案 | EdgeOne 加速区域规则（见 §8.1） | 换 Cloudflare Pages；或绑定已备案自定义域名 |
 | **页面打开是 401 UNAUTHORIZED** | **加速区域规则**（见 §8.1，最常见） | 系统分配的域名本就不能长期公开访问，需绑自定义域名 |
 | 部署报 "project not found" | 项目名不匹配 | CLI 传了 `-n quantlab`，检查 `vars.EDGEONE_PROJECT` |
 | `npx edgeone` 报命令不存在 | npm 拉包失败 | 重试；或在 workflow 里改成 `npm i -g edgeone && edgeone pages deploy ...` |
