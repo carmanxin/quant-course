@@ -73,12 +73,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # 注意：这里不能开 `cache: 'pip'`。
+      # 当产物已提交、precompute 被跳过时，本轮根本不会跑 pip install，
+      # setup-python 的 Post 步骤会因"无缓存可保存"直接失败，把整个 job 拖成 failure
+      #（构建本身其实是成功的）。需要装依赖时多花 2-3 分钟，比 job 假失败划算。
       - name: 安装 Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-          cache-dependency-path: requirements-ci.txt
 
       - name: 安装 Node 依赖
         run: npm ci
