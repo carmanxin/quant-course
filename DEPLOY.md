@@ -356,8 +356,33 @@ git push
 
 ## 8. 故障排查
 
+### 8.0 ⚠ 最常见：平台报「安装依赖失败」
+
+**症状**：EdgeOne / Cloudflare 控制台部署日志里出现「安装依赖失败」、`npm install failed`、`ENOAUDIT`、`Downloading Chromium` 卡死。
+
+**原因**：托管平台从 Git 导入仓库后，会**自动检测框架并自行构建**。它看到根目录有 `package.json` 就跑 `npm install`——但：
+
+1. 容器里**没有 Python**，即使装完依赖，`npm run build` 也会在 precompute 步骤挂掉；
+2. `playwright` 的 postinstall 会下载约 **150 MB 的 Chromium**，在国内网络的容器里极易超时；
+3. 如果你选的是 `dist` 分支，那里**根本没有 `package.json`**，`npm install` 直接失败。
+
+**本项目已经不需要平台构建**——GitHub Actions 已经把成品推到了 `dist` 分支。所以要做的不是"修好依赖安装"，而是**让平台别装依赖**。
+
+**处理（按优先级）**
+
+| 做法 | 操作 |
+|---|---|
+| ✅ **首选：改成纯静态** | 项目设置里把**框架预设**改成 `Other` / `静态站点` / 关闭「自动构建」；**构建命令**填 `echo skip`（或直接留空）；**输出目录**填 `/`；**分支**选 `dist` |
+| ✅ **次选：直接传 ZIP** | 见 §3 路线 B。本地/AI 已打包好的 `quantlab-dist.zip`（约 14 MB，根含 `index.html`），控制台选「直接上传」拖进去即可，完全不触碰依赖 |
+| ⚠️ 若必须让它装 | 已加 `.npmrc` 设 `playwright_skip_browser_download=1`（跳过 150MB 浏览器下载），并把 `playwright` 移到了 `devDependencies`。但仍解决不了「容器无 Python」，构建必然失败 |
+
+> 一句话：**这个站必须由 GitHub Actions 构建，平台只负责分发文件。** 任何让平台自己 `npm install` 的配置都会失败。
+
+---
+
 | 现象 | 原因 | 处理 |
 |---|---|---|
+| **平台报「安装依赖失败」** | 平台自动 `npm install`（容器无 Python / Playwright 下 Chromium 超时 / dist 分支无 package.json） | 见 §8.0：框架预设改 `Other`、构建命令 `echo skip`、分支 `dist`；或直接传 ZIP |
 | Actions 在 precompute 步骤超时 | 503 个代码块在 2 核 runner 上跑不完 | 把 `public/code` 提交进仓库（CI 会自动跳过）；或调大 `timeout-minutes` |
 | 部署后页面空白 | 路径用了绝对路径但部署在子目录 | 本项目就是绝对路径，确保部署在域名根目录；或用 `relativize-dist.mjs` 转相对路径 |
 | 案例没有运行结果 | CI 里没跑 precompute 或跑失败了 | 看 Actions 日志里 precompute 那一步；本地跑一遍把产物提交 |
