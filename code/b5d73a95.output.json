@@ -1,0 +1,4 @@
+{
+  "text": "卫星图像分析 - WMT 停车场客流:\r\n  平均周客流: 603 辆\r\n  平均周收入: $211,113\r\n  同比变化范围: [nan%, nan%]\r\n\r\n信号示例（前5周）:\r\n      week  parking_traffic  yoy_change\r\n2023-01-01              758         NaN\r\n2023-01-08              752         NaN\r\n2023-01-15              648         NaN\r\n2023-01-22              751         NaN\r\n2023-01-29              623         NaN",
+  "svgs": []
+}

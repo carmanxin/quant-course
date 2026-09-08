@@ -1,0 +1,4 @@
+{
+  "text": "3 个策略的相关性矩阵:\r\n           Trend  MeanRev  LongShort\r\nTrend      1.000   -0.002     -0.057\r\nMeanRev   -0.002    1.000     -0.006\r\nLongShort -0.057   -0.006      1.000\r\n\r\n==================================================\r\n单策略表现\r\n==================================================\r\n  Trend - 总收益: 130.98%\r\n  Trend - 夏普: 0.82\r\n  Trend - 最大回撤: -31.97%\r\n  Trend - 年化波动: 22.33%\r\n\r\n  MeanRev - 总收益: -2.39%\r\n  MeanRev - 夏普: -0.05\r\n  MeanRev - 最大回撤: -23.49%\r\n  MeanRev - 年化波动: 9.67%\r\n\r\n  LongShort - 总收益: -37.90%\r\n  LongShort - 夏普: -0.38\r\n  LongShort - 最大回撤: -54.12%\r\n  LongShort - 年化波动: 24.17%",
+  "svgs": []
+}

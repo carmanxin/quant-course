@@ -1,0 +1,5 @@
+{
+  "text": "",
+  "svgs": [],
+  "error": "File \"<string>\", line 94\r\n    return f\"\"\"# {project.name}\r\n           ^\r\nSyntaxError: unterminated triple-quoted f-string literal (detected at line 126)"
+}

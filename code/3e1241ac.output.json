@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n--- simulate_monty_hall() ---\r\ndict {'stay_win_rate': 0.33322, 'switch_win_rate': 0.66678}",
+  "svgs": []
+}
