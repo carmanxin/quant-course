@@ -1,0 +1,20 @@
+# ============================================================================
+# Cloudflare 配置（同时兼容 Pages 与新版 Workers Builds 两种界面）
+# ============================================================================
+# 本工程是**纯静态站**：所有 Python 运行结果都在构建期预计算好并提交了
+#（public/code/ 下 503 个 output.json），线上不需要任何运行时。
+#
+# 注意：
+#   - 本文件在 master 分支，assets 指向 VitePress 的构建输出目录。
+#   - dist 分支上的同名文件由 GitHub Actions 生成，assets 指向 "."（分支根）。
+#   - Cloudflare Pages 经典界面里手动填 "Build output directory" 时，
+#     以界面填写为准，本文件不生效（留着也无害）。
+# ============================================================================
+
+name = "quant-course"
+compatibility_date = "2026-09-08"
+
+# 纯静态资源发布，没有 Worker 脚本
+[assets]
+directory = ".vitepress/dist"
+not_found_handling = "404-page"

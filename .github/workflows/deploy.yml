@@ -246,6 +246,15 @@ jobs:
       - name: 推送到 dist 分支
         run: |
           cd dist-out
+          # dist 分支根目录就是构建产物，wrangler.toml 的 assets 指向 "."（分支根）
+          cat > wrangler.toml <<'EOF'
+          name = "quant-course"
+          compatibility_date = "2026-09-08"
+
+          [assets]
+          directory = "."
+          not_found_handling = "404-page"
+          EOF
           git init -q
           git checkout -q -b dist
           git config user.name  "github-actions[bot]"

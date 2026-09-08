@@ -300,22 +300,34 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 
 ### 5.2 配置步骤（Git 集成，约 5 分钟，不需要任何 Token）
 
+> **界面变了**：Cloudflare 把 Pages 合并进了 **Workers Builds**，新建项目时
+> 没有「Production branch」卡片，Deploy command 也成了必填项。
+> 本工程根目录已放 `wrangler.toml`（assets 指向 `.vitepress/dist`），**从 master 构建即可**，
+> 不依赖 dist 分支、不需要 Python。
+
 1. 登录 <https://dash.cloudflare.com> → 左侧 **Workers & Pages**
-2. **Create** → **Pages** → **Connect to Git**
+2. **Create** → **Pages**（或 Workers，任选）→ **Connect to Git**
 3. 授权 GitHub，选中 `carmanxin/quant-course`
-4. 开始设置（**这四项是成败关键**）：
+4. 设置（**成败关键**，照字面填）：
 
 | 配置项 | 填什么 | 说明 |
 |---|---|---|
-| Production branch | **`dist`** | 不是 master！dist 分支根目录就是构建好的 120 个页面 |
-| Framework preset | **None** | 让它别检测框架、别装依赖 |
-| Build command | **留空** | 留空 = 不构建 |
-| Build output directory | **留空** | 留空 = 直接把分支根目录当站点发布 |
+| Branch（分支） | **`master`** | 不是 dist。master 已含 503 个预计算产物，平台只需跑 VitePress 构建 |
+| Build command | `npm ci --ignore-scripts && npx vitepress build` | `npm ci` 用 lock 安装；`--ignore-scripts` 跳过 Playwright 下载 Chromium；再用 VitePress 出静态站 |
+| Deploy command | `npx wrangler deploy` | 保留界面默认值即可，读仓库的 `wrangler.toml` 发布静态资源 |
+| Framework preset | 选 **None** 或留空 | 别让平台用自己的框架猜测 |
 
-5. **Save and Deploy**，等 1-2 分钟，拿到 `https://quantlab.pages.dev`
+5. （可选，强烈建议）在 **Settings → Builds & deployments → Build configuration → 环境变量** 加一条
+   `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = 1`，彻底杜绝 Chromium 下载超时。
+   不加也行：`--ignore-scripts` 已经把 postinstall 跳过了。
+6. **Save and Deploy**，首次构建约 3-4 分钟，拿到 `https://quantlab.pages.dev`
 
-> 构建命令和输出目录**都留空**，Cloudflare 会直接把 `dist` 分支根当站点发布——
-> 这正是我们要的：产物已经在仓库里了，不需要平台再构建（它容器里也没 Python）。
+> 如果保存后构建报 `esbuild` 相关错误（极少见），把 Build command 改回
+> `npm ci && npx vitepress build`（不跳过 postinstall）即可。
+
+> **旧版界面（有 Production branch 卡片）**：分支填 `dist`、Framework preset 选 `None`、
+> Build command 和 Build output directory 都留空 —— 那时直接发已构建产物。
+> 目前新建项目基本都是上面的 Workers Builds 流程，按上面填。
 
 ### 5.3 以后怎么更新
 
