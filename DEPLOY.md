@@ -1,9 +1,12 @@
 # QuantLab 上线部署手册
 
-> 版本 v1.0 · 2026-09-08
+> 版本 v2.0 · 2026-09-10（**已按本手册成功上线**，全文按实战结果校正）
 > 面向：主理人本人（以及未来接手这个工程的人）
 > 目标：把 `D:\AI\study\quant\` 这个本地站点变成一个任何人打开链接就能访问的线上网站
 > 前置文档：`_reports/DEPLOY-PRD.md`（为什么选这个平台）、`_reports/WORK-REPORT.md`（工程全貌）
+>
+> **当前线上地址**：<https://quant-course.pages.dev>（Cloudflare Pages，2026-09-10 上线）
+> **唯一可行路线**：GitHub Actions 构建 → Wrangler 推送，**平台零构建**（详见 §5）
 
 ---
 
@@ -29,25 +32,45 @@ npm run build
 
 ### 0.2 三条路线，按需选一条
 
-| 路线 | 做法 | 耗时 | 适合 |
-|---|---|---|---|
-| **A. GitHub Actions 构建 + 平台 Git 集成分发**（✅ 当前采用） | push → Actions 构建并推 `dist` 分支 → 平台（Cloudflare）直接发那份产物 | 首次 30 分钟，之后全自动 | **长期维护，推荐** |
-| **B. 控制台手动传 ZIP** | 本地 `npm run build` → 打包 → 拖上传 | 首次 15 分钟，每次更新 5 分钟 | 只想快点上线看看 |
-| **C. 平台自己从源码构建** | 平台拉仓库跑 `npm install && npm run build` | — | **不可行**（见 0.3） |
+| 路线 | 做法 | 实战结论 |
+|---|---|---|
+| **A. Actions 构建 + Wrangler 推送** | push → Actions（7GB 容器）构建 → `wrangler pages deploy` 直接推产物 | ✅ **唯一可行，本站采用**（§5） |
+| **B. 控制台手动传 ZIP** | 本地构建 → 打包 → 拖上传 | ❌ 不可行：拖拽上限 1,000 文件，本站 4,393 个（§5.1） |
+| **C. 平台自己从源码构建** | 平台拉仓库跑 `npm install && npx vitepress build` | ❌ 不可行：**2GB 内存必 OOM**（§5.2 有实测日志） |
+| **D. 平台 Git 集成分发 dist 分支** | Actions 推 `dist` 分支，平台拉分支发布 | ⚠️ 仅作保底：新版界面无 Production branch 编辑项，易锁死在错分支（§5.2） |
 
 ### 0.3 为什么不能让平台自己构建
 
-EdgeOne Pages 和 Cloudflare Pages 的构建容器里**没有 Python**，跑不了 `precompute`，439 个案例的运行结果会全部丢失，页面只剩代码没有输出。
-此外平台还会自行 `npm install`，本项目历史上有 `playwright` 会触发 150MB Chromium 下载，在国内网络的容器里极易超时（即「安装依赖失败」）。
+**两个硬约束，第二条足以一票否决「让平台自己构建」：**
 
-正确分工：**GitHub Actions 的 runner 有 Python，在那里构建完 → 推到 `dist` 分支 → 平台只负责分发**。
-所以平台侧的配置必须是「**不构建**」：框架预设 `None`/静态、构建命令留空。
+1. **没有 Python**（可绕）—— 平台构建容器里没有 Python，跑不了 `precompute`，
+   439 个案例的运行结果会全部丢失。
+   *绕过方式*：本站已把 503 个预计算产物提交进仓库（`public/code/*.output.json`），
+   CI 检测到 ≥480 个就自动跳过 precompute（20 分钟 → 4 分钟），所以这条其实已不是障碍。
+
+2. **内存只有 2GB（绕不开，致命）** —— Cloudflare 免费构建实例是 2 vCPU / **2 GB RAM**。
+   本站 122 章全量 VitePress 构建实测**堆内存涨到 2052 MB 直接 OOM 崩溃**：
+   `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed`。
+   对照：GitHub Actions 的 `ubuntu-latest` 有 **7 GB**，89–104 秒稳稳跑完。
+   → **改任何 Build command 都救不了**，这是物理内存上限，不是配置问题。
+
+另外平台还会自行 `npm install`，本项目历史上有 `playwright` 会触发 150MB Chromium 下载
+（已修：移入 devDependencies + `.npmrc` 里 `playwright_skip_browser_download=1`）。
+
+**正确分工**：GitHub Actions（7GB + 有 Python）构建完 → 用 Wrangler 把 `dist` 推给平台
+→ **平台只负责分发，零构建**。平台侧不要填任何构建命令。
 
 ---
 
 ## 0.5 最快路径：让 AI 代配置
 
-本机已装 **GitHub CLI (`gh` v2.97)**，所以绝大部分操作 AI 可以直接跑命令完成。
+> **⚠ 2026-09-10 实测修正**：`gh` 在这台机器上**实际不可用** —— 既未登录，且 `github.com:443`
+> 被墙（`gh` 的 API 只走 HTTPS，没有 SSH 通道可切）。所以 `gh repo create` / `gh secret set` /
+> `gh workflow run` / `gh run watch` **全部跑不通**。
+> 实际走通的是：**git 走 SSH 推送**（已配 `url.git@github.com:.insteadOf`）+ **网页端配 Secret**
+> + **空 commit 触发 Actions**（详见 §5.4）。下面保留 gh 的说明仅供换环境时参考。
+
+本机装了 **GitHub CLI (`gh` v2.97)**，但如上所述在当前网络环境下不可用。
 你只需要做 **4 件必须本人做的事**（都涉及账号/授权/密钥，AI 无法代劳），合计约 15 分钟：
 
 | # | 你要做的 | 为什么必须你做 | 大约 |
@@ -298,96 +321,104 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 
 单文件上限均为 25 MiB，本工程最大 2.3 MiB，没问题——**卡住的是文件数量，不是体积**。
 
-### 5.2 配置步骤（Git 集成，约 5 分钟，不需要任何 Token）
+### 5.2 ❌ 实测：Cloudflare Git 集成（平台自构建）这条路走不通
 
-> **界面变了**：Cloudflare 把 Pages 合并进了 **Workers Builds**，新建项目时
-> 没有「Production branch」卡片，Deploy command 也成了必填项。
-> 本工程根目录已放 `wrangler.toml`（assets 指向 `.vitepress/dist`），**从 master 构建即可**，
-> 不依赖 dist 分支、不需要 Python。
+> 2026-09-10 结论：**别在这条路上再花时间**。前后三次构建全部失败，
+> 前两次是配置问题（能修），第三次是物理限制（无解）。
 
-1. 登录 <https://dash.cloudflare.com> → 左侧 **Workers & Pages**
-2. **Create** → **Pages**（或 Workers，任选）→ **Connect to Git**
-3. 授权 GitHub，选中 `carmanxin/quant-course`
-4. 设置（**成败关键**，照字面填）：
+| 次序 | 现象 | 根因 | 能否修复 |
+|---|---|---|---|
+| 第 1、2 次 | `npm error code EUSAGE` — `npm ci can only install with an existing package-lock.json` | 分支配成了 `dist`；dist 分支只有构建产物，没有 `package.json` / lock | 能：改 master + 用 `npm install` |
+| 第 3 次 | `npm install` 过了、`vitepress build` 也启动了，**堆内存涨到 2052 MB 后 OOM 崩溃** | Cloudflare 免费构建容器 2 vCPU / **2 GB RAM**，而本站需要 >2GB | ❌ **修不了** |
 
-| 配置项 | 填什么 | 说明 |
-|---|---|---|
-| Branch（分支） | **`master`** | 不是 dist。master 已含 503 个预计算产物，平台只需跑 VitePress 构建 |
-| Build command | `npm install --ignore-scripts && npx vitepress build` | 用 `npm install`（不依赖 lock 文件，避免 `npm ci` 找不到 lock 直接 EUSAGE）；`--ignore-scripts` 跳过 Playwright 下载 Chromium |
-| Deploy command | `npx wrangler deploy` | 保留界面默认值即可，读仓库的 `wrangler.toml` 发布静态资源 |
-| Framework preset | 选 **None** 或留空 | 别让平台用自己的框架猜测 |
+第 3 次的原始报错：
 
-5. （可选，强烈建议）在 **Settings → Builds & deployments → Build configuration → 环境变量** 加一条
-   `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = 1`，彻底杜绝 Chromium 下载超时。
-   不加也行：`--ignore-scripts` 已经把 postinstall 跳过了。
-6. **Save and Deploy**，首次构建约 3-4 分钟，拿到 `https://quantlab.pages.dev`
+```
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed
+- JavaScript heap out of memory
+```
 
-#### ⚠️ 分支配错的典型症状（2026-09-08 实测）
-构建日志第一行就报 `npm error code EUSAGE` + `npm ci can only install with an existing package-lock.json`：
-**100% 是分支配成了 `dist`**（或任何没有 `package.json` 的分支）。dist 分支只有构建产物，
-没有 `package.json` / `package-lock.json`，`npm ci` 必然失败。
-**修复**：把项目的 Production branch 改回 `master`（新版界面在项目 **Settings → Builds & deployments**
-里改；若改不了就删项目重建，创建时 Branch 选 `master`）。
+同时 Cloudflare 还自动跑了 `pip install -r requirements.txt`，装了全套 Python
+（torch + CUDA 3GB+）—— 对本工程纯属浪费，因为 503 个预计算产物早就提交进仓库了。
 
-> 如果保存后构建报 `esbuild` 相关错误（极少见），把 Build command 改成
-> `npm install && npx vitepress build`（不跳过 postinstall）即可。
+**2052 MB 就是那台机器的内存天花板**；对照 GitHub Actions 的 `ubuntu-latest`
+有 **7 GB**，89–104 秒就能跑完全量构建。**这是内存上限不是配置问题，改 Build command 毫无意义。**
 
-### 5.3 界面反复失败？直接切到 Actions 自动部署（最稳，推荐）
+> 附带一个坑：新版 Workers Builds 界面**创建后没有「Production branch」编辑项**，
+> 分支在建项目那一刻就锁死了，配错只能删项目重建。
 
-新版 Workers Builds 界面有三个坑叠加：**没有 Production branch 编辑项**（创建时锁死分支）、
-**Build command 必填**、且误选 `dist` 分支后 `npm ci` 必 EUSAGE。如果你在界面上卡超过一轮，
-**别在界面上耗了**，改用仓库里已经写好的 `deploy-cloudflare` job：
+### 5.3 ✅ 唯一可行：Actions 构建 + Wrangler 推送（平台零构建）
 
-这条路线 Cloudflare 界面**什么都不用填**，由 GitHub Actions（有 Python、有 lock）构建完，
-用 Wrangler 直接把 `dist` 推上去。
+分工很干净：**GitHub Actions 负责构建，Cloudflare 只负责收产物、分发**。
 
-1. Cloudflare 控制台 → My Profile → API Tokens → **Create Token** → 模板选
-   "Edit Cloudflare Workers" → 拿到 `CLOUDFLARE_API_TOKEN`
-2. 控制台首页右侧栏复制 **Account ID**（`CLOUDFLARE_ACCOUNT_ID`）
-3. GitHub 仓库 → Settings → Secrets and variables → Actions → 加两个 Repository secret：
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
-4. （若 Cloudflare 项目名不是 `quantlab`）再在 Variables 里加 `CLOUDFLARE_PROJECT = 你的项目名`
-5. `git push` 一次，或 `gh workflow run deploy.yml` → Actions 自动跑
-   `build → deploy-cloudflare`，约 2 分钟拿到 `*.pages.dev`
+```
+git push (SSH)
+   ↓
+GitHub Actions  runner: ubuntu-latest / 7GB 内存
+   ├─ npm ci                    装 vitepress 等
+   ├─ 检测 public/code/*.output.json ≥480 → 跳过 precompute（20min → 4min）
+   ├─ npx vitepress build  →  .vitepress/dist
+   ↓
+deploy-cloudflare job
+   ├─ wrangler pages project create quant-course   （已存在则自动跳过）
+   └─ wrangler pages deploy ./dist
+   ↓
+https://quant-course.pages.dev
+```
 
-> 这条和 Git 集成**二选一**：用了 Actions 部署，就别在 Cloudflare 配 Git 集成，
-> 否则同一次 push 触发两次部署。若之前建过 Git 集成项目，删掉它即可。
+**一次性配置（约 10 分钟）**
 
-#### ⚠️ 实测：Cloudflare 免费构建容器 2GB 内存不够，A 路线（自构建）不可行
-2026-09-10 第三次构建（界面重新建项目 + `npm install --ignore-scripts && npx vitepress build`）：
-- `npm install` 通过、`vitepress build` 启动，但 **堆内存涨到 2052 MB 后 OOM 崩溃**
-  （`FATAL ERROR: Ineffective mark-compacts near heap limit`）。
-- 同时 Cloudflare 自动 `pip install -r requirements.txt` 装了全套 Python（torch+CUDA 3GB+，纯浪费）。
-- 根因：Cloudflare 免费构建实例 **2 vCPU / 2 GB RAM**，而本站 122 章全量 VitePress 构建
-  需要 >2GB（GitHub Actions 用 7GB 容器才 89-104s 跑完）。
-- **推论**：Cloudflare Git 集成「自己拉源码构建」在这站上必 OOM，无论怎么改 Build command。
-  唯一稳的路是 **B 方案：GitHub Actions（7GB）构建完，用 Wrangler 把 `dist` 推上去**（平台零构建）。
-  不要再在 Cloudflare 界面配构建命令了。
+1. **Cloudflare 拿凭证**
+   - 控制台 → My Profile → API Tokens → **Create Token**
+     → 模板选 **Edit Cloudflare Workers**（本站实测够用）→ 得到 `CLOUDFLARE_API_TOKEN`
+   - 复制 **Account ID**：右侧栏就有；找不到就看浏览器地址栏
+     `dash.cloudflare.com/<这串 32 位就是>`，或本地跑 `npx wrangler whoami`
 
-> **旧版界面（有 Production branch 卡片）**：分支填 `dist`、Framework preset 选 `None`、
-> Build command 和 Build output directory 都留空 —— 那时直接发已构建产物。
-> 目前新建项目基本都是上面的 Workers Builds 流程，按上面填。
+2. **GitHub 仓库配密钥**（Settings → Secrets and variables → Actions）
+   - Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`
+   - Variables：`CLOUDFLARE_PROJECT = quant-course`（项目名决定域名前缀）
 
-### 5.3 以后怎么更新
+3. **确认 `wrangler.toml` 已提交到 master**（本仓库已有，assets 指向 `.vitepress/dist`）
 
-全自动：你或 AI `git push` → GitHub Actions 构建 → 推 `dist` 分支 → Cloudflare 自动拉取部署。
-不需要手动干预，也不需要在 Cloudflare 配任何密钥。
+4. **删掉之前建的 Cloudflare Git 集成项目** —— 否则同一次 push 会走两条部署路径
 
-### 5.4 备选：用 API Token 让 Actions 直接推
+### 5.4 怎么触发一次部署（`gh` 不可用时的做法）
 
-如果想让 GitHub Actions 直接用 Wrangler 推（不依赖 Cloudflare 拉 GitHub），
-在仓库 Settings → Secrets 里配这两个，工作流里的 `deploy-cloudflare` job 就会自动生效：
+`gh workflow run` 在本机跑不通（原因见 §0.5），改用 **空 commit + SSH push** 触发 `on: push`：
 
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
+```bash
+git commit --allow-empty -m "ci: 触发部署"
+git push origin master
+```
 
-> 注意：**两种方式二选一**。如果已经在 Cloudflare 配了 Git 集成，就别再配 Token，
-> 否则同一次 push 会触发两次部署。
+然后去 <https://github.com/carmanxin/quant-course/actions> 看进度。
+全流程约 **2–3 分钟**（build ~100s + wrangler deploy ~60s），出 `https://quant-course.pages.dev`。
+
+> 只想提交代码、**不**想触发部署时，commit message 里加 `[skip ci]`
+> （本站 2026-09-10 清理仓库那次就是这么做的）。
+
+### 5.5 以后怎么更新
+
+全自动：改内容 → `git push` → Actions 构建 → Wrangler 推送 → 线上更新，无需手动干预。
+若改动了 ` ```python ` 代码块，记得先本地重跑预计算再提交（见 §7）。
+
+### 5.6 上线结果（2026-09-10 实测通过）
+
+- Actions run **#10 全绿**，耗时 2m 33s（build + deploy-cloudflare + publish-dist-branch 全部成功）
+- 线上地址：**<https://quant-course.pages.dev>**
+- 验收：首页 6 大模块、实时行情 ticker、Level-2 订单簿、策略 PnL 卡片全部正常；
+  1.3 凯利案例的 7 行结果表格 + 科学计数法 + SVG 图表正确渲染，
+  **503 个预计算产物无一处「暂无运行结果」**。
 
 ---
 
 ## 6. 上线验收清单
+
+> **2026-09-10 已实测通过**（线上：<https://quant-course.pages.dev>）。
+> 已验证：首页 6 大模块 + 实时行情 ticker + Level-2 订单簿 + 策略 PnL 卡片；
+> 1.3 凯利案例的 7 行结果表格、科学计数法、SVG 图表全部正确；
+> **503 个预计算产物无一处「暂无运行结果」**。
+> 下面清单保留给**换环境或重新部署**时复核用。
 
 打开线上网址，逐项检查：
 
@@ -415,7 +446,7 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 **一键检查命令**（把 URL 换成你自己的）：
 
 ```bash
-URL=https://quantlab.edgeone.app
+URL=https://quant-course.pages.dev
 curl -o /dev/null -s -w "首页: HTTP %{http_code}  %{time_total}s\n" $URL/
 curl -o /dev/null -s -w "章节: HTTP %{http_code}  %{time_total}s\n" $URL/guide/m01-overview/1.3-quant-mindset.html
 ```
@@ -499,6 +530,41 @@ git push
 
 ---
 
+### 8.2 构建到一半 `JavaScript heap out of memory`（Cloudflare 免费容器 2GB）
+
+**症状**：`npm install` 通过、`vitepress build` 也启动了，跑到一半崩：
+
+```
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed
+- JavaScript heap out of memory
+```
+
+**原因**：Cloudflare 免费构建实例是 2 vCPU / **2 GB RAM**，而本站 122 章全量构建需要 >2GB
+（实测堆内存涨到 2052 MB 崩溃；GitHub Actions 的 7GB 容器只需 89–104 秒）。
+
+**处理**：**不要在平台侧构建**，改用 §5.3 的「Actions 构建 + Wrangler 推送」。
+给 Node 加 `--max-old-space-size` 也没用 —— 那是容器总内存的天花板，不是 Node 默认值的问题。
+
+---
+
+### 8.3 `gh` 命令全部跑不通（本机环境）
+
+**症状**：`gh run list` / `gh workflow run` 报
+`To get started with GitHub CLI, please run: gh auth login`，或干脆连接超时。
+
+**原因**：`gh` 的 API 只走 HTTPS，而本机 `github.com:443` 被墙，且未登录。
+git 本身走 SSH（已配 `url.git@github.com:.insteadOf`）是通的 —— **push 正常，只是 `gh` 用不了**。
+
+**处理**：
+
+| 想做的事 | 替代做法 |
+|---|---|
+| 触发部署 | `git commit --allow-empty -m "ci: 触发部署" && git push origin master`（§5.4） |
+| 配 Secret | 网页端：仓库 Settings → Secrets and variables → Actions |
+| 看构建日志 | 网页端 <https://github.com/carmanxin/quant-course/actions> |
+
+---
+
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | **平台报「安装依赖失败」** | 平台自动 `npm install`（容器无 Python / Playwright 下 Chromium 超时 / dist 分支无 package.json） | 见 §8.0：框架预设改 `Other`、构建命令 `echo skip`、分支 `dist`；或直接传 ZIP |
@@ -511,6 +577,9 @@ git push
 | `npx edgeone` 报命令不存在 | npm 拉包失败 | 重试；或在 workflow 里改成 `npm i -g edgeone && edgeone pages deploy ...` |
 | 国内某些运营商打不开 | 国际版节点对某些线路不友好 | 切 Cloudflare Pages 对比；或上自定义域名做分运营商解析 |
 | push 后 Actions 没触发 | 分支名不匹配 | workflow 监听 `master`/`main`；`git branch --show-current` 确认 |
+| 构建崩在 `heap out of memory` | 平台免费容器只有 2GB（Cloudflare） | 见 §8.2：改 Actions 构建 + Wrangler 推送 |
+| `gh` 报未登录 / 连接超时 | `gh` 只走 HTTPS，本机 443 被墙 | 见 §8.3：改空 commit + SSH push，Secret 走网页配 |
+| 清理旧构建目录删不掉 | safe-delete 批量保护（本轮累计超 50 个文件） | 改用 `mv` 移出项目目录（同盘 mv 秒完、不触发保护） |
 
 ---
 

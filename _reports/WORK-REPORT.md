@@ -370,9 +370,48 @@ const payload = (hasRealOutput && !wrappedIsFatal && (hasUsefulText || hasVisual
 1. **补面试模块**:中资/外资/私募分开题库(已完成 80%)
 2. **加 RAG 检索**:课程内容已经结构化,加一个向量索引就能让 AI 问答
 3. **做"读者画像"标签**:根据章节前置依赖动态推荐"你应该先读哪一章"
-4. **生产端部署**:EdgeOne Pages 国内访问(详见 DEPLOY-PRD.md)
+4. **生产端部署**:~~EdgeOne Pages 国内访问~~ → **已于 2026-09-10 完成上线**(Cloudflare Pages,见下方 §9 与 DEPLOY-PRD.md v2.0)
 5. **国际化**:英文版 vitepress 站点复用同一份 markdown(少量注释调整)
 
 ---
 
-> 本报告完成于 2026-09-07。所有数据均来自工程实际状态(非估算),可用于对内交付、对外演示、或下一份工程的复刻基线。
+## 9. 上线部署实录（2026-09-10 补充）
+
+### 9.1 结果
+
+| 项 | 值 |
+|---|---|
+| 线上地址 | <https://quant-course.pages.dev> |
+| 平台 | Cloudflare Pages |
+| 构建 | GitHub Actions（`ubuntu-latest`，**7GB 内存**） |
+| 推送 | `wrangler pages deploy` |
+| 单次全流程 | 约 2–3 分钟（build ~100s + deploy ~60s） |
+| 平台侧构建 | **零** —— 不跑 `npm install`、不跑 `vitepress build` |
+
+### 9.2 三条被否掉的路线（均有实测证据）
+
+| 路线 | 失败原因 |
+|---|---|
+| 控制台拖拽上传 ZIP | 文件数上限 **1,000**，本工程产物 **4,393** 个 |
+| 平台 Git 集成 + `dist` 分支 | `npm ci` EUSAGE：dist 分支没有 `package.json` / lock；且新版界面**无 Production branch 编辑项**，建错即锁死 |
+| 平台 Git 集成 + `master` 自构建 | **OOM**：Cloudflare 免费容器 2 vCPU / **2GB RAM**，堆内存涨到 2052 MB 崩溃 |
+
+> **关键认知**：平台侧构建在这个站上不可能成功 —— 既不是配置问题也不是依赖问题，
+> 是 2GB 物理内存对 122 章全量构建的硬天花板。GitHub Actions 的 7GB 容器 89–104 秒即可跑完。
+
+### 9.3 工程侧的配套修改
+
+1. `playwright` 从 `dependencies` 移到 `devDependencies`，并加 `.npmrc`
+   `playwright_skip_browser_download=1`（避免 CI 下载 150MB Chromium 超时）
+2. `.gitignore` 重写，排除 20 类构建残留 —— 发现历史误提交了 **3,054 个**垃圾文件
+   （主要是 `public/code/_auto.bak.*`），已于 2026-09-10 一次性清理，仓库瘦身
+
+### 9.4 环境限制（本机）
+
+`gh` CLI 不可用（`github.com:443` 被墙 + 未登录），但 git 走 SSH 正常。
+因此：触发部署用**空 commit + SSH push**，配 Secret 与看日志走网页端。
+
+---
+
+> 本报告初版完成于 2026-09-07；2026-09-10 按实际上线结果补 §9，并校正 §8 第 4 条。
+> 所有数据均来自工程实际状态(非估算),可用于对内交付、对外演示、或下一份工程的复刻基线。

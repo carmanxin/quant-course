@@ -1,9 +1,14 @@
 # QuantLab 部署 PRD(Product Requirements Document)
 
-> 文档版本:v1.0 · 2026-09-07
+> 文档版本:v2.0 · 2026-09-10(**已实施并上线,按实战结果校正**)
 > 作者:主理人 + AI 协作者
-> 状态:**草案,待评审**
-> 关联文档:`_reports/WORK-REPORT.md`
+> 状态:**已上线** — <https://quant-course.pages.dev>
+> 关联文档:`_reports/WORK-REPORT.md`、`DEPLOY.md`(操作手册)
+>
+> **v2.0 主要修订**:原定 EdgeOne Pages 为主站,实战后**改判** ——
+> ①EdgeOne 系统域名受加速区域限制,国内访问 401(仅 3 小时预览链接有效);
+> ②Cloudflare 免费构建容器仅 2GB 内存,自构建必 OOM。
+> 最终采用:**GitHub Actions 构建 + Wrangler 推送 → Cloudflare Pages 分发,平台零构建**。
 
 ---
 
@@ -11,7 +16,8 @@
 
 把 `D:\AI\study\quant\` 这个量化交易学习站部署到**国内可访问、稳定、免费、不备案**的线上环境。
 
-**核心方案**:**腾讯云 EdgeOne Pages 国际版(edgeone.ai)** 作为主部署平台 + GitHub 作为代码托管 + Cloudflare Pages 作为灾备镜像。
+**核心方案(实战定稿)**:**GitHub Actions 构建 + Wrangler 推送 → Cloudflare Pages 分发**。
+平台侧**零构建** —— 只负责收产物、分发,不跑 `npm install`、不跑 `vitepress build`。
 
 **核心约束**:
 - 国内可访问(用户主要在中国大陆)
@@ -20,11 +26,18 @@
 - Git 自动化部署,无人工干预
 - 失败 5 分钟内可回滚
 
-**核心收益**:
-- 79 MB 构建产物 → CDN 边缘节点
-- 海外/亚洲访问 < 200ms
-- 中国大陆联通/移动用户访问比 Vercel/Cloudflare Pages 更友好
-- 与已有 GitHub 工作流零冲突
+**为什么不是原定的 EdgeOne(2026-09-10 实测改判)**:
+
+| 原判断 | 实战结果 |
+|---|---|
+| EdgeOne 国际版免备案、国内可直连 | ❌ 系统分配的 `*.edgeone.dev` 受**加速区域**限制:含大陆区仅 3 小时预览链接有效;不含大陆区则国内直接 **401** |
+| Cloudflare 作灾备 | ✅ **升为主站** —— `*.pages.dev` 长期有效、免备案 |
+| 平台可从源码构建 | ❌ Cloudflare 免费容器 2 vCPU / **2 GB RAM**,本站 122 章全量构建**必 OOM**(实测 2052 MB 崩溃);EdgeOne 容器无 Python |
+
+**实际达成**:
+- 79 MB 构建产物 → Cloudflare 全球 CDN
+- Actions 全绿 2m 33s,**503 个预计算产物零丢失**
+- push 即自动上线,无需人工干预
 
 ---
 
@@ -54,7 +67,7 @@ QuantLab 是一个 122 章、24 万字、439 个 Python 案例的 VitePress 学�
 ### 1.3 非目标(明确不做)
 
 - **不做实名认证/ICP 备案**:个人项目、个人非营利;备案需 15-30 天且流程复杂
-- **不做自定义域名绑定(初期)**:edgeone.ai 自带 `*.edgeone.app` 子域名足够,后续如要 `quantlab.xinming.cn` 再说
+- **不做自定义域名绑定(初期)**:Cloudflare 自带 `*.pages.dev` 子域名长期有效且免备案(已用 `quant-course.pages.dev` 上线),后续如要 `quantlab.xinming.cn` 再说
 - **不做边缘函数**:静态站点足够,SSR/Vercel Functions 不在范围
 - **不做付费 CDN**:免费额度足够(5GB 总项目大小,本工程构建产物 79MB 完全够)
 - **不做账号系统/评论**:纯只读内容站
@@ -67,8 +80,8 @@ QuantLab 是一个 122 章、24 万字、439 个 Python 案例的 VitePress 学�
 
 | 平台 | 免费额度 | 国内访问 | 备案要求 | Git 部署 | 综合评分 |
 |---|---|---|---|---|---|
-| **EdgeOne Pages 国际版** | 5GB 项目大小、无限流量 | ★★★★(亚洲 200ms,联通/移动友好) | 否 | ✅ GitHub | **推荐** |
-| Cloudflare Pages | 100 站点、500 构建/月 | ★★★(联通 300ms+,需 IP 优选) | 否 | ✅ GitHub | 次选 |
+| **Cloudflare Pages** | 100 站点、500 构建/月 | ★★★(联通 300ms+,需 IP 优选) | 否 | ✅ GitHub | ✅ **已采用并上线** |
+| EdgeOne Pages 国际版 | 5GB 项目大小、无限流量 | ★(系统域名国内 401 / 仅 3 小时预览有效) | 否 | ✅ GitHub | 暂缓(待备案域名) |
 | Vercel | 100GB 带宽/月 | ★★(`*.vercel.app` 国内常被屏蔽) | 否 | ✅ GitHub | 不推荐 |
 | Netlify | 100GB 带宽/月 | ★★(类似 Vercel) | 否 | ✅ GitHub | 不推荐 |
 | GitHub Pages | 1GB、100GB 带宽 | ★(国内常被墙) | 否 | ✅ GitHub | 不推荐 |
@@ -138,27 +151,38 @@ Site Owner: Click "Preview" in the console for a new link.
 | D. 接受 3 小时预览链接 | 无 | 时断时续 | ¥0 | 仅临时演示 |
 | E. 走备案流程 | 有域名 + 愿意等 10-20 天 | ★★★★★ | 域名费 | 长期备选 |
 
-**决策记录**：2026-09-08 用户选定 **方案 B（Cloudflare Pages）**。
+**决策记录**：2026-09-08 用户选定 **方案 B（Cloudflare Pages）**；
+2026-09-10 **完成上线**，线上地址 <https://quant-course.pages.dev>。
 EdgeOne 项目保留，待日后如有已备案域名可切回方案 A。
 
-**Cloudflare Pages 的两个实施要点**：
+### 2.5 ⚠️ 实施要点（2026-09-10 实战校正：推翻「Git 集成」）
 
-1. **不能用控制台拖拽上传**——拖拽上限 1,000 个文件，本工程构建产物 4,393 个文件，超限 4 倍多。
-   （Wrangler CLI 上限 20,000，Git 集成无此限制。）
-   单文件上限 25 MiB 不构成问题（最大 2.3 MiB），**卡点是文件数量不是体积**。
-2. **必须走 Git 集成 + dist 分支 + 构建命令留空**。配置：Production branch = `dist`、
-   Framework preset = `None`、Build command 与 output directory 均留空。
-   这样 Cloudflare 直接把分支根当站点发布，不触发构建（它容器里也没有 Python）。
-5. **支持 VitePress**:官方文档明确支持 React/Vue/VitePress 等主流框架
-6. **绑定邮箱即可用**:不需要绑卡、不需要手机号
+原计划「Cloudflare Git 集成 + dist 分支 + 构建命令留空」**实战失败三次，已废弃**：
 
-### 2.3 备选灾备方案:Cloudflare Pages
+| 尝试 | 结果 |
+|---|---|
+| Git 集成 + `dist` 分支 | ❌ `npm ci` EUSAGE（dist 分支没有 package.json / lock）；且新版界面**无 Production branch 编辑项**，分支建错即锁死 |
+| Git 集成 + `master` + `npm install` | ❌ **OOM**：堆内存涨到 2052 MB 崩溃。Cloudflare 免费容器只有 **2GB RAM** |
 
-如果 EdgeOne Pages 国际版出现意外,可一键迁移到 Cloudflare Pages:
-- 同样的 Git 集成逻辑
-- 同样的无限带宽(Cloudflare 杀手锏)
-- 联通用户可通过 IP 优选改善体验(社区方案成熟)
-- **唯一缺点**:免费版不支持国内节点,联通线路体验差
+**定稿做法：Actions 构建 + Wrangler 推送（平台零构建）**
+
+1. **不能用控制台拖拽上传** —— 拖拽上限 1,000 个文件，本工程产物 4,393 个，超限 4 倍多。
+   （Wrangler CLI 上限 20,000，够用。）单文件上限 25 MiB 不构成问题（最大 2.3 MiB），
+   **卡点是文件数量不是体积**。
+2. **构建全部放在 GitHub Actions**（`ubuntu-latest`，**7GB 内存** + 有 Python），约 100 秒完成；
+   检测到仓库已有 ≥480 个预计算产物就跳过 precompute（20min → 4min）。
+3. **产物用 `wrangler pages deploy` 推送**，Cloudflare 只分发、不构建。
+   凭证走仓库 Secret：`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`。
+4. **`gh` CLI 在本机不可用**（443 被墙），改用**空 commit + SSH push** 触发部署。
+
+### 2.6 Cloudflare Pages（实际主站，原「灾备」）
+
+Cloudflare 已从「备选灾备」**升为实际主站**：
+
+- `*.pages.dev` 域名长期有效、免备案、无 3 小时限制（相对 EdgeOne 的决定性优势）
+- 无限带宽
+- 联通用户可通过 IP 优选改善体验（社区方案成熟）
+- **唯一缺点**：免费版无国内节点，联通线路晚高峰可能慢；个别地区有被墙概率
 
 ---
 
@@ -371,6 +395,10 @@ CDN 节点更新(30 秒内全球生效)
 
 ### 10.1 功能验收
 
+> **2026-09-10 实测**:已上线 <https://quant-course.pages.dev>。
+> 抽样验证通过:1.3 凯利案例结果表格 + 科学计数法 + SVG 图表、首页 6 大模块与交互组件、
+> **503 个预计算产物无「暂无运行结果」**。全量 122 章 / 439 案例建议按下面清单复核。
+
 - [ ] 所有 122 章均可访问
 - [ ] 所有 439 个代码案例都有运行结果(蓝色 note 或真实输出)
 - [ ] 所有 23 个交互组件(ECharts/Vue)正常工作
@@ -397,7 +425,7 @@ CDN 节点更新(30 秒内全球生效)
 
 | 决策 | 选项 | 推荐 |
 |---|---|---|
-| 平台 | A. EdgeOne Pages B. Cloudflare Pages | **A** |
+| 平台 | A. EdgeOne Pages B. Cloudflare Pages | **B**(已决策 2026-09-08,已上线 2026-09-10) |
 | 域名 | A. `*.edgeone.app` 子域名 B. 购买国际域名 | **A 起步** |
 | 仓库可见性 | A. Public B. Private | **A**(教学内容本就希望公开) |
 | 是否做灾备 | A. 是 B. 否 | **A**(Cloudflare Pages 几乎零成本) |
@@ -413,32 +441,37 @@ CDN 节点更新(30 秒内全球生效)
 
 ## 12. 附录
 
-### 12.1 EdgeOne Pages 部署具体步骤
+### 12.1 ⚠️ 已废弃:让平台从源码构建(EdgeOne / Cloudflare 都行不通)
+
+初版写的「平台导入仓库 → 构建命令 `npm run build` → 输出 `.vitepress/dist`」
+**实战证明不可行**,两个致命原因:
+
+1. **容器没有 Python** —— 跑不了 precompute,439 个案例的运行结果会全丢。
+   (本站虽已把 503 个产物提交进仓库绕开了这点,但见第 2 条。)
+2. **内存不够** —— Cloudflare 免费构建实例只有 **2GB RAM**,
+   本站 122 章全量构建实测**堆内存涨到 2052 MB 时 OOM 崩溃**。
+
+> EdgeOne 另有一层限制:系统分配的 `*.edgeone.dev` 要么只有 3 小时预览链接,
+> 要么国内直接 401。故 EdgeOne 整体**暂缓**,待有已备案域名再启用。
+
+### 12.2 ✅ 实际采用:Cloudflare Pages 部署步骤(Actions 构建 + Wrangler 推送)
 
 ```
-1. 注册 edgeone.ai 账号(只需邮箱)
-2. 进入控制台 → Pages → 创建项目
-3. 选择"导入 GitHub 仓库"
-4. 授权 GitHub 账号,选择 quant-course 仓库
-5. 配置构建:
-   - 构建命令:npm run build
-   - 输出目录:.vitepress/dist
-   - Node 版本:20
-6. 点击"开始部署"
-7. 部署完成后会得到一个 URL:quantlab.edgeone.app
-8. 测试访问,记录延迟数据
+1. Cloudflare 控制台 → My Profile → API Tokens → Create Token
+   模板选 "Edit Cloudflare Workers" → 得到 CLOUDFLARE_API_TOKEN
+2. 控制台首页右侧栏复制 Account ID(或看地址栏 dash.cloudflare.com/<32位>)
+3. GitHub 仓库 → Settings → Secrets and variables → Actions:
+   - Secrets:   CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID
+   - Variables: CLOUDFLARE_PROJECT = quant-course
+4. 确认仓库已有 wrangler.toml(assets 指向 .vitepress/dist)
+5. 删掉之前建的 Cloudflare Git 集成项目(避免两条部署路径并存)
+6. 触发部署(本机 gh 不可用,走 SSH):
+     git commit --allow-empty -m "ci: 触发部署" && git push origin master
+7. Actions 自动跑: npm ci → vitepress build → wrangler pages deploy
+8. 约 2-3 分钟后得到 https://quant-course.pages.dev
 ```
 
-### 12.2 Cloudflare Pages 灾备部署
-
-```
-1. 注册 Cloudflare 账号
-2. Pages → Create → Connect to Git
-3. 选择同一仓库
-4. 配置同上
-5. 部署后得到 quantlab.pages.dev
-6. 配置 DNS:把 quantlab.edgeone.app CNAME 改为 quantlab.pages.dev(应急时)
-```
+> 日常更新只需 `git push`,全自动。注意:改了 ```python 代码块要先本地重跑预计算再提交。
 
 ### 12.3 参考资料
 
@@ -453,9 +486,9 @@ CDN 节点更新(30 秒内全球生效)
 
 | 角色 | 姓名 | 签字 | 日期 |
 |---|---|---|---|
-| 产品负责人 | 辛浩铭 | (待) | 2026-09-07 |
-| 技术评审 | AI 协作者 | ✅ 已完成方案设计 | 2026-09-07 |
-| 运维负责人 | (待) | (待) | (待) |
+| 产品负责人 | 辛浩铭 | ✅ 已确认上线 | 2026-09-10 |
+| 技术评审 | AI 协作者 | ✅ 方案设计 + 实战校正(v2.0) | 2026-09-10 |
+| 运维负责人 | GitHub Actions(自动化) | ✅ 已跑通,全绿 | 2026-09-10 |
 
 ---
 

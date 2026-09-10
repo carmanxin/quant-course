@@ -29,7 +29,7 @@
 
 | # | 决策 | 推荐 | 你的选择 |
 |---|---|---|---|
-| D1 | 部署平台 | **EdgeOne Pages 国际版**（免备案、国内友好） | ☐ EdgeOne ☐ Cloudflare ☐ 其他 |
+| D1 | 部署平台 | **Cloudflare Pages**（`*.pages.dev` 长期有效、免备案；EdgeOne 系统域名会 401，已改判） | ☑ **Cloudflare** |
 | D2 | 仓库可见性 | **Public**（Actions 时长免费 unlimited） | ☐ Public ☐ Private |
 | D3 | 是否提交预计算产物 `public/code/` | **是**（CI 从 20 min 降到 4 min） | ☐ 提交 ☐ 不提交 |
 
@@ -45,7 +45,7 @@
 ### 0.2 注册账号
 
 - [ ] GitHub 账号（<https://github.com/signup>）
-- [ ] EdgeOne Pages 国际版（**<https://edgeone.ai>**，不是腾讯云国内控制台）
+- [ ] Cloudflare（**<https://dash.cloudflare.com>**，注册即用，不需绑卡）
 - [ ] 记下账号邮箱：`________________`
 
 ### 0.3 本地环境自检
@@ -153,7 +153,8 @@ git ls-files requirements-ci.txt
 
 - [ ] 打开 `https://github.com/<用户名>/quant-course/settings/secrets/actions`
 - [ ] 新建 `EDGEONE_API_TOKEN`
-  - 取值：EdgeOne 控制台 → 右上角头像 → API Token → Create Token
+  - 取值：Cloudflare 控制台 → My Profile → API Tokens → Create Token（模板选 Edit Cloudflare Workers）
+  - 另需 Account ID：控制台首页右侧栏，或看地址栏 `dash.cloudflare.com/<这串 32 位就是>`
   - ⚠️ token 只显示一次，先粘到记事本
 - [ ] （可选）新建 `CLOUDFLARE_API_TOKEN`
 - [ ] （可选）新建 `CLOUDFLARE_ACCOUNT_ID`
@@ -179,7 +180,7 @@ git ls-files requirements-ci.txt
 | extract-py-fences | 1 min | `____` |
 | precompute（若跑了） | 8-15 min | `____` |
 | vitepress build | 3-5 min | `____` |
-| 部署 EdgeOne | 2 min | `____` |
+| 部署 Cloudflare（wrangler pages deploy） | 1 min | `____` |
 | **总计** | **4-25 min** | `____` |
 
 - [ ] 每一步都是绿的
@@ -188,15 +189,15 @@ git ls-files requirements-ci.txt
 
 ### 2.3 拿到 URL
 
-- [ ] 登录 <https://edgeone.ai> → Pages → 看到项目 `quantlab`
-- [ ] 复制访问链接：`https://______________________.edgeone.app`
+- [ ] 登录 <https://dash.cloudflare.com> → Workers & Pages → 看到项目 `quant-course`
+- [ ] 访问链接：`https://quant-course.pages.dev`
 - [ ] 浏览器打开，首页正常
 
 ### 2.4 顺手做三件事
 
 - [ ] 把 URL 存进浏览器书签
 - [ ] 记到手机备忘录（方便随时发给别人）
-- [ ] 在项目设置里改个好记的子域名（如 `quantlab` 没被占用就直接申请 `quantlab.edgeone.app`）
+- [ ] 域名前缀由项目名决定：仓库 Variables 里设 `CLOUDFLARE_PROJECT = quant-course` → 域名即 `quant-course.pages.dev`
 
 **Day 2 验收**：☐ 构建全绿 ☐ 拿到 URL ☐ 首页能打开
 
@@ -219,7 +220,7 @@ git ls-files requirements-ci.txt
 
 ```bash
 # 改 URL 后运行
-URL=https://quantlab.edgeone.app
+URL=https://quant-course.pages.dev
 for p in "/" "/guide/m01-overview/1.3-quant-mindset.html" "/guide/m03-python-data/3.3-performance.html" "/guide/m04-backtest/4.1-engine.html"; do
   printf "%-55s " "$p"
   curl -o /dev/null -s -w "HTTP %{http_code}  %{time_total}s\n" "$URL$p"
@@ -285,7 +286,7 @@ curl -s "$URL/guide/m04-backtest/4.1-engine.html" | grep -c "本段代码定义�
 - [ ] 注册 <https://uptimerobot.com>（免费 50 个监控点，5 分钟粒度）
 - [ ] Add New Monitor：
   - Type: HTTP(s)
-  - URL: 你的 EdgeOne URL
+  - URL: `https://quant-course.pages.dev`
   - Interval: 5 min
 - [ ] 填告警邮箱
 - [ ] 再加一个监控灾备 URL（可选）
@@ -358,7 +359,7 @@ https://你的网址
 **如果某运营商慢（>5s）**
 
 - [ ] A/B 对比：把 Cloudflare 的 URL 也发给该运营商用户，看哪个快
-- [ ] EdgeOne 慢 → 后续考虑自定义域名 + 分运营商解析；或切 Cloudflare
+- [ ] 若国内访问慢 → 自定义域名 + 分运营商解析 / IP 优选；或待有备案域名后切 EdgeOne 国内节点
 - [ ] 两家都慢 → 说明不是平台问题，看 6.2
 
 **如果首屏慢（>3s）**
@@ -375,9 +376,9 @@ https://你的网址
 
 ### 6.2 通用优化项（都值得做）
 
-- [ ] 确认 EdgeOne 已开启 HTTPS（默认开）
+- [ ] 确认 Cloudflare 已开启 HTTPS（默认开；强制 HTTPS 在 SSL/TLS → Edge Certificates 设）
 - [ ] 确认 `Cache-Control` 对 `assets/` 长期缓存（VitePress 默认带 hash 文件名，安全）
-- [ ] 在 EdgeOne 控制台开启「智能压缩」（Gzip/Brotli）
+- [ ] Cloudflare 默认已启用 Brotli 压缩，无需额外配置
 - [ ] 给 `<head>` 加 favicon（已有 `/favicon.svg`）
 
 ### 6.3 体验优化（可选）
@@ -434,7 +435,7 @@ https://你的网址
 
 **最优先级：平台控制台回滚（30 秒）**
 
-1. 打开 <https://edgeone.ai> → Pages → 你的项目
+1. 打开 <https://dash.cloudflare.com> → Workers & Pages → 项目 → Deployments
 2. **部署记录**（Deployments）
 3. 找到上一个成功的版本 → 点「回滚」/「Rollback」
 
@@ -457,9 +458,9 @@ git push
 |---|---|
 | 本地工程路径 | `D:\AI\study\quant` |
 | GitHub 仓库 | `https://github.com/______/quant-course` |
-| 主站 URL | `https://________.edgeone.app` |
+| 主站 URL | `https://quant-course.pages.dev` |
 | 灾备 URL | `https://________.pages.dev` |
-| EdgeOne 控制台 | <https://edgeone.ai> |
+| Cloudflare 控制台 | <https://dash.cloudflare.com> |
 | Cloudflare 控制台 | <https://dash.cloudflare.com> |
 | GitHub Actions | `https://github.com/______/quant-course/actions` |
 | 本地构建 | `npm run build` |
@@ -472,10 +473,10 @@ git push
 
 | 日期 | 决策 | 选择 | 理由 |
 |---|---|---|---|
-| 2026-09-08 | 部署平台 | EdgeOne Pages 国际版 | 免备案 + 国内联通/移动优于 Cloudflare |
+| 2026-09-08（09-10 改判） | 部署平台 | **Cloudflare Pages** | EdgeOne 系统域名国内 401；Cloudflare 自构建 2GB OOM → 改走 Actions 构建 + Wrangler 推送 |
 | | 仓库可见性 | | |
 | | 是否提交 public/code | | |
-| | 域名策略 | 先用 `*.edgeone.app` | 跑 3-6 个月再考虑买域名 |
+| | 域名策略 | 先用 `*.pages.dev` | 跑 3-6 个月再考虑买域名 |
 | | | | |
 
 ---
