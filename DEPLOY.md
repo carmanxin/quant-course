@@ -332,6 +332,39 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 > 如果保存后构建报 `esbuild` 相关错误（极少见），把 Build command 改成
 > `npm install && npx vitepress build`（不跳过 postinstall）即可。
 
+### 5.3 界面反复失败？直接切到 Actions 自动部署（最稳，推荐）
+
+新版 Workers Builds 界面有三个坑叠加：**没有 Production branch 编辑项**（创建时锁死分支）、
+**Build command 必填**、且误选 `dist` 分支后 `npm ci` 必 EUSAGE。如果你在界面上卡超过一轮，
+**别在界面上耗了**，改用仓库里已经写好的 `deploy-cloudflare` job：
+
+这条路线 Cloudflare 界面**什么都不用填**，由 GitHub Actions（有 Python、有 lock）构建完，
+用 Wrangler 直接把 `dist` 推上去。
+
+1. Cloudflare 控制台 → My Profile → API Tokens → **Create Token** → 模板选
+   "Edit Cloudflare Workers" → 拿到 `CLOUDFLARE_API_TOKEN`
+2. 控制台首页右侧栏复制 **Account ID**（`CLOUDFLARE_ACCOUNT_ID`）
+3. GitHub 仓库 → Settings → Secrets and variables → Actions → 加两个 Repository secret：
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+4. （若 Cloudflare 项目名不是 `quantlab`）再在 Variables 里加 `CLOUDFLARE_PROJECT = 你的项目名`
+5. `git push` 一次，或 `gh workflow run deploy.yml` → Actions 自动跑
+   `build → deploy-cloudflare`，约 2 分钟拿到 `*.pages.dev`
+
+> 这条和 Git 集成**二选一**：用了 Actions 部署，就别在 Cloudflare 配 Git 集成，
+> 否则同一次 push 触发两次部署。若之前建过 Git 集成项目，删掉它即可。
+
+#### ⚠️ 实测：Cloudflare 免费构建容器 2GB 内存不够，A 路线（自构建）不可行
+2026-09-10 第三次构建（界面重新建项目 + `npm install --ignore-scripts && npx vitepress build`）：
+- `npm install` 通过、`vitepress build` 启动，但 **堆内存涨到 2052 MB 后 OOM 崩溃**
+  （`FATAL ERROR: Ineffective mark-compacts near heap limit`）。
+- 同时 Cloudflare 自动 `pip install -r requirements.txt` 装了全套 Python（torch+CUDA 3GB+，纯浪费）。
+- 根因：Cloudflare 免费构建实例 **2 vCPU / 2 GB RAM**，而本站 122 章全量 VitePress 构建
+  需要 >2GB（GitHub Actions 用 7GB 容器才 89-104s 跑完）。
+- **推论**：Cloudflare Git 集成「自己拉源码构建」在这站上必 OOM，无论怎么改 Build command。
+  唯一稳的路是 **B 方案：GitHub Actions（7GB）构建完，用 Wrangler 把 `dist` 推上去**（平台零构建）。
+  不要再在 Cloudflare 界面配构建命令了。
+
 > **旧版界面（有 Production branch 卡片）**：分支填 `dist`、Framework preset 选 `None`、
 > Build command 和 Build output directory 都留空 —— 那时直接发已构建产物。
 > 目前新建项目基本都是上面的 Workers Builds 流程，按上面填。
