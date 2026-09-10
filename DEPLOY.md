@@ -313,7 +313,7 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 | 配置项 | 填什么 | 说明 |
 |---|---|---|
 | Branch（分支） | **`master`** | 不是 dist。master 已含 503 个预计算产物，平台只需跑 VitePress 构建 |
-| Build command | `npm ci --ignore-scripts && npx vitepress build` | `npm ci` 用 lock 安装；`--ignore-scripts` 跳过 Playwright 下载 Chromium；再用 VitePress 出静态站 |
+| Build command | `npm install --ignore-scripts && npx vitepress build` | 用 `npm install`（不依赖 lock 文件，避免 `npm ci` 找不到 lock 直接 EUSAGE）；`--ignore-scripts` 跳过 Playwright 下载 Chromium |
 | Deploy command | `npx wrangler deploy` | 保留界面默认值即可，读仓库的 `wrangler.toml` 发布静态资源 |
 | Framework preset | 选 **None** 或留空 | 别让平台用自己的框架猜测 |
 
@@ -322,8 +322,15 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
    不加也行：`--ignore-scripts` 已经把 postinstall 跳过了。
 6. **Save and Deploy**，首次构建约 3-4 分钟，拿到 `https://quantlab.pages.dev`
 
-> 如果保存后构建报 `esbuild` 相关错误（极少见），把 Build command 改回
-> `npm ci && npx vitepress build`（不跳过 postinstall）即可。
+#### ⚠️ 分支配错的典型症状（2026-09-08 实测）
+构建日志第一行就报 `npm error code EUSAGE` + `npm ci can only install with an existing package-lock.json`：
+**100% 是分支配成了 `dist`**（或任何没有 `package.json` 的分支）。dist 分支只有构建产物，
+没有 `package.json` / `package-lock.json`，`npm ci` 必然失败。
+**修复**：把项目的 Production branch 改回 `master`（新版界面在项目 **Settings → Builds & deployments**
+里改；若改不了就删项目重建，创建时 Branch 选 `master`）。
+
+> 如果保存后构建报 `esbuild` 相关错误（极少见），把 Build command 改成
+> `npm install && npx vitepress build`（不跳过 postinstall）即可。
 
 > **旧版界面（有 Production branch 卡片）**：分支填 `dist`、Framework preset 选 `None`、
 > Build command 和 Build output directory 都留空 —— 那时直接发已构建产物。
