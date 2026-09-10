@@ -28,11 +28,16 @@ export function useECharts(options: Ref<any>) {
 
   onMounted(() => {
     initChart()
-    window.addEventListener('resize', () => chart?.resize())
+    const onResize = () => chart?.resize()
+    window.addEventListener('resize', onResize)
+    // 保存清理函数
+    ;(chartRef.value as any).__cleanup = () => window.removeEventListener('resize', onResize)
   })
 
   onUnmounted(() => {
-    window.removeEventListener('resize', () => chart?.resize())
+    if (chartRef.value && (chartRef.value as any).__cleanup) {
+      ;(chartRef.value as any).__cleanup()
+    }
     chart?.dispose()
   })
 

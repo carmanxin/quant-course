@@ -481,4 +481,31 @@ export default defineConfig({
   buildConcurrency: 8,
   // 便携版输出位置（避免与 .vitepress/dist 的 safe-delete 冲突）
   outDir: process.env.QPORTABLE ? 'portable/dist' : '.vitepress/dist',
+  vite: {
+    plugins: [
+      {
+        name: 'quantlab-strip-woff2-preload',
+        transformIndexHtml(html) {
+          // VitePress 默认主题 head 会注入 Inter 字体的 woff2 preload，
+          // 但项目 CSS 用的是 PingFang/YaHei，这个 preload 永远不会被命中，
+          // 触发控制台 "preloaded but not used within a few seconds" 警告。
+          return html.replace(
+            /<link rel="preload"[^>]*\.woff2[^>]*>\s*/g,
+            ''
+          )
+        }
+      }
+    ],
+    build: {
+      rollupOptions: {
+        output: {
+          // 把 echarts 拆成独立 vendor chunk：theme 不再背 950KB 图表库，
+          // 包含 echarts 组件的页面才会预加载这个 chunk
+          manualChunks(id) {
+            if (id.includes('node_modules/echarts')) return 'echarts-vendor'
+          }
+        }
+      }
+    }
+  },
 })
