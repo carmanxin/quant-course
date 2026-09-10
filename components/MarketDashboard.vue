@@ -1,6 +1,6 @@
 <template>
   <div class="mdb" :class="{ 'mdb--bull': trendBull, 'mdb--bear': !trendBull }">
-    <!-- 顶部实时行情条 -->
+    <!-- 顶部演示行情条（前端模拟，非真实行情） -->
     <div class="mdb-ticker">
       <div class="mdb-ticker-row">
         <span v-for="(it, i) in displayQuotes" :key="i" class="mdb-tk-item">
@@ -39,15 +39,15 @@
           </g>
           <g class="candles">
             <g v-for="(c, idx) in candles" :key="idx" :transform="`translate(${idx * 8 + 4},0)`">
-              <line :x1="0" :y1="200 - c.h * 1.6" :x2="0" :y2="200 - c.l * 1.6"
+              <line :x1="0" :y1="priceScale.toY(c.h)" :x2="0" :y2="priceScale.toY(c.l)"
                     :class="c.o <= c.c ? 'wick bull' : 'wick bear'" />
-              <rect :x="-3" :y="200 - Math.max(c.o, c.c) * 1.6"
-                    width="6" :height="Math.abs(c.o - c.c) * 1.6"
+              <rect :x="-3" :y="priceScale.toY(Math.max(c.o, c.c))"
+                    width="6" :height="Math.abs(priceScale.toY(c.o) - priceScale.toY(c.c))"
                     :class="c.o <= c.c ? 'body bull' : 'body bear'" />
             </g>
           </g>
           <path :d="maPath" class="ma" />
-          <line x1="0" :y1="200 - lastCandle.c * 1.6" x2="400" :y2="200 - lastCandle.c * 1.6" class="lastline" stroke-dasharray="2 2" />
+          <line x1="0" :y1="priceScale.toY(lastCandle.c)" x2="400" :y2="priceScale.toY(lastCandle.c)" class="lastline" stroke-dasharray="2 2" />
         </svg>
         <div class="mdb-chart-foot">
           <span>成交量 {{ volDisplay }}</span>
@@ -86,7 +86,7 @@
     <!-- 底部策略 PnL 曲线 -->
     <div class="mdb-pnl">
       <div class="mdb-pnl-head">
-        <span>策略 PnL · 回测模拟</span>
+        <span>策略 PnL · 演示数据（随机游走，非真实回测）</span>
         <span class="mdb-pnl-val" :class="trendBull ? 'up' : 'down'">
           {{ (equityNow - 100000).toFixed(0) }} USD
           <small>({{ ((equityNow / 100000 - 1) * 100).toFixed(2) }}%)</small>
@@ -119,7 +119,7 @@ interface Quote { sym: string; px: number; chg: number }
 interface Candle { o: number; c: number; h: number; l: number }
 interface BookLevel { px: number; sz: number }
 
-// ============ 实时行情初始值 ============
+// ============ 演示行情初始值（前端模拟，非真实行情） ============
 const quotes = ref<Quote[]>([
   { sym: 'AAPL',    px: 219.45, chg: -0.78 },
   { sym: 'NVDA',    px: 912.80, chg:  4.56 },
@@ -159,15 +159,29 @@ function generateInitialCandles(): Candle[] {
   return list
 }
 
+// K 线坐标归一化：把价格区间映射到视口 [10, 190]，避免不同量级（订单簿≈100 / SPX≈5700）
+// 共用同一缩放系数导致蜡烛画在视口外
+const priceScale = computed(() => {
+  const cs = candles.value
+  if (cs.length === 0) return { lo: 0, hi: 1, toY: (p: number) => 100 }
+  let lo = Infinity, hi = -Infinity
+  for (const c of cs) { if (c.l < lo) lo = c.l; if (c.h > hi) hi = c.h }
+  if (lo === hi) { lo -= 1; hi += 1 }
+  const range = hi - lo
+  const toY = (p: number) => 190 - ((p - lo) / range) * 180
+  return { lo, hi, toY }
+})
+
 const maPath = computed(() => {
   if (candles.value.length < 20) return ''
   const closes = candles.value.map(c => c.c)
   const points: string[] = []
+  const toY = priceScale.value.toY
   for (let i = 19; i < closes.length; i++) {
     const slice = closes.slice(i - 19, i + 1)
     const avg = slice.reduce((a, b) => a + b) / 20
     const x = i * 8 + 4
-    const y = 200 - avg * 1.6
+    const y = toY(avg)
     points.push(`${i === 19 ? 'M' : 'L'} ${x},${y}`)
   }
   return points.join(' ')
@@ -271,7 +285,8 @@ let chartT: number | undefined
 let bookT: number | undefined
 let equityT: number | undefined
 
-onMounted(() => {
+function startIntervals() {
+  if (tkrT || chartT || bookT || equityT) return
   tkrT = window.setInterval(() => {
     quotes.value = quotes.value.map(q => {
       const drift = (Math.random() - 0.5) * 0.005
@@ -309,13 +324,29 @@ onMounted(() => {
       tradeCount.value += 1
     }
   }, 600)
+}
+
+function stopIntervals() {
+  if (tkrT) { clearInterval(tkrT); tkrT = undefined }
+  if (chartT) { clearInterval(chartT); chartT = undefined }
+  if (bookT) { clearInterval(bookT); bookT = undefined }
+  if (equityT) { clearInterval(equityT); equityT = undefined }
+}
+
+onMounted(() => {
+  startIntervals()
+  // 页面不可见时暂停定时器，避免后台耗电
+  document.addEventListener('visibilitychange', onVis)
 })
 
+function onVis() {
+  if (document.hidden) stopIntervals()
+  else startIntervals()
+}
+
 onUnmounted(() => {
-  if (tkrT) clearInterval(tkrT)
-  if (chartT) clearInterval(chartT)
-  if (bookT) clearInterval(bookT)
-  if (equityT) clearInterval(equityT)
+  stopIntervals()
+  document.removeEventListener('visibilitychange', onVis)
 })
 </script>
 

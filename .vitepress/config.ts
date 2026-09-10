@@ -246,9 +246,10 @@ const sidebar = [
 
 export default defineConfig({
   title: 'QuantLab · 量化交易系统设计与实践',
-  description: 'FinTech 风格的量化交易学习平台 · 10 大模块 · 50+ 章节 · 9 个交互式计算器',
+  description: 'FinTech 风格的量化交易学习平台 · 20 大模块 · 120+ 章节 · 8 个交互式计算器 · 439 个 Python 实战案例',
   lang: 'zh-CN',
   appearance: true,
+  cleanUrls: true,
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#00E5A0' }],

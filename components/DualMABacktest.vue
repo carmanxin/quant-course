@@ -26,7 +26,18 @@ const slowPeriod = ref(30)
 
 function run() {
   const fast = fastPeriod.value, slow = slowPeriod.value
-  if (fast >= slow) return
+  if (fast >= slow) {
+    priceChart?.clear()
+    eqChart?.clear()
+    eqChart?.setOption({
+      grid: { left: 50, right: 20, top: 15, bottom: 30 },
+      xAxis: { type: 'category', show: false },
+      yAxis: { type: 'value', axisLabel: { color: '#f87171', fontSize: 11 } },
+      series: [],
+      title: { text: `参数无效：快线周期 (${fast}) 必须小于慢线周期 (${slow})`, left: 'center', top: 'middle', textStyle: { color: '#f87171', fontSize: 13, fontWeight: 600 } }
+    }, { notMerge: true })
+    return
+  }
 
   const prices = [100]
   for (let i = 1; i < 200; i++) prices.push(Math.max(prices[i - 1] + (Math.random() - 0.48) * 2.5, 10))

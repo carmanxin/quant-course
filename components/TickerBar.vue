@@ -1,8 +1,8 @@
 <template>
-  <div class="ft-ticker-wrap" aria-label="实时行情">
+  <div class="ft-ticker-wrap" aria-label="演示行情（前端随机模拟，仅供交互展示）">
     <div class="ft-ticker-label">
       <span class="ft-ticker-dot"></span>
-      <span>实时行情</span>
+      <span>演示行情</span>
     </div>
     <div class="ft-marquee">
       <div class="ft-marquee-track">
@@ -44,21 +44,30 @@ const itemsDoubled = computed(() => [...items.value, ...items.value])
 
 let timer: number | undefined
 
-onMounted(() => {
-  // 每 2 秒模拟价格跳动
+function start() {
+  if (timer) return
+  // 每 2 秒模拟价格跳动（演示数据，非真实行情）
   timer = window.setInterval(() => {
     items.value = items.value.map(it => {
-      // 随机漫步
       const drift = (Math.random() - 0.5) * 0.006
       const newChg = it.chg + drift * 10
       const newPx  = it.px * (1 + drift)
       return { ...it, px: newPx, chg: newChg }
     })
   }, 2000)
+}
+function stop() { if (timer) { clearInterval(timer); timer = undefined } }
+
+function onVis() { document.hidden ? stop() : start() }
+
+onMounted(() => {
+  start()
+  document.addEventListener('visibilitychange', onVis)
 })
 
 onUnmounted(() => {
-  if (timer) clearInterval(timer)
+  stop()
+  document.removeEventListener('visibilitychange', onVis)
 })
 </script>
 
