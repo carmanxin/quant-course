@@ -1,0 +1,4 @@
+{
+  "text": "[dry-run] would execute DDL for tick_trades (686 chars, 17 lines)\r\n[dry-run] would execute DDL for tick_minute_bars (477 chars, 15 lines)\r\n\r\n=== 设计要点 ===\r\n  ENGINE            MergeTree                 后台归并有序数据块，写入吞吐高\r\n  PARTITION BY      toYYYYMMDD(timestamp)     按日分区 → 时间范围查询直接裁掉无关分区\r\n  ORDER BY          (symbol, timestamp)       先 symbol 后时间：单票时间序列扫描连续\r\n  LowCardinality    symbol / exchange         字典编码，重复字符串只存一次\r\n  TTL               timestamp + 30 DAY        热数据留 30 天，过期自动落冷/删除\r\n  index_granularity 8192                      稀疏索引：每 8192 行一个标记\r\n\r\n=== 查询 “某只票某一天的全部 tick” 的扫描量 ===\r\n  全表行数:             25,200,000,000\r\n  分区裁剪后:              100,000,000  (0.3968%)\r\n  稀疏索引命中 granule:               3 个 → 实际读取约 24,576 行\r\n  相对全表扫描节省:    99.999902%\r\n\r\n=== 排序键顺序的影响 ===\r\n  ORDER BY (symbol, timestamp) → 单票回放快；跨票同一时刻切片慢\r\n  ORDER BY (timestamp, symbol) → 全市场快照快；单票回放要跳着读\r\n  两类查询都重要时，用第二张表或 PROJECTION 各存一份排序",
+  "svgs": []
+}

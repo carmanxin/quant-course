@@ -1,0 +1,4 @@
+{
+  "text": "===== 执行质量报告 =====\r\ntrading_days: 130\r\navg_slippage_bps: 1.528256534292446\r\nmax_slippage_bps: 7.705462981309442\r\navg_fill_rate: 0.9749626718887566\r\navg_cancel_rate: 0.027734022900485045\r\ntotal_alerts: 1\r\n\r\n===== 上线检查清单 =====\r\n  data_pipeline: PASS\r\n    - data_freshness: Real-time\r\n    - missing_rate: 0.02%\r\n    - outlier_handled: True\r\n  signal_stability: PASS\r\n    - corr_vs_backtest: 0.995\r\n    - timestamp_aligned: True\r\n  execution_readiness: WARN\r\n    - limit_up_down_handled: True\r\n    - position_limits_set: True\r\n    - kill_switch_configured: False\r\n  risk_management: PASS\r\n    - max_order_size: 1M CNY\r\n    - max_position: 10%\r\n    - sector_limit: 30%",
+  "svgs": []
+}

@@ -1,0 +1,4 @@
+{
+  "text": "训练集准确率: 0.929\r\n测试集准确率: 0.753\r\n预测概率范围: [0.064, 0.978]\r\n\r\n特征重要性:\r\n  Feature 1: 0.3995\r\n  Feature 2: 0.3012\r\n  Feature 3: 0.1234\r\n  Feature 4: 0.0757\r\n  Feature 5: 0.1002",
+  "svgs": []
+}

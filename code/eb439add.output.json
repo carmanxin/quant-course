@@ -1,0 +1,4 @@
+{
+  "text": "=== RL 交易环境就绪 ===\r\n  价格序列长度    : 500\r\n  价格范围        : [88.5, 138.6]\r\n  动作空间        : Discrete(3)  (0=空仓, 1=半仓, 2=全仓)\r\n  观测空间维度    : 23 (持仓1 + 收益窗口20 + 波动率1 + 趋势1)\r\n\r\n  reset 后观测形状  : (23,), dtype=float32\r\n  step(2) 返回元素 : 5 个 -> (obs, reward, terminated, truncated, info)\r\n  info 字段        : ['total_pnl', 'position', 'current_price', 'n_trades']\r\n\r\n=== 基线对比（单轮 episode，含 0.1% 单边成本）===\r\n  策略                   总收益      交易次数      步数\r\n  随机策略              -7.35%       306     479\r\n  始终全仓              16.42%         2     479\r\n  买入持有(无成本)         16.62%         1     480\r\n\r\n=== 观察 ===\r\n  · 随机策略频繁换手，交易成本侵蚀收益，通常显著跑输买入持有\r\n  · 始终全仓≈买入持有，差额即累计交易成本\r\n  · PPO 要超越上述基线才有训练价值——这正是 RL 交易的现实门槛\r\n\r\n  提示: train_rl_trader(prices) 需先 pip install stable-baselines3\r\n        （本页预计算结果由上述不依赖 SB3 的环境自检 + 基线对比生成）",
+  "svgs": []
+}

@@ -1,0 +1,4 @@
+{
+  "text": "--- S0 (int) ---\r\n100\r\n\r\n--- atm_vol (float) ---\r\n0.2\r\n\r\n--- iv (ndarray) ---\r\nndarray shape=(50,) dtype=float64 head10=[np.float64(0.23), np.float64(0.22877551020408166), np.float64(0.22755102040816327), np.float64(0.22632653061224492), np.float64(0.22510204081632654), np.float64(0.22387755102040818), np.float64(0.2226530612244898), np.float64(0.22142857142857145), np.float64(0.2202040816326531), np.float64(0.2189795918367347)]\r\n\r\n--- skew (float) ---\r\n-0.15\r\n\r\n--- strikes (ndarray) ---\r\nndarray shape=(50,) dtype=float64 head10=[np.float64(80.0), np.float64(80.81632653061224), np.float64(81.63265306122449), np.float64(82.44897959183673), np.float64(83.26530612244898), np.float64(84.08163265306122), np.float64(84.89795918367346), np.float64(85.71428571428571), np.float64(86.53061224489795), np.float64(87.34693877551021)]",
+  "svgs": []
+}

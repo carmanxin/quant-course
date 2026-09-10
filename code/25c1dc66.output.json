@@ -1,0 +1,4 @@
+{
+  "text": "数据回补器(DataBackfiller)演示就绪\r\n  - 实时检测每只标的的最后缓存 tick\r\n  - 当 gap 超过阈值(默认 10 秒)时自动触发回补\r\n  - 从 REST API 获取缺失区间历史数据并 publish 到 Redis channel\r\n\r\n  detect_and_backfill(self, symbol: str)  (async)\r\n  典型调用: await backfiller.detect_and_backfill('AAPL')",
+  "svgs": []
+}
