@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n警告：协方差为正，Roll估计不适用\r\n========================================================\r\n自动调用 estimate_roll_spread(...) — 运行结果:\r\n========================================================\r\n0\r\n警告：协方差为正，Roll估计不适用\r\n=== 微观结构分析 ===\r\nroll_spread: 0.000000\r\nroll_spread_bps: 0.00 bps\r\neffective_cost_bps: -0.09 bps\r\namihud_illiquidity: 0.000017\r\navg_daily_volume: 0.100000\r\n========================================================\r\n自动调用 analyze_transaction_costs(...) — 运行结果:\r\n========================================================\r\n[roll_spread] int\r\n0\r\n[roll_spread_bps] float64\r\nnp.float64(0.0)\r\n[effective_cost_bps] float64\r\nnp.float64(-0.09006319894527788)\r\n[amihud_illiquidity] float64\r\nnp.float64(1.7332599165682072e-05)\r\n[avg_daily_volume] float64\r\nnp.float64(0.1)",
+  "svgs": []
+}

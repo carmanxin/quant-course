@@ -1,0 +1,4 @@
+{
+  "text": "✓ test_portfolio_cash\r\n  ✗ test_risk_drawdown: 回撤超过 10% 应该拒绝新订单\r\n  ✓ test_execution_commission\r\n  ✓ test_strategy_no_signal\r\n\r\n3/4 测试通过\r\n--- 结果 ---\r\n--- run_unit_tests() ---\r\n  ✓ test_portfolio_cash\r\n  ✗ test_risk_drawdown: 回撤超过 10% 应该拒绝新订单\r\n  ✓ test_execution_commission\r\n  ✓ test_strategy_no_signal\r\n\r\n3/4 测试通过\r\nFalse\r\n--- test_portfolio_cash_flow() ---\r\nNone\r\n--- test_risk_drawdown_halt() ---\r\n调用失败: 回撤超过 10% 应该拒绝新订单\r\n--- test_execution_costs() ---\r\nNone\r\n--- test_strategy_initial_period() ---\r\nNone",
+  "svgs": []
+}

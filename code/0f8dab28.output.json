@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n========================================================\r\n自动调用 build_fed_sentiment_lexicon() — 运行结果:\r\n========================================================\r\n[hawkish] dict\r\n[tighten] float\r\n1.5\r\n[inflationary] float\r\n1.5\r\n[overheating] float\r\n2.0\r\n[upside risk] float\r\n2.0\r\n[price pressure] float\r\n1.5\r\n[above target] float\r\n1.5\r\n[dovish] dict\r\n[ease] float\r\n1.5\r\n[slack] float\r\n1.5\r\n[below target] float\r\n1.5\r\n[downside risk] float\r\n2.0\r\n[disinflation] float\r\n1.5\r\n[deflation] float\r\n2.5",
+  "svgs": []
+}

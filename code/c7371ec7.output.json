@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n--- verify_reservoir_sampling() ---\r\ndict {'expected_count': 1000.0, 'chi_squared': 96.214}",
+  "svgs": []
+}

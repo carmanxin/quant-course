@@ -1,0 +1,5 @@
+{
+  "text": "",
+  "svgs": [],
+  "error": "C:\\Users\\xinhaoming\\.workbuddy\\binaries\\python\\versions\\3.13.12\\Lib\\site-packages\\joblib\\externals\\loky\\backend\\resource_tracker.py:359: UserWarning: resource_tracker: There appear to be 2 leaked folder objects to clean up at shutdown\r\n  warnings.warn(\r\nC:\\Users\\xinhaoming\\.workbuddy\\binaries\\python\\versions\\3.13.12\\Lib\\site-packages\\joblib\\externals\\loky\\backend\\resource_tracker.py:375: UserWarning: resource_tracker: C:\\Users\\xinhaoming\\AppData\\Local\\Temp\\joblib_memmapping_folder_30988_3054ea3d"
+}

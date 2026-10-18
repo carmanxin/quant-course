@@ -1,0 +1,4 @@
+{
+  "text": "Pre-Trade合规检查:\r\n  [PASS] AAPL BUY 1000: 检查通过\r\n  [REJECT] GME BUY 100: GME 在限制交易名单中\r\n  [REJECT] TSLA BUY 3000: 订单价值 750,000 超过单笔上限 500,000\r\n  [REJECT] NVDA SELL 500: 可卖数量不足（持仓: 200, 卖出: 500）",
+  "svgs": []
+}

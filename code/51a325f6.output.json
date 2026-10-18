@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n_rows = [{'date': '2024-04-01', 'code': '600001', 'is_limit_up': 0, 'is_limit_down': 0, 'close': 10.0, 'pre_close': 9.9}, {'date': '2024-04-01', 'code': '600002', 'is_limit_up': 0, 'is_limit_down': 0, 'close'\r\n_i = 39\r\n_d = '2024-04-40'\r\n_c = '300001'\r\n_up = 0\r\n_down = 0\r\n_ts = <__main__.LimitBoardTimeSeriesAnalysis object at 0x000001B4F68F46E0>",
+  "svgs": []
+}
