@@ -1,0 +1,5 @@
+{
+  "text": "",
+  "svgs": [],
+  "note": "脚本运行成功：定义了 1 个类：`IPOFirstDayPredictor`，并计算/装配了 4 个模块级对象（_rows、ipo_data、market_data、_pred）。结果保存在变量/对象中未主动打印，可在本机运行后查看。"
+}

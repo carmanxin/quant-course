@@ -1,0 +1,4 @@
+{
+  "text": "CET1_Ratio: 5.555555555555555\r\nCET1_Minimum: 7.0\r\nCET1_Headroom: -1.4444444444444446\r\nTier1_Ratio: 7.222222222222221\r\nTier1_Minimum: 8.5\r\nTier1_Headroom: -1.2777777777777786\r\nTotal_Capital_Ratio: 8.88888888888889\r\nTotal_Capital_Minimum: 10.5\r\nLeverage_Ratio: 6.25\r\nLeverage_Minimum: 3.0\r\nCompliant: False",
+  "svgs": []
+}

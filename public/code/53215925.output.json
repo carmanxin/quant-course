@@ -1,0 +1,4 @@
+{
+  "text": "T: 500\r\nN_exceptions: 86\r\nexception_rate: 0.172\r\nexpected_rate: 0.010000000000000009\r\nKupiec_POF_LR: 341.36761293742273\r\nKupiec_POF_pvalue: 0.0\r\nChristoffersen_Ind_LR: 0.9551169209840396\r\nChristoffersen_Ind_pvalue: 0.3284202401127434\r\nChristoffersen_CC_LR: 342.3227298584068\r\nChristoffersen_CC_pvalue: 0.0\r\nmodel_valid: False",
+  "svgs": []
+}

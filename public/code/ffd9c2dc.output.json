@@ -1,0 +1,4 @@
+{
+  "text": "{'Scenario': '加息+股跌', 'Total_PnL': np.float64(-180000012.0), 'Position_PnLs': {'债券A': np.float64(-12.0), '股票B': np.float64(-180000000.0)}}\r\n{'Scenario': '滞胀', 'Total_PnL': np.float64(-360000024.0), 'Position_PnLs': {'债券A': np.float64(-24.0), '股票B': np.float64(-360000000.0)}}\r\n{'Scenario': '温和复苏', 'Total_PnL': np.float64(60000006.0), 'Position_PnLs': {'债券A': np.float64(6.0), '股票B': np.float64(60000000.0)}}",
+  "svgs": []
+}

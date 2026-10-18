@@ -1,0 +1,5 @@
+{
+  "text": "",
+  "svgs": [],
+  "note": "脚本运行成功：定义了 1 个类：`PolicyHistoricalBenchmark`，并计算/装配了 3 个模块级对象（_hist、_bench、_cur）。结果保存在变量/对象中未主动打印，可在本机运行后查看。"
+}
