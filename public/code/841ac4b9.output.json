@@ -1,5 +1,4 @@
 {
-  "text": "",
-  "svgs": [],
-  "note": "本段为代码片段（仅展示函数/类定义，未提供运行入口，无需运行）"
+  "text": "--- 结果 ---\r\n========================================================\r\n自动调用 composite_northbound_dragontiger(...) — 运行结果:\r\n========================================================\r\nDataFrame shape=(100, 11)\r\n       date      code     close  northbound_signal  inst_net_buy  inst_buy_ratio  nb_signal_percentile  dt_signal  dt_signal_percentile  composite_signal  resonance\r\n0 -0.027810 -0.023299  0.017031                NaN           NaN             NaN                   NaN        0.0                   0.0               0.3      False\r\n1  0.009134 -0.017880  0.028028                NaN           NaN             NaN                   NaN        0.0                   0.0               0.3      False\r\n2 -0.019339 -0.013517  0.008133                NaN           NaN             NaN                   NaN        0.0                   0.0               0.3      False\r\n3  0.057050 -0.017005  0.009964                NaN           NaN             NaN                   NaN        0.0                   0.0               0.3      False\r\n4  0.002613  0.000845 -0.023449                NaN           NaN             NaN                   NaN       -0.0                   0.0               0.3      False\r\n5 -0.024717  0.001636  0.040557                NaN           NaN             NaN                   NaN        0.0                   0.0               0.3      False\r\n...（共 100 行，仅显示前 6 行）",
+  "svgs": []
 }

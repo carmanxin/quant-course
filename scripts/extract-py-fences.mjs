@@ -65,18 +65,8 @@ function extractFences(md) {
 }
 
 async function main() {
-  // 清空旧的 _auto（重新生成）
-  // 逐个删除文件而非 rmdir 整个目录 —— 避免 safe-delete bulk guard 拦截,
-  // 同时防止 mv 备份方式造成 _auto.bak.* 目录无限累积
-  if (existsSync(OUT_DIR)) {
-    for (const e of await readdir(OUT_DIR, { withFileTypes: true })) {
-      const p = path.join(OUT_DIR, e.name)
-      try {
-        if (e.isDirectory()) await rm(p, { recursive: true, force: true })
-        else await rm(p, { force: true })
-      } catch {}
-    }
-  }
+  // 不再清空旧 _auto：旧 hash 文件无害（索引按 md 中实际出现的 hash 查），
+  // 且本沙箱的 safe-delete 会把逐个删除卡死 10min+（2026-10-17 实测）。
   await mkdir(OUT_DIR, { recursive: true })
 
   const mdFiles = await walk(GUIDE_DIR)

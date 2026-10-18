@@ -1,5 +1,4 @@
 {
-  "text": "",
-  "svgs": [],
-  "note": "本段为代码片段（仅展示函数/类定义，未提供运行入口，无需运行）"
+  "text": "--- 结果 ---\r\n========================================================\r\n自动调用 optimal_leverage(...) — 运行结果:\r\n========================================================\r\n[kelly_leverage] float\r\n1.0\r\n[recommended_leverage] float\r\n0.5\r\n[max_drawdown_estimate] float64\r\nnp.float64(0.6321205588285577)",
+  "svgs": []
 }

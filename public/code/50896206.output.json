@@ -1,4 +1,4 @@
 {
-  "text": "--- 结果 ---\r\nfuncs = [<function <lambda> at 0x000001AF647D13A0>, <function <lambda> at 0x000001AF647D1440>, <function <lambda> at 0x000001AF647D14E0>, <function <lambda> at 0x000001AF647D1580>, <function <lambda> at 0x000001AF647D1620>, <function <lambda> at 0x000001AF647D16C0>, <function <lambda> at 0x000001AF647D1760>, <function <lambda> at 0x000001AF647D1800>, <function <lambda> at 0x000001AF647D18A0>, <function <lambda> at 0x000001AF647D1940>]",
+  "text": "--- 结果 ---\r\nfuncs = [<function <lambda> at 0x000002F440BA58A0>, <function <lambda> at 0x000002F440BA5940>, <function <lambda> at 0x000002F440BA59E0>, <function <lambda> at 0x000002F440BA5A80>, <function <lambda> at 0x000002F440BA5B20>, <function <lambda> at 0x000002F440BA5BC0>, <function <lambda> at 0x000002F440BA5C60>, <function <lambda> at 0x000002F440BA5D00>, <function <lambda> at 0x000002F440BA5DA0>, <function <lambda> at 0x000002F440BA5E40>]",
   "svgs": []
 }

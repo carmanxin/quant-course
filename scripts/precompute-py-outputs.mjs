@@ -92,6 +92,102 @@ async function ensureModulesInstalled(files) {
   })
 }
 
+// === demo 参数生成器：让"有必填参数的 def"也能被自动调用 ===
+// 按优先级：.items()/keys() 用法或 *_dict → dict of 价格 Series；
+// 代码里出现 param['col'] 列引用 → 带真实列名的 DataFrame；
+// 名字启发（prices/returns/signal/数值标量…）→ 对应类型 demo 数据。
+function demoArgExpr(paramName, codeBody) {
+  const lower = paramName.toLowerCase()
+  // 转义正则特殊字符（参数名可能带 * / : 等，如 **gen_kwargs）
+  const esc = paramName.replace(/[^A-Za-z0-9_]/g, '\\$&')
+  if (
+    new RegExp('\\b' + esc + '\\s*\\.\\s*(items|keys|values)\\s*\\(').test(codeBody) ||
+    /dict(s)?$/.test(lower)
+  ) {
+    return '{f"A{i}": pd.Series(100 + np.cumsum(np.random.randn(300) * 0.02), index=pd.date_range("2024-01-01", periods=300)) for i in range(3)}'
+  }
+  const cols = new Set()
+  const re1 = new RegExp("\\b" + esc + "\\s*\\[\\s*(['\"])([\\w.\\- %\\u4e00-\\u9fff]+?)\\1\\s*\\]", 'g')
+  for (const m of codeBody.matchAll(re1)) cols.add(m[2])
+  const re2 = new RegExp("\\b" + esc + "\\s*\\[\\s*\\[([^\\]]+)\\]\\s*\\]", 'g')
+  for (const m of codeBody.matchAll(re2)) {
+    for (const q of m[1].matchAll(/['"]([^'"]+)['"]/g)) cols.add(q[1])
+  }
+  if (cols.size > 0) {
+    const names = [...cols]
+    return `pd.DataFrame(np.random.randn(100, ${names.length}) * 0.02, columns=${JSON.stringify(names)}, index=pd.date_range("2024-01-01", periods=100))`
+  }
+  if (/^(lookback|window|periods?|n|k|top_n|n_.*)$/.test(lower)) return '252'
+  if (/date|_date$|^day$/.test(lower)) return 'pd.Timestamp("2024-06-28")'
+  if (/^(df|data|fundamentals?|factors|factor_\w+|features|universe)$/.test(lower) || lower.endsWith('_df'))
+    return 'pd.DataFrame(np.random.randn(100, 5) * 0.02, columns=["c0","c1","c2","c3","c4"], index=pd.date_range("2024-01-01", periods=100))'
+  if (/price|close|level/.test(lower)) return 'pd.Series(100 + np.cumsum(np.random.randn(300) * 0.02), index=pd.date_range("2024-01-01", periods=300))'
+  if (/return/.test(lower)) return 'pd.Series(np.random.randn(300) * 0.02, index=pd.date_range("2024-01-01", periods=300))'
+  if (/signal|position/.test(lower)) return 'pd.Series(np.random.choice([-1, 0, 1], 300).astype(float), index=pd.date_range("2024-01-01", periods=300))'
+  if (/weights?$/.test(lower)) return 'np.random.dirichlet(np.ones(10))'
+  if (/threshold|alpha|beta|rate|target|vol|cap|budget/.test(lower)) return '0.1'
+  if (/count|num|size|days/.test(lower)) return '252'
+  return null
+}
+
+// 生成"自动调用 def 并打印结果"的 post 代码行（纯 def 片段与混合片段共用）。
+// preferDemo=true（纯 def 片段）：used 变量并未被 pre 注入、运行时不存在，
+// 不能拿来当实参（必然 NameError）——直接按 demoArgExpr 生成。
+// 输出格式对齐站点已有真实结果：报告式标题 + === 分隔 + _ql_summarize 表格摘要；
+// 调用失败保持静默（无输出回落 note），不留命令行式噪音。
+function genDefCallLines(fname, params, codeBody, used, preferDemo) {
+  const lines = []
+  params = params.trim()
+  if (params === '' || params === 'self') {
+    lines.push(`try:\n    _r = ${fname}()\n    if _r is not None:\n        print('=' * 56)\n        print('自动调用 ${fname}() — 运行结果:')\n        print('=' * 56)\n        print(_ql_summarize(_r))\nexcept Exception:\n    pass`)
+    return lines
+  }
+  const paramList = params.split(',').map((s) => s.trim()).filter((s) => s && s !== 'self' && !s.startsWith('*'))
+  const requiredParams = paramList.filter((p) => !p.includes('=') && !/:.+=/.test(p))
+  lines.push('try:')
+  if (requiredParams.length === 0) {
+    lines.push(`    _r = ${fname}()`)
+    lines.push(`    if _r is not None:`)
+    lines.push(`        print('=' * 56)`)
+    lines.push(`        print('自动调用 ${fname}() — 运行结果:')`)
+    lines.push(`        print('=' * 56)`)
+    lines.push(`        print(_ql_summarize(_r))`)
+  } else {
+    let args = null
+    if (requiredParams.length === 1) {
+      let arg = null
+      if (!preferDemo) {
+        for (const u of used) {
+          const lu = u.toLowerCase()
+          if (lu === 'df' || lu.startsWith('df_')) { arg = 'df'; break }
+          if (lu === 'prices' || lu.startsWith('prices')) { arg = 'prices'; break }
+          if (lu === 'signal') { arg = 'signal'; break }
+          if (lu === 'factors' || lu.startsWith('factors')) { arg = 'factors'; break }
+          if (lu === 'returns' || lu.endsWith('_returns')) { arg = 'returns'; break }
+        }
+      }
+      if (!arg) arg = demoArgExpr(requiredParams[0].split(':')[0].split('=')[0].trim(), codeBody)
+      if (!arg && !preferDemo) arg = [...used][0] || null
+      if (arg) args = [arg]
+    } else {
+      const generated = requiredParams.map((p) => demoArgExpr(p.split(':')[0].split('=')[0].trim(), codeBody))
+      if (generated.every(Boolean)) args = generated
+    }
+    if (args) {
+      lines.push(`    _r = ${fname}(${args.join(', ')})`)
+      lines.push(`    if _r is not None:`)
+      lines.push(`        print('=' * 56)`)
+      lines.push(`        print('自动调用 ${fname}(...) — 运行结果:')`)
+      lines.push(`        print('=' * 56)`)
+      lines.push(`        print(_ql_summarize(_r))`)
+    } else {
+      lines.push('    pass  # 多必填参数,留给用户代码调用')
+    }
+  }
+  lines.push('except Exception:\n    pass')
+  return lines
+}
+
 // === Fragment-with-scaffolding: 自动注入 demo 数据 + 自动调用 def ===
 // 让"片段"也能跑出真实输出（而不是 note）
 function buildScaffold(codeBody, pureDefMode = false) {
@@ -246,18 +342,7 @@ function buildScaffold(codeBody, pureDefMode = false) {
   if (pureDefMode || used.size === 0) {
     const postLines = []
     for (const m of codeBody.matchAll(/^def\s+(\w+)\s*\(([^)]*)\)/gm)) {
-      const fname = m[1]
-      const params = m[2].trim()
-      let callable = false
-      if (params === '' || params === 'self') callable = true
-      else {
-        const parts = params.split(',').map((s) => s.trim()).filter((s) => s && s !== 'self')
-        callable = parts.every((p) => p.includes('=') || /:.+=/.test(p))
-      }
-      if (callable) {
-        postLines.push(`print('--- ${fname}() ---')`)
-        postLines.push(`try:\n    _r = ${fname}()\n    print(type(_r).__name__, repr(_r)[:300] if not hasattr(_r, 'to_string') else _r.head().to_string())\nexcept Exception as _e:\n    print(f"调用失败: {_e}")`)
-      }
+      postLines.push(...genDefCallLines(m[1], m[2], codeBody, used, true))
     }
     if (postLines.length > 0) return { pre: '', post: postLines.join('\n'), locallyDefined }
     return null
@@ -376,52 +461,7 @@ function buildScaffold(codeBody, pureDefMode = false) {
   // 4. 自动调用每个模块级 def（放在用户代码之后，def 已注册到模块作用域）
 //    只认第 0 列的 def —— 类内方法（__init__/compute_costs 等）不单独调用
   for (const m of codeBody.matchAll(/^def\s+(\w+)\s*\(([^)]*)\)/gm)) {
-    const fname = m[1]
-    const params = m[2].trim()
-    if (params === '' || params === 'self') {
-      postLines.push(`print('--- ${fname}() ---')`)
-      postLines.push(`try:\n    print(${fname}())\nexcept Exception as _e:\n    print(f"调用失败: {_e}")`)
-    } else {
-      // 拆分参数表,只取无默认值的(必填参数)
-      const paramList = params.split(',').map(s => s.trim()).filter(s => s && s !== 'self')
-      const requiredParams = paramList.filter(p => !p.includes('=') && !/:.+=/.test(p))
-      postLines.push(`print('--- ${fname}(...) ---')`)
-      postLines.push(`try:`)
-      // 必填参数 > 1 → 用户代码负责调用(避免我们瞎传参造成 TypeError 噪音)
-      // 必填参数 0 → 直接调,传 user code 已用变量的对应别名
-      // 必填参数 1 → 选 best match (df > prices > ...) 传入
-      if (requiredParams.length > 1) {
-        postLines.push(`    pass  # 多必填参数,留给用户代码调用`)
-      } else {
-        let arg = null
-        for (const u of used) {
-          const lu = u.toLowerCase()
-          if (lu === 'df' || lu.startsWith('df_')) { arg = `df`; break }
-          if (lu === 'prices' || lu.startsWith('prices')) { arg = `prices`; break }
-          if (lu === 'prices_df') { arg = `prices_df`; break }
-          if (lu === 'signal') { arg = `signal`; break }
-          if (lu === 'factors' || lu.startsWith('factors')) { arg = `factors`; break }
-          if (lu === 'returns' || lu.endsWith('_returns')) { arg = `returns`; break }
-        }
-        if (arg) {
-          postLines.push(`    _r = ${fname}(${arg})`)
-          postLines.push(`    print(type(_r).__name__, repr(_r)[:300] if not hasattr(_r, 'to_string') else _r.head().to_string())`)
-        } else if (requiredParams.length === 0) {
-          // 无必填参数 + 无 best match → 不调用,避免传奇怪参数
-          postLines.push(`    pass  # 无明确参数,留给用户代码调用`)
-        } else {
-          // 兜底:用第一个 used 变量
-          const first = [...used][0]
-          if (first) {
-            postLines.push(`    _r = ${fname}(${first})`)
-            postLines.push(`    print(type(_r).__name__, repr(_r)[:300])`)
-          } else {
-            postLines.push(`    pass  # 无可传参数,跳过`)
-          }
-        }
-      }
-      postLines.push(`except Exception as _e:\n    print(f"调用失败: {_e}")`)
-    }
+    postLines.push(...genDefCallLines(m[1], m[2], codeBody, used))
   }
 
   return { pre: preLines.join('\n'), post: postLines.join('\n'), locallyDefined }
@@ -534,6 +574,51 @@ class _QLTee:
 _QL_TEE = _QLTee(_ql_sys.stdout)
 _ql_sys.stdout = _QL_TEE
 _QL_N1 = 0
+
+def _ql_summarize(_v, _depth=0):
+    # 报告式摘要：DataFrame/Series 对齐表格 + 截断提示；tuple/dict 逐元素展开
+    try:
+        import matplotlib.figure as _mfig, matplotlib.axes as _maxs
+        if isinstance(_v, (_mfig.Figure, _maxs.Axes)):
+            return "(matplotlib 图表，已渲染为下方图像)"
+    except Exception:
+        pass
+    try:
+        import numpy as _np, pandas as _pd
+        if isinstance(_v, _pd.DataFrame):
+            _n = len(_v)
+            _s = "DataFrame shape=" + str(_v.shape) + "\\n" + _v.head(6).to_string()
+            if _n > 6:
+                _s += "\\n...（共 " + str(_n) + " 行，仅显示前 6 行）"
+            return _s
+        if isinstance(_v, _pd.Series):
+            _n = len(_v)
+            _s = "Series shape=" + str(_v.shape) + " name=" + str(_v.name) + "\\n" + _v.head(8).to_string()
+            if _n > 8:
+                _s += "\\n...（共 " + str(_n) + " 个值，仅显示前 8 个）"
+            return _s
+        if isinstance(_v, _np.ndarray):
+            _flat = list(_v.reshape(-1)[:10])
+            return "ndarray shape=" + str(_v.shape) + " dtype=" + str(_v.dtype) + " head10=" + str(_flat)
+    except Exception:
+        pass
+    if _depth < 2:
+        try:
+            if isinstance(_v, (list, tuple)):
+                _parts = []
+                for _i, _e in enumerate(_v):
+                    _parts.append("[" + str(_i) + "] " + type(_e).__name__)
+                    _parts.append(_ql_summarize(_e, _depth + 1))
+                return "\\n".join(_parts)
+            if isinstance(_v, dict):
+                _parts = []
+                for _k, _e in list(_v.items())[:6]:
+                    _parts.append("[" + str(_k) + "] " + type(_e).__name__)
+                    _parts.append(_ql_summarize(_e, _depth + 1))
+                return "\\n".join(_parts)
+        except Exception:
+            pass
+    return repr(_v)[:300]
 `
 
 // 静默（无 print/图表）时的兜底说明：用代码结构描述这段脚本在做什么
@@ -899,20 +984,24 @@ plt.show = _patched_show
         strippedSummary = true
       }
 
+      // text 中除了"末尾操作失败"那行,是否还有别的实质性输出(>30 字符)?否则不算有真实输出
+      const textExcludingWrap = wrappedError ? text.replace(/⚠\s*末尾操作失败:.*\n?/, '').trim() : text
+      // post 自动调用全部失败时，text 只剩 scaffold 标题行（--- 结果 --- / --- fn(...) ---），
+      // 无任何实质内容 —— 视为无输出，回落 note（避免"只有标题没有结果"的假结果页）
+      const scaffoldOnly = textExcludingWrap
+        .split('\n')
+        .every((l) => { const t = l.trim(); return !t || t.startsWith('--- ') || t.startsWith('===') })
       // 有真实输出（print/图）则优先保留 — 但如果 wrap 错误是 NameError/AttributeError 等,
       // 即使 text 非空也只是 "⚠ 末尾操作失败:..." + 空调用结果,应归 note 而非 raw 文本
-      const hasRealOutput = !!(text || (svgs && svgs.length > 0))
+      const hasRealOutput = !!((text && !scaffoldOnly) || (svgs && svgs.length > 0))
       const wrappedIsFatal = wrappedError && (wrappedIsNameError || wrappedIsModuleMissing)
       // 特殊:numba/vectorbt 编译错误 → 视为"片段代码,需要外部数据,无法独立运行"
       const wrappedIsNumbaError = wrappedError && /nopython|numba.*pipeline|nopython mode|non-precise type|TypingError|CompileError/i.test(wrappedError)
-      // text 中除了"末尾操作失败"那行,是否还有别的实质性输出(>30 字符)?否则不算有真实输出
-      const textExcludingWrap = wrappedError ? text.replace(/⚠\s*末尾操作失败:.*\n?/, '').trim() : text
-      const hasUsefulText = textExcludingWrap.length > 30
-      // 有图表即算"有产出"。仅在 strippedSummary 时放宽：上面可能已把自动变量摘要
-      // 清空（text 变空），此时不能因为 hasUsefulText 为 false 就掉进 isFragment
-      // 分支冒出 "仅展示函数/类定义" 的误报 note —— 图本身就是运行结果。
-      // 限定 strippedSummary 避免误伤其他带图 fence（如缺模块时仍需保留提示）。
-      const hasVisual = !!(svgs && svgs.length > 0) && strippedSummary
+      const hasUsefulText = !scaffoldOnly && textExcludingWrap.length > 30
+      // 有图表即算"有产出"。两种放宽：① strippedSummary（自动变量摘要已被清空）；
+      // ② scaffoldOnly（post 自动调用产图成功，text 只剩 scaffold 标题行，图本身就是结果）。
+      // 限定避免误伤：缺模块等仍需保留提示的 fence 不在此列（text 有实质内容或报错）。
+      const hasVisual = !!(svgs && svgs.length > 0) && (strippedSummary || scaffoldOnly)
       // 如果 stderr 有内容且 text 主要就是 wrap 的 "末尾操作失败" 那行 → text 不可信,优先看 stderr
       const stderrClean = (stderr || '').trim().slice(0, 500)
       const payload = (hasRealOutput && !wrappedIsFatal && (hasUsefulText || hasVisual) && code === 0)
