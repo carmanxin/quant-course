@@ -5,9 +5,19 @@
 //
 // 并发：CONCURRENCY=8（默认），避免一次 spawn 太多 python3 把机器干爆。
 // 超时：每文件 30s，SIGKILL 兜底。
+//   ⚠ 网络型代码块（如 akshare 拉行情）常需 40-90 秒，默认 30s 会误杀。
+//     跑这类 fence 时请设 PRECOMPUTE_TIMEOUT=90000（或更大）。
+//   ⚠ 被超时杀掉不会破坏既有产物 —— 见下方「产物质量守门」：
+//     新结果质量低于旧结果时保留旧产物（JSON 与 svg 目录一并保留）。
+//
+// 环境变量：
+//   PRECOMPUTE_TIMEOUT=90000   每文件超时毫秒（默认 30000）
+//   PRECOMPUTE_CONCURRENCY=8   并发数（默认 8）
+//   PRECOMPUTE_ONLY=h1,h2      只重跑指定 hash（用于单点复算）
+//   PRECOMPUTE_INSTALL=1       允许自动 pip install 缺失模块（默认关闭）
 
 import { spawn } from 'node:child_process'
-import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises'
+import { readFile, writeFile, mkdir, readdir, unlink } from 'node:fs/promises'
 import { glob } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -644,6 +654,137 @@ function describeSilentScript(codeBody) {
   return `脚本运行成功：${parts.join('，')}。结果保存在变量/对象中未主动打印，可在本机运行后查看。`
 }
 
+// ============================================================================
+// 产物质量守门（2026-10-26 第一令）
+// ----------------------------------------------------------------------------
+// 背景：此前 precompute 无条件 writeFile，任何一次失败重跑都会把已有的优质
+//   产物静默降级（实测：6136496a 原本 608 字符真实结果被覆写为空 error）。
+//
+// 策略：新旧产物各算一个「质量分」，新结果分 < 旧结果分时**保留旧产物**。
+//   质量分只衡量「信息量与可读性」，不比较具体内容 —— 因为同一段代码两次运行的
+//   浮点/随机结果本来就可能有差异，不应据此判优劣。
+//
+// 质量分构成（分级计分，取最高档，避免"有图就压过一切"）：
+//   文本档（取最高者）：
+//     +40  有实质输出（>= 30 字符）
+//     +30  有输出（>= 8 字符）        ← 短输出也算真实结果，只是信息量少
+//     +10  有输出（>= 1 字符）        ← 极短但非空，仍优于无输出
+//      0  无文本
+//   图表档：+25（有 svg 即有可视化结果，读者能直接看图）
+//   说明档：+10（有 note —— 诚实标注"无法独立运行"及其原因，优于空白）
+//   扣分档：
+//     -30  error 且完全无文本（纯 traceback，读者无从下手）
+//     -20  文本是 scaffold 空壳（只有 '--- 结果 ---' 这类标题行）
+//
+// 关键设计（2026-10-26 修正）：
+//   初版用"文本 >= 30 字符"作为有无实质输出的单一阈值，导致
+//   "GUARD TEST OK: 10"（19 字符真实输出）得分 0，低于 note 的 10 分 ——
+//   守门反而拦住了正确结果。改为**分级计分**，任何非空真实输出都优于 note。
+//
+// 边界：同分则**以新覆盖旧**（保证主动重跑能刷新结果），
+//   旧分 > 新分时保留旧，且**不清理旧 svg 目录**。
+// ============================================================================
+function scorePayload(p) {
+  if (!p || typeof p !== 'object') return -100
+  const text = (p.text || '').trim()
+  const svgs = Array.isArray(p.svgs) ? p.svgs : []
+  let s = 0
+
+  // --- 文本档（分级，取最高） ---
+  if (text.length >= 30) s += 40
+  else if (text.length >= 8) s += 30
+  else if (text.length >= 1) s += 10
+
+  // --- 图表档 ---
+  if (svgs.length > 0) s += 25
+
+  // --- 说明档 ---
+  if (p.note) s += 10
+
+  // --- 扣分档 ---
+  // 纯 traceback 且无任何文本：读者无从下手
+  if (p.error && !text) s -= 30
+  // 文本是 scaffold 空壳：只有 '---' / '===' 标题行，没有实质内容
+  if (text) {
+    const onlyTitles = text.split('\n').every(l => {
+      const t = l.trim()
+      return !t || t.startsWith('---') || t.startsWith('===')
+    })
+    if (onlyTitles) s -= 20
+  }
+  return s
+}
+
+// 写入产物，但当新结果质量低于旧结果时保留旧产物。
+// 返回实际落盘的那一份（用于日志与统计）。
+// keptOldCount 声明在模块级：runOne 在 main 之前定义，须能访问。
+let keptOldCount = 0
+
+// 备份/恢复 svg 目录。
+// 背景：python 执行时会把图表写进 <name>.svgs/，若本次运行质量低于旧产物，
+//   JSON 被守门保留，但 svg 已被新运行覆盖 —— 两者会**不自洽**
+//   （旧 text 配新图，读者看到矛盾的图）。
+//   故在执行前备份旧 svg，守门拦截时恢复。
+//
+// ⚠ 必须按 name 索引：precompute 是并发的（CONCURRENCY 默认 8），
+//   用单个模块级变量会被其它任务互相覆盖，导致恢复错乱。
+const svgBackups = new Map()
+
+async function backupSvgDir(name, svgDir) {
+  try {
+    const files = await readdir(svgDir)
+    const bufs = []
+    for (const f of files) {
+      if (!f.endsWith('.svg')) continue
+      bufs.push({ name: f, data: await readFile(path.join(svgDir, f)) })
+    }
+    const bk = bufs.length ? bufs : null
+    svgBackups.set(name, bk)
+    return bk
+  } catch {
+    svgBackups.set(name, null)
+    return null
+  }
+}
+
+async function restoreSvgDir(svgDir, backup) {
+  if (!backup) return
+  try {
+    // 清掉本次新生成的 svg，避免新旧混存
+    const files = await readdir(svgDir)
+    for (const f of files) {
+      if (f.endsWith('.svg')) {
+        try { await unlink(path.join(svgDir, f)) } catch { }
+      }
+    }
+    for (const b of backup) {
+      await writeFile(path.join(svgDir, b.name), b.data)
+    }
+  } catch { }
+}
+
+async function writePayloadGuarded(name, payload) {
+  const outPath = path.join(CODE_DIR, `${name}.output.json`)
+  let old = null
+  try {
+    const raw = await readFile(outPath, 'utf8')
+    old = JSON.parse(raw)
+  } catch {
+    old = null
+  }
+  const newScore = scorePayload(payload)
+  const oldScore = old ? scorePayload(old) : -100
+  if (old && newScore < oldScore) {
+    // 保留旧产物：不写盘，并恢复旧 svg 目录（保证 text 与图自洽）
+    await restoreSvgDir(path.join(CODE_DIR, `${name}.svgs`), svgBackups.get(name))
+    svgBackups.delete(name)
+    return { written: false, keptOld: true, newScore, oldScore, payload: old }
+  }
+  await writeFile(outPath, JSON.stringify(payload, null, 2))
+  svgBackups.delete(name)
+  return { written: true, keptOld: false, newScore, oldScore, payload }
+}
+
 // 用同一 env 再跑一次给定源码（用于静默脚本的自动汇总变体）
 // 健壮版 spawn：detached 进程组 + 硬性超时保证 resolve。
 // Windows 上 python 若派生孙进程并持有 stdout 管道，'close' 事件可能永不触发，
@@ -687,6 +828,8 @@ async function runOne(pyFile) {
   const name = m[1]
   const svgDir = path.join(CODE_DIR, `${name}.svgs`)
   await mkdir(svgDir, { recursive: true })
+  // 守门用：执行前备份旧 svg，若新结果质量更低则恢复（保证 text 与图自洽）
+  await backupSvgDir(name, svgDir)
 
   const env = {
     ...process.env,
@@ -901,11 +1044,9 @@ plt.show = _patched_show
     // 数学公式演示片段直接跳过 python 执行,返回 note
     if (skipExecution) {
       const payload = { text: '', svgs: [], note: '本段为公式演示片段（伪代码占位符，无完整上下文）' }
-      await writeFile(
-        path.join(CODE_DIR, `${name}.output.json`),
-        JSON.stringify(payload, null, 2),
-      )
-      return resolve({ name, file: path.basename(pyFile), code: 0, len: 0 })
+      const w = await writePayloadGuarded(name, payload)
+      if (w.keptOld) keptOldCount++
+      return resolve({ name, file: path.basename(pyFile), code: 0, len: 0, keptOld: w.keptOld })
     }
     const r = await spawnPy(augmentedText, env)
     let code = r.code
@@ -913,11 +1054,9 @@ plt.show = _patched_show
     let stderr = r.stderr
     if (r.timedOut) {
       const payload = { text: '', svgs: [], note: `本段运行超时（>${TIMEOUT_MS / 1000}s），已在预计算中跳过（不阻塞页面）` }
-      await writeFile(
-        path.join(CODE_DIR, `${name}.output.json`),
-        JSON.stringify(payload, null, 2),
-      )
-      return resolve({ name, file: path.basename(pyFile), code: 124, len: 0 })
+      const w = await writePayloadGuarded(name, payload)
+      if (w.keptOld) keptOldCount++
+      return resolve({ name, file: path.basename(pyFile), code: 124, len: 0, keptOld: w.keptOld })
     }
     let svgs = []
       try {
@@ -1035,11 +1174,9 @@ plt.show = _patched_show
                         : code === 0
                           ? { text, svgs }
                           : { text: textExcludingWrap || text || '', svgs, error: stderrClean }
-      await writeFile(
-        path.join(CODE_DIR, `${name}.output.json`),
-        JSON.stringify(payload, null, 2),
-      )
-      resolve({ name, file: path.basename(pyFile), code, len: stdout.length })
+      const w = await writePayloadGuarded(name, payload)
+      if (w.keptOld) keptOldCount++
+      resolve({ name, file: path.basename(pyFile), code, len: stdout.length, keptOld: w.keptOld })
   })
 }
 
@@ -1071,7 +1208,10 @@ async function main() {
   }
 
   // 自动安装缺失的常见模块（best-effort，不阻塞 precompute）
-  // 默认关闭（环境网络常 timeout）；开启：set PRECOMPUTE_INSTALL=1
+  // 默认**关闭**：pip install 是全局安装，会污染用户/系统 Python 环境，
+  //   且在 CI 中不可控（网络 + 磁盘 + 超时）。只有显式设置才启用。
+  //   开启：PRECOMPUTE_INSTALL=1
+  //   CI 走的是「产物已提交 → 跳过 precompute」路径，根本不需要装包。
   if (process.env.PRECOMPUTE_INSTALL === '1') {
     await ensureModulesInstalled(files)
   } else {
@@ -1086,12 +1226,15 @@ async function main() {
     else if (r.code !== 0) failed++
     if (done % 25 === 0 || done === files.length) {
       const pct = ((done / files.length) * 100).toFixed(1)
-      console.log(`[precompute] ${done}/${files.length} (${pct}%) — failed=${failed} skipped=${skipped}`)
+      console.log(`[precompute] ${done}/${files.length} (${pct}%) — failed=${failed} skipped=${skipped}${keptOldCount ? ` kept-old=${keptOldCount}` : ''}`)
     }
     return r
   }))
   await Promise.all(tasks)
   console.log(`[precompute] DONE: ${files.length - failed - skipped}/${files.length} succeeded, ${failed} failed, ${skipped} skipped`)
+  if (keptOldCount) {
+    console.log(`[precompute] 守门生效：${keptOldCount} 个新结果质量低于既有产物，已保留旧产物（未被降级）`)
+  }
   process.exit(0)
 }
 
@@ -1106,4 +1249,4 @@ if (process.argv[1] && _mainPath === _argvPath) {
   })
 }
 
-export { runOne, buildScaffold }
+export { runOne, buildScaffold, scorePayload, writePayloadGuarded }
