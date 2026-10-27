@@ -359,7 +359,14 @@ export default defineConfig({
             OPTION_RE.lastIndex = 0
             while ((m = OPTION_RE.exec(b.content))) options.push(m[1].trim())
           }
-          if (options.length < 2) { out.push(t); continue }
+          // ⚠ 2026-10-26 司礼监第三令（防御性修复）：原写法 `out.push(t)` 只推回
+          //   **第一个** html_block，blocks[1..n] 被静默丢弃 —— 一旦某页的选项之间
+          //   出现空行导致 markdown-it 把连续 <div> 切成多个 html_block，
+          //   该页选项就会整片消失且无任何报错。
+          //   实测当前 13 个测验页的选项均连续（blocks 恒为 1），故此修复
+          //   在现有内容上不产生可见差异，属防御性加固。
+          //   正确做法：把**全部** blocks 推回，并把游标跳到 j（跳过已收集的块）。
+          if (options.length < 2) { out.push(...blocks); i = j - 1; continue }
 
           // 往前找题面：末尾的 paragraph 组 + 可选的 heading 组（heading 在前）
           const qTokens: any[] = []
@@ -373,7 +380,8 @@ export default defineConfig({
           }
           takeGroup('paragraph_close', 'paragraph_open')
           takeGroup('heading_close', 'heading_open')
-          if (!qTokens.length) { out.push(t); continue }
+          // 同样地：找不到题面时必须把 blocks 全部推回，不能只推 t（防御性，见上）
+          if (!qTokens.length) { out.push(...blocks); i = j - 1; continue }
 
           let qRaw = ''
           for (const qt of qTokens) if (qt.type === 'inline') qRaw += (qRaw ? '<br>' : '') + qt.content
