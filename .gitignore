@@ -25,3 +25,9 @@ scripts/__pycache__/
 agents/__pycache__/
 *.pyc
 .workbuddy/automations/*/memory.md
+
+# === 版本备份区（2026-10-27 起）===
+# 每次部署新版本前的「旧版归档」放在这里：含旧 dist 全量产物（4000+ 文件）
+# 与离线单文件，属本地备份资产，**不进仓库**。
+_backup/
+.shots/

@@ -45,13 +45,19 @@ npm run build
 
 1. **没有 Python**（可绕）—— 平台构建容器里没有 Python，跑不了 `precompute`，
    439 个案例的运行结果会全部丢失。
-   *绕过方式*：本站已把 503 个预计算产物提交进仓库（`public/code/*.output.json`），
-   CI 检测到 ≥480 个就自动跳过 precompute（20 分钟 → 4 分钟），所以这条其实已不是障碍。
+   *绕过方式*：本站已把 438 个预计算产物提交进仓库（`public/code/*.output.json`），
+   CI 检测**索引完整性**（`_index.json` 条目数 == md 中唯一 fence 数 439，且产物无缺失）
+   即自动跳过 precompute（20 分钟 → 4 分钟），所以这条其实已不是障碍。
+   > 2026-10-26 修正：原判据是「产物数 ≥ 480」，但一轮全新 precompute 的产出上限
+   > 就是唯一 fence 数 439 —— 阈值永远达不到，仓库够数靠的是 145 个孤儿产物在凑。
+   > 已改为索引完整性判据，与产出能力自洽。
 
 2. **内存只有 2GB（绕不开，致命）** —— Cloudflare 免费构建实例是 2 vCPU / **2 GB RAM**。
    本站 122 章全量 VitePress 构建实测**堆内存涨到 2052 MB 直接 OOM 崩溃**：
    `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed`。
-   对照：GitHub Actions 的 `ubuntu-latest` 有 **7 GB**，89–104 秒稳稳跑完。
+   对照：GitHub Actions 的 `ubuntu-latest` 有 **7 GB**，全量构建可跑完。
+   > 2026-10-26 实测：本机全量构建耗时 **1098 秒（18.3 分钟）**（原文档「89–104 秒」
+   > 系早期小规模构建的遗留数字，量级已变 10 倍）。CI `timeout-minutes: 45` 仍有余量。
    → **改任何 Build command 都救不了**，这是物理内存上限，不是配置问题。
 
 另外平台还会自行 `npm install`，本项目历史上有 `playwright` 会触发 150MB Chromium 下载
@@ -181,7 +187,7 @@ ls .github/workflows/         # 应该有 deploy.yml
 cat requirements-ci.txt | head -3
 ```
 
-如果 `public/code/` 下的产物（4012 个文件）没被提交，CI 会自己跑 precompute（慢 20 分钟）。想让 CI 快一点，可以把产物也提交：
+如果 `public/code/` 下的产物（438 个 output.json + 438 个 svg 目录）没被提交，CI 会自己跑 precompute（慢 20 分钟）。想让 CI 快一点，可以把产物也提交：
 
 ```bash
 git add -f public/code
@@ -269,7 +275,8 @@ ls -lh quantlab-dist.zip
 
 Windows 也可以用资源管理器：进 `.vitepress\dist` → 全选 → 右键「发送到 → 压缩(zipped)文件夹」。
 
-> 上传限制：20000 个文件以内、单文件 25 MB 以内。本工程 4393 个文件、最大 2.3 MB，远低于限制。
+> 上传限制：20000 个文件以内、单文件 25 MB 以内。本工程 1484 个文件、最大 2.3 MB，远低于限制。
+> （2026-10-26 订正：原写 4393，含已清理的孤儿产物与历史残留）
 
 ### 步骤 B3 — 上传
 
@@ -313,7 +320,7 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 
 ### 5.1 关键限制：不能用拖拽上传
 
-| 上传方式 | 文件数上限 | 本工程（4393 个文件） |
+| 上传方式 | 文件数上限 | 本工程（1484 个文件） |
 |---|---|---|
 | 控制台拖拽 ZIP | **1,000** | ❌ 超限 4 倍多 |
 | Wrangler CLI | 20,000 | ✅ 可以 |
@@ -339,10 +346,11 @@ FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed
 ```
 
 同时 Cloudflare 还自动跑了 `pip install -r requirements.txt`，装了全套 Python
-（torch + CUDA 3GB+）—— 对本工程纯属浪费，因为 503 个预计算产物早就提交进仓库了。
+（torch + CUDA 3GB+）—— 对本工程纯属浪费，因为 439 个代码块的预计算产物早就提交进仓库了。
 
 **2052 MB 就是那台机器的内存天花板**；对照 GitHub Actions 的 `ubuntu-latest`
-有 **7 GB**，89–104 秒就能跑完全量构建。**这是内存上限不是配置问题，改 Build command 毫无意义。**
+有 **7 GB**，全量构建可跑完（> 2026-10-26 实测本机全量构建耗时 **1098 秒（18.3 分钟）**）。
+**这是内存上限不是配置问题，改 Build command 毫无意义。**
 
 > 附带一个坑：新版 Workers Builds 界面**创建后没有「Production branch」编辑项**，
 > 分支在建项目那一刻就锁死了，配错只能删项目重建。
@@ -356,7 +364,7 @@ git push (SSH)
    ↓
 GitHub Actions  runner: ubuntu-latest / 7GB 内存
    ├─ npm ci                    装 vitepress 等
-   ├─ 检测 public/code/*.output.json ≥480 → 跳过 precompute（20min → 4min）
+   ├─ 检测索引完整性（_index.json 条目 == 唯一 fence 数 439 且产物无缺失）→ 跳过 precompute（20min → 4min）
    ├─ npx vitepress build  →  .vitepress/dist
    ↓
 deploy-cloudflare job
@@ -408,7 +416,9 @@ git push origin master
 - 线上地址：**<https://quant-course.pages.dev>**
 - 验收：首页 6 大模块、实时行情 ticker、Level-2 订单簿、策略 PnL 卡片全部正常；
   1.3 凯利案例的 7 行结果表格 + 科学计数法 + SVG 图表正确渲染，
-  **503 个预计算产物无一处「暂无运行结果」**。
+  **439 个代码块的预计算产物无一处「暂无运行结果」**。
+  > 2026-10-26 订正：原文写作「503 个预计算产物」，实际唯一代码块数为 **439**；
+  > 503 是历史遗留的计数（含已废弃的重复产物），2026-10-26 清理孤儿产物后不再适用。
 
 ---
 
@@ -417,7 +427,7 @@ git push origin master
 > **2026-09-10 已实测通过**（线上：<https://quant-course.pages.dev>）。
 > 已验证：首页 6 大模块 + 实时行情 ticker + Level-2 订单簿 + 策略 PnL 卡片；
 > 1.3 凯利案例的 7 行结果表格、科学计数法、SVG 图表全部正确；
-> **503 个预计算产物无一处「暂无运行结果」**。
+> **439 个代码块的预计算产物无一处「暂无运行结果」**。
 > 下面清单保留给**换环境或重新部署**时复核用。
 
 打开线上网址，逐项检查：
@@ -540,7 +550,8 @@ FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed
 ```
 
 **原因**：Cloudflare 免费构建实例是 2 vCPU / **2 GB RAM**，而本站 122 章全量构建需要 >2GB
-（实测堆内存涨到 2052 MB 崩溃；GitHub Actions 的 7GB 容器只需 89–104 秒）。
+（实测堆内存涨到 2052 MB 崩溃；GitHub Actions 的 7GB 容器可跑完全量构建，
+> 2026-10-26 实测本机耗时 1098 秒 / 18.3 分钟）。
 
 **处理**：**不要在平台侧构建**，改用 §5.3 的「Actions 构建 + Wrangler 推送」。
 给 Node 加 `--max-old-space-size` 也没用 —— 那是容器总内存的天花板，不是 Node 默认值的问题。
@@ -568,7 +579,7 @@ git 本身走 SSH（已配 `url.git@github.com:.insteadOf`）是通的 —— **
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | **平台报「安装依赖失败」** | 平台自动 `npm install`（容器无 Python / Playwright 下 Chromium 超时 / dist 分支无 package.json） | 见 §8.0：框架预设改 `Other`、构建命令 `echo skip`、分支 `dist`；或直接传 ZIP |
-| Actions 在 precompute 步骤超时 | 503 个代码块在 2 核 runner 上跑不完 | 把 `public/code` 提交进仓库（CI 会自动跳过）；或调大 `timeout-minutes` |
+| Actions 在 precompute 步骤超时 | 439 个代码块在 2 核 runner 上跑不完 | 把 `public/code` 提交进仓库（CI 会自动跳过）；或调大 `timeout-minutes` |
 | 部署后页面空白 | 路径用了绝对路径但部署在子目录 | 本项目就是绝对路径，确保部署在域名根目录；或用 `relativize-dist.mjs` 转相对路径 |
 | 案例没有运行结果 | CI 里没跑 precompute 或跑失败了 | 看 Actions 日志里 precompute 那一步；本地跑一遍把产物提交 |
 | 平台域名打开是 401 / 提示备案 | EdgeOne 加速区域规则（见 §8.1） | 换 Cloudflare Pages；或绑定已备案自定义域名 |

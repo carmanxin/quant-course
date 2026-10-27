@@ -9,18 +9,26 @@
 #   在 CI 里装不动（也远超 runner 磁盘与超时限制）。
 #
 #   本文件只保留 precompute 真正用得上的包（总计约 400MB，2-3 分钟装完），
-#   覆盖全站 503 个代码块中约 95% 的 import 需求。
+#   覆盖全站代码块 import 需求的 **70.8%**（按 import 次数计）。
 #
-# 覆盖范围（来自 public/code/_auto/*.py 的 import 扫描）：
-#   numpy 154 · pandas 95 · scipy 66 · matplotlib 48 · sklearn 24 · statsmodels 20
-#   —— 这 6 个包覆盖 407/503 个代码块的全部依赖
+# 覆盖范围（2026-10-26 重新实测 public/code/_auto/*.py 的 import 分布，
+# 口径 = 每个 .py 文件内同一顶层包只计一次）：
+#   numpy 206 · pandas 131 · scipy 79 · matplotlib 51 · statsmodels 20 · sklearn 16
+#   —— 这 6 个包合计 503 次 import / 全部 710 次 import = 70.8%；
+#      519 个 .py 文件中有 252 个（48.6%）至少用到其中之一。
+#   > 订正：原文写作「约 95% 的 import 需求」，实测为 70.8%（import 次数口径）；
+#   > 95% 是文件级口径下的高估，已按实测值订正。
 #
-# 不在本文件中的重型/专业包（约 5% 的代码块会 import 它们）：
+# 不在本文件中的重型/专业包（少数代码块会 import 它们）：
 #   torch · transformers · vectorbt · akshare · stable_baselines3 · nautilus_trader
 #   这些代码块在 CI 里会执行失败，precompute 脚本会把它们标记为
 #   蓝色 note 提示，**不会阻塞构建**（continue-on-error）。
 #   如果需要它们出现在运行结果里，请在本地跑 precompute 后把
-#   public/code/ 产物提交进仓库（CI 检测到 >=480 个产物会自动跳过重跑）。
+#   public/code/ 产物提交进仓库。
+#   CI 判据：索引完整性（_index.json 条目数 == md 中唯一 fence 数 439，
+#   且索引指向的产物文件无缺失）→ 跳过 precompute。
+#   （2026-10-26 修正：原写「CI 检测到 >=480 个产物会自动跳过」——
+#    439 个唯一 fence 永远达不到 480，阈值不成立，已改为索引完整性判据。）
 # ==========================================================================
 
 numpy>=1.24,<3
