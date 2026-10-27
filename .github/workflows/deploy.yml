@@ -171,6 +171,20 @@ jobs:
           fi
           echo "冒烟检查通过"
 
+      # 2026-10-27 司礼监第四令：把四枚常态化审计脚本接入 CI 冒烟。
+      # 此前 CI 只验「index.html 存在」与「裸字符串残留」，
+      # 未校验 ①结果↔代码对应性 ②组件是否渲染 ③索引是否完整 —— 三处皆曾出过静默缺陷。
+      # 本步任何一项失败即中断部署，避免把坏产物推上线。
+      - name: 常态化审计（哈希一致性 / 页面映射 / 渲染层 / 组件注册）
+        run: |
+          set -e
+          for s in _audit-hash-consistency _audit-page-mapping _audit-e2e-rendered _audit-components; do
+            echo "::group::$s"
+            node "tests/$s.mjs"
+            echo "::endgroup::"
+          done
+          echo "四枚审计脚本全部通过"
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:

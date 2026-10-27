@@ -132,9 +132,19 @@ CI 构建机是 **Windows**，与本地 Git Bash 产物天然有差：
 | `_audit-page-mapping.mjs` | md → dist HTML 一一映射 | 117 md → 120 html · 0 缺页 |
 | `_audit-e2e-rendered.mjs` | 渲染层代码↔结果反查 | 227/227 逐字节一致 |
 | `_audit-components.mjs` | 组件注册状态 + 渲染痕迹 | 489/489 · 零静默丢失 |
+| `_audit-live.mjs` | **线上 vs dist 分支真源**全量比对（2026-10-27 新立） | 120 页 · 实质差异 0 |
 
-**建议接入 CI 冒烟**——现 `deploy.yml` 只验 `index.html` 存在与裸字符串残留，
-未校验结果↔代码对应性、未校验组件是否渲染。
+`_audit-live.mjs` 用法：`node tests/_audit-live.mjs [baseUrl] [ref]`，
+默认 `https://quant-course.pages.dev` + `origin/dist`。
+三级判定：逐字节一致 / 仅环境差异（归一化后同）/ 实质差异。
+**建议接入 CI 部署后冒烟**——现 `deploy.yml` 只验 `index.html` 存在与裸字符串残留，
+未校验结果↔代码对应性、未校验组件是否渲染、未校验线上↔真源一致性。
+
+## 🔴 线上核验的「三级判定」不可省（2026-10-27 教训）
+
+首轮逐字节比对得「115 页不一致」，看似重大事故；实为**三类构建环境差异**所致：
+CRLF 换行（280 处/页）、资源 hash、Vue scoped id。归一化后**实质差异 0**。
+**纪律：报「不一致」之前必须先归一化，否则会把环境噪声当成内容缺陷上报。**
 
 ## 沙箱坑（2026-10-26 补）
 
