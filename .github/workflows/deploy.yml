@@ -86,24 +86,44 @@ jobs:
         run: npm ci
 
       # ------------------------------------------------------------------
-      # 预计算产物策略：
-      #   已有 >=480 个 output.json 且未强制重跑 → 跳过（快）
-      #   否则安装精简 Python 依赖后重跑（慢但完整）
+      # 预计算产物策略（2026-10-26 修正）：
+      #   判据改为「索引完整性」——比对 _index.json 条目数 与 md 中唯一 fence 数。
+      #
+      #   旧判据 `ls public/code/*.output.json | wc -l >= 480` 有逻辑悖论：
+      #     一轮全新 precompute 的产出上限 = 唯一 fence 数（439）< 480，
+      #     即阈值永远达不到；仓库之所以"够数"，靠的是 145 个
+      #     _index.json 未引用的孤儿产物在凑数。一旦清理孤儿产物即跌破。
+      #     旧判据同时让「改了 md 后重建结果」这条路在 CI 中形同虚设。
+      #
+      #   新判据自洽：
+      #     INDEX_N = _index.json 条目数
+      #     FENCE_N = md 中唯一 python fence 数（与 extract 去重口径一致）
+      #     二者相等 ⇒ 索引已覆盖全部代码块，产物齐全 ⇒ 跳过 precompute
       # ------------------------------------------------------------------
-      - name: 检测是否已有预计算产物
+      - name: 检测预计算产物是否齐全
         id: has_outputs
         run: |
-          N=$(ls public/code/*.output.json 2>/dev/null | wc -l)
-          echo "count=$N"
+          INDEX_N=$(python3 -c "import json;print(len(json.load(open('public/code/_index.json'))))" 2>/dev/null || echo 0)
+          # 唯一 fence 数：与 scripts/extract-py-fences.mjs 同口径（归一化后 hash 去重）
+          FENCE_N=$(node scripts/count-unique-fences.mjs 2>/dev/null || echo 0)
+          # 索引条目是否都有对应产物文件
+          MISSING=$(python3 -c "
+            import json,os
+            idx=json.load(open('public/code/_index.json'))
+            names=set(idx.values())
+            miss=[n for n in names if not os.path.exists('public/code/'+n+'.output.json')]
+            print(len(miss))
+          " 2>/dev/null || echo 999)
+          echo "index=$INDEX_N fences=$FENCE_N missing=$MISSING"
           if [ "${{ inputs.force_precompute }}" = "true" ]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "强制重跑预计算"
-          elif [ "$N" -ge 480 ]; then
+          elif [ "$INDEX_N" -gt 0 ] && [ "$INDEX_N" = "$FENCE_N" ] && [ "$MISSING" = "0" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "已有 $N 个预计算产物，跳过 precompute"
+            echo "索引完整（$INDEX_N 条 = $FENCE_N 个唯一 fence，产物无缺失），跳过 precompute"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "只有 $N 个产物（<480），需要跑 precompute"
+            echo "索引不完整（index=$INDEX_N, fences=$FENCE_N, missing=$MISSING），需要跑 precompute"
           fi
 
       - name: 安装精简 Python 依赖
