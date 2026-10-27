@@ -88,6 +88,42 @@ Vue SSR 后**组件名与自定义 prop 都不出现在 HTML 里**。产物实�
 （本项目因此误判「13 页测验丢失」，实为脚本量尺刻错）。
 ⚠ 另：**`<div class="quiz-option">` 的个数是选项数不是题数**（m11 每页 12 div = 3 题 × 4 选项）。
 
+## 🔴 产物与代码不同源，不可混谈（2026-10-27 定）
+
+本项目两次误判皆源于此：
+- 旧版**线上产物**构建于 `909896b`(09-08，组件注册尚在)，
+  旧版**代码基线** `6ba720c`(10-18，注册已失) —— **两者不是同一份东西**。
+  拿产物去论代码 → 误判「测验本就正常，只是缺响应式」；
+  实则 `config.ts` 链条 `class="quiz-option"` → `<QuizBlock>` → `app.component()` 渲染，
+  **未注册则整条消失**，与 RunLocally 同命。
+- 教训：**断「某物存/亡」须 ① 回溯 git 历史 ② 区分产物与代码两个来源
+  ③ 用 Playwright 真点一次验交互**。
+
+## 🔴 push 之后必须逐项核对两端引用（2026-10-27 血口）
+
+`origin` 配了**双 pushurl**（GitHub + Gitee），`git push origin` 同推两端，
+但 **tag 不随分支 push 自动过去**。本次 push 回显全绿，实测：
+**GitHub 侧一个标签都没有**、**Gitee 侧缺 `dist` 分支**。
+处置：`git ls-remote <remote> 'refs/heads/*' 'refs/tags/*'` 逐项核对后补推。
+⚠ 推 `dist` 分支到 gitee 要用 `refs/remotes/origin/dist:refs/heads/dist`
+（本地无 `dist` 分支，直接 `refs/heads/dist` 会报 "src refspec does not match any"）。
+
+## 🔴 dist 分支被 Actions 强推 ⇒ 旧产物在远端失引用
+
+部署 workflow 会 **forced update** `dist` 分支，旧提交（如 `76feba9`）在远端
+**失去任何引用**（仅存本地对象库）。**必须另立归档分支**
+`archive/dist-v1.0.0-pre-fix` → 旧提交，否则「服务器侧备份」是空谈。
+
+## 线上 vs 本地产物的三类「环境差异」（比对前必须归一化）
+
+CI 构建机是 **Windows**，与本地 Git Bash 产物天然有差：
+1. **换行符**：线上 CRLF vs 本地 LF（单页差 280 处 CRLF、字节数差 ≈ 280）
+2. **资源 hash**：`style.XXXXXXXX.css` / `app.XXXXXXXX.js` —— 页面级 chunk 全部相同
+3. **Vue scoped id**：`data-v-XXXXXXXX` —— 同上，仅作用域标识
+
+归一化三者后再比，才是「内容是否一致」的结论。
+终验：120 页中 **94 页逐字节完全一致**，26 页归一化后一致，**实质差异 0**。
+
 ## 常态化审计脚本（tests/，均可独立重跑）
 
 | 脚本 | 内容 | 终验结果 |
