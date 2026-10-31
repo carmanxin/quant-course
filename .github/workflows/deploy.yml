@@ -213,7 +213,17 @@ jobs:
         if: env.HAS_TOKEN != 'true'
         run: |
           echo "::warning::未配置 EDGEONE_API_TOKEN，跳过 EdgeOne 部署。"
-          echo "配置方法：GitHub 仓库 → Settings → Secrets and variables → Actions → New repository secret"
+          echo ""
+          echo "::notice::EdgeOne API Token 的正确获取路径（与普通 EdgeOne 控制台不同）："
+          echo "::notice::1. 登录 EdgeOne 控制台 https://edgeone.ai"
+          echo "::notice::2. 切到顶部「Makers」Tab（或直接访问 Pages 控制台）"
+          echo "::notice::3. 点「API Token」Tab → 「创建 API Token」→ 填描述 + 过期时间 → 提交"
+          echo "::notice::4. Token 仅显示一次，立即复制"
+          echo "::notice::5. GitHub 仓库 → Settings → Secrets and variables → Actions → New repository secret"
+          echo "::notice::   Name 填 EDGEONE_API_TOKEN，Value 粘贴刚才复制的 token"
+          echo ""
+          echo "::notice::注意：不要在腾讯云国内控制台 console.cloud.tencent.com 找 —— 那是国内版，会强制 ICP 备案。"
+          echo "::notice::项目名可在仓库 Variables 里设 EDGEONE_PROJECT（默认 quantlab），须与控制台项目名一致。"
 
       - name: 部署
         if: env.HAS_TOKEN == 'true'
@@ -222,11 +232,21 @@ jobs:
         run: |
           PROJECT="${{ vars.EDGEONE_PROJECT || 'quantlab' }}"
           ENVIRON="${{ inputs.deploy_env || 'production' }}"
-          echo "部署 $PROJECT → $ENVIRON（${{ needs.build.outputs.pages }} 页 / ${{ needs.build.outputs.size }}）"
-          npx --yes edgeone pages deploy ./dist \
+          echo "项目名 : $PROJECT （若与控制台项目名不同，CLI 会另建新项目）"
+          echo "环境   : $ENVIRON"
+          echo "区域   : global（国际版，免 ICP 备案；国内版会要求备案并回 401）"
+          echo "规模   : ${{ needs.build.outputs.pages }} 页 / ${{ needs.build.outputs.size }}"
+          # CLI 参数以 v1.6.46 源码实测为准：
+          #   -n/--name 项目名（不存在则自动创建）  -t/--token API Token
+          #   -e/--env production|preview            -a/--area global|overseas（默认 global）
+          #   --json 输出单行 JSON，便于 CI 解析部署地址
+          # ⚠ --site 仅用于「匿名部署」的站点判定，对带 Token 的正式部署不适用，故不用。
+          npx --yes edgeone makers deploy ./dist \
             -n "$PROJECT" \
             -t "$EDGEONE_API_TOKEN" \
-            -e "$ENVIRON"
+            -e "$ENVIRON" \
+            -a global \
+            --json
 
   deploy-cloudflare:
     name: 部署到 Cloudflare Pages（灾备）

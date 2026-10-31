@@ -137,9 +137,21 @@ git branch --show-current          # 当前分支（现在是 master）
 
 ### 1.3 拿 EdgeOne API Token
 
-1. 登录 <https://edgeone.ai> → 右上角头像 → **API Token**
-2. 点 **Create Token**，名字随便填（如 `github-actions`）
-3. 复制生成的 token（**只显示一次**，先粘到记事本里）
+> **2026-10-27 订正**：原步骤写作「右上角头像 → API Token」，**位置有误**——
+> EdgeOne Pages 的 API Token **不在头像菜单里**，而在**顶部「Makers」Tab 下的 API Token 页**。
+> 官方文档：<https://pages.edgeone.ai/zh/document/api-token>
+
+1. 登录 <https://edgeone.ai>
+2. 切到顶部的 **Makers** Tab（Pages 已升级为 Makers；旧称 Pages）
+   - 若登录后直接进场景选择大厅，鼠标移到「创建项目」即可看到 Makers 入口
+3. 点 **API Token** Tab → **创建 API Token**
+4. 填「Token 描述」（如 `github-actions`）+ 选「过期时间」（1 天 ~ 1 年）→ 提交
+   > 建议设过期时间，别选永久
+5. 复制生成的 token（**只显示一次**，立刻粘到记事本）
+
+> ⚠️ **别在这两处找**：
+> - 右上角头像菜单（那是腾讯云账号级 API Key，不是 Pages Token）
+> - 腾讯云国内控制台 `console.cloud.tencent.com/edgeone/pages`（国内版，会强制 ICP 备案）
 
 ---
 
@@ -199,10 +211,24 @@ git push
 
 ### 步骤 A2 — 配置仓库密钥
 
-1. 打开 `https://github.com/<你的用户名>/quant-course/settings/secrets/actions`
+1. 打开 <https://github.com/carmanxin/quant-course/settings/secrets/actions>
+   （即 `github.com/<你的用户名>/<仓库名>/settings/secrets/actions`，本项目仓库名 `quant-course`）
 2. 点 **New repository secret**
 3. Name 填 `EDGEONE_API_TOKEN`，Value 粘贴 1.3 拿到的 token
 4. 点 Add secret
+
+> ⚠️ **必须是「repository secret」，不能放「environment secret」**
+> —— 本项目 `deploy.yml` **未声明 `environment:` 字段**，
+> 放在 `Settings → Environments` 下的 secret **CI 读不到**（会一直显示"未配置 Token，跳过"）。
+> 若你确实想用 Environment secret，则需给 `deploy-edgeone` job 加上：
+> ```yaml
+>   deploy-edgeone:
+>     environment: production
+> ```
+
+> ⚠️ **同名遮蔽**：若 Repository secret 与 Environment secret 同名，
+> **Environment 优先**——环境里放了个空值或旧值，就会把仓库级的正确值盖掉。
+> 排查时先看 `Actions` 日志里 EdgeOne job 的第 3 步输出。
 
 （可选，灾备）再加两个：
 
