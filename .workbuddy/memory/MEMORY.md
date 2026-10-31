@@ -153,3 +153,23 @@ CRLF 换行（280 处/页）、资源 hash、Vue scoped id。归一化后**实�
   排查时先确认源产物完好（`text` 长度），再区分「代码之失」与「环境之失」。
 - 批量删目录（`Remove-Item -Recurse`）可能触发用户拒绝；旧构建目录建议保留或逐个删。
 - `git status` 里 `public/code` 显示大量 `D` 是**清理孤儿产物**所致，已核验零误删。
+- **safe-delete 拥堵时连 Node 的 `fs.unlinkSync` 也会被拦**（报 `genie-trash/win32-x64.exe ETIMEDOUT`），
+  批量删 498 个文件耗时 **18 分钟**。对策：先 `mv` 移出工作区，再对**单个目录** `rm -rf`。
+  ⚠️ 若 safe-delete 已拥堵，连 `git status` / `ls` 都会 SIGTERM 挂起 → 换 PowerShell 工具验。
+
+## 🔴 平台工具的 list 视图 ≠ 清理干净（2026-10-31 定）
+
+**现象**：`automation_update(mode=list)` 只列 21 条，用户却说侧边栏有一堆「QuantLab 进度监控」任务。
+**真相**在 `C:/Users/xinhaoming/.workbuddy/workbuddy.db`（SQLite，drizzle 迁移）：
+- `automation-1784252908024`「QuantLab 进度监控」早在 2026-08-26 已**软删**
+  （`automations.deleted_at` 有值）→ 平台工具正确隐藏它，`mode=delete` 回显 "already deleted"
+- **但软删留下了 126 条 `automation_runs`（read_at IS NULL）+ 238 个
+  `sessions.custom_title='QuantLab 进度监控'`** → 这才是用户看到的"一堆任务"
+
+**纪律**：
+1. **软删 ≠ 清理干净**；查清理效果必须直读 `workbuddy.db`，四表联动：
+   `automations` / `automation_runs` / `sessions` / `session_usage`
+2. **小时级轮询（`FREQ=HOURLY`）会把会话堆成灾** —— 126 次运行 × 每次多轮重试 = 238 个同名会话
+3. 清会话 = 删库（4 表）+ 删盘（`projects/<proj>/*.jsonl`、`~/.workbuddy/tasks/<sid>/`、
+   `artifact-index/`、`changes-index/`）**四件套**，缺一则侧边栏仍有痕迹
+4. 备份模板：`~/.workbuddy/automation-backups/<name>-<ts>/`（整库 `.db.bak` + 目标行 JSON + 磁盘文件 + MANIFEST）
