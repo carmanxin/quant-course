@@ -1,0 +1,4 @@
+{
+  "text": "场景1 - 无数据泄露:\r\n  AUC: 0.535 (+/- 0.034)\r\n  评估: 分布一致，无显著偏移\r\n\r\n场景2 - 存在分布偏移:\r\n  AUC: 0.699 (+/- 0.041)\r\n  评估: 分布显著不一致，存在可能的过拟合风险\r\n\r\n特征漂移分析:\r\n         ks_statistic ks_pvalue mean_shift_sigma drift_significant\r\nfactor_1        0.318       0.0         0.755167              True\r\nfactor_2        0.061  0.165069         0.089109             False\r\nfactor_3        0.047  0.448824         0.101128             False",
+  "svgs": []
+}

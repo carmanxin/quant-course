@@ -1,0 +1,4 @@
+{
+  "text": "Macro_Factor Style_Factor  Interaction_Beta_mean    t_stat  Significant\r\n0           增长           动量               0.000093  0.132583        False\r\n1           增长           价值               0.000876  0.553598        False\r\n2           增长           低波              -0.001020 -0.976970        False\r\n3           通胀           动量               0.000752  0.685998        False\r\n4           通胀           价值               0.000490  0.359032        False\r\n5           通胀           低波               0.000543  0.562150        False",
+  "svgs": []
+}

@@ -1,0 +1,4 @@
+{
+  "text": "Unhedged_Ann_Return: 20.38421128450493\r\nHedged_Ann_Return: 5.746519896741786\r\nReturn_Drag_bps: 14.637691387763143\r\nHedge_Cost_bps: 150\r\nUnhedged_Max_Drawdown: 12.001952347624044\r\nHedged_Max_Drawdown: 16.252915277035086\r\nDrawdown_Improvement: -4.250962929411042\r\nUnhedged_Sortino: 2.8598286628694916\r\nHedged_Sortino: 0.8026793410783647\r\nSortino_Improvement: -2.057149321791127\r\nNet_Benefit: False",
+  "svgs": []
+}

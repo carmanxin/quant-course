@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n========================================================\r\n自动调用 funding_rate_mean_reversion_strategy(...) — 运行结果:\r\n========================================================\r\n[z_score] float64\r\nnp.float64(nan)\r\n[current_rate_annualized] float\r\n10950.0\r\n[signal] str\r\n'NEUTRAL'\r\n[expected_return_30d_pct] int\r\n0",
+  "svgs": []
+}

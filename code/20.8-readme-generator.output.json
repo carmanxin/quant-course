@@ -1,0 +1,5 @@
+{
+  "text": "",
+  "svgs": [],
+  "error": "Traceback (most recent call last):\n  File \"<string>\", line 55, in <module>\n  File \"/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/matplotlib/font_manager.py\", line 1294, in addfont\n    prop = ttfFontProperty(font)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/matplotlib/font_manager.py\", line 545, in ttfFontProperty\n    raise NotImplementedError(\"Non-scalable fonts are not supported\")\nNotImplementedError: Non-s"
+}
