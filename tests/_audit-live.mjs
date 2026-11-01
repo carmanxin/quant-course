@@ -65,8 +65,8 @@ async function fetchText(url) {
  *   `.tmp_*` 已在 .gitignore 中，不会污染仓库。
  */
 function exportRef(ref) {
-  const dir = path.resolve(process.cwd(), '.tmp_distref')
-  fs.rmSync(dir, { recursive: true, force: true })
+  // 每次用带时间戳的独立目录，避免删除旧快照（1,497 个文件会触发 safe-delete 批量保护）
+  const dir = path.resolve(process.cwd(), `.tmp_distref_${Date.now()}`)
   fs.mkdirSync(dir, { recursive: true })
   execSync(`git archive "${ref}" | tar -x -C "${dir}"`, { stdio: 'pipe' })
   return dir
@@ -125,9 +125,16 @@ async function main() {
     })
   }
 
-  fs.rmSync(dir, { recursive: true, force: true })
+  // 清理临时目录：⚠ 不能用 fs.rmSync(recursive) —— 快照有 1,497 个文件，
+  //   会触发 WorkBuddy safe-delete 的批量保护（SAFE_DELETE_BULK_CONFIRM_REQUIRED，
+  //   阈值 50）而抛错，把已算完的核验结果一起带崩。
+  //   改用「忽略失败」的清理。
+  try {
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 0 })
+  } catch {
+    console.log(`\n(提示：临时目录 ${dir} 未能自动清理，可手动删除或忽略 —— 不影响核验结论)`)
+  }
 
-  console.log('===== 核验结果 =====')
   console.log(`逐字节完全一致 : ${exact}`)
   console.log(`仅环境差异     : ${envOnly}`)
   console.log(`实质差异       : ${realDiff}`)

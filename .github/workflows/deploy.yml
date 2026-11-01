@@ -97,26 +97,37 @@ jobs:
       #     INDEX_N = _index.json 条目数
       #     FENCE_N = md 中唯一 python fence 数（与 extract 去重口径一致）
       #     二者相等 ⇒ 索引已覆盖全部代码块，产物齐全 ⇒ 跳过 precompute
+      #
+      # 2026-11-01 修正：判据改由 scripts/check-precompute-ready.mjs 一次算完。
+      #   原实现在 shell 里用两段 `python3 -c ...` 分别算 INDEX_N / MISSING，
+      #   且失败时被 `|| echo 0` / `|| echo 999` 静默兜底 —— 一旦 python3 不可用，
+      #   判据会「假性不通过」而每次都跑 precompute（多耗 8-15 min），
+      #   且真实原因被掩盖。现改为 Node 单脚本（Node 是 CI 既成依赖，不会缺），
+      #   任一环节失败显式报错非 0 退出，并把诊断写进 job summary。
       # ------------------------------------------------------------------
       - name: 检测预计算产物是否齐全
         id: has_outputs
         run: |
-          INDEX_N=$(python3 -c "import json;print(len(json.load(open('public/code/_index.json'))))" 2>/dev/null || echo 0)
-          # 唯一 fence 数：与 scripts/extract-py-fences.mjs 同口径（归一化后 hash 去重）
-          FENCE_N=$(node scripts/count-unique-fences.mjs 2>/dev/null || echo 0)
-          # 索引条目是否都有对应产物文件
-          MISSING=$(python3 -c "
-            import json,os
-            idx=json.load(open('public/code/_index.json'))
-            names=set(idx.values())
-            miss=[n for n in names if not os.path.exists('public/code/'+n+'.output.json')]
-            print(len(miss))
-          " 2>/dev/null || echo 999)
-          echo "index=$INDEX_N fences=$FENCE_N missing=$MISSING"
+          set -o pipefail
+          RESULT=$(node scripts/check-precompute-ready.mjs)
+          echo "$RESULT"
+          LINE=$(echo "$RESULT" | tail -1)
+          echo "### 预计算产物判定" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$RESULT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          INDEX_N=$(echo "$LINE" | sed -n 's/.*index=\([0-9]*\).*/\1/p')
+          FENCE_N=$(echo "$LINE" | sed -n 's/.*fences=\([0-9]*\).*/\1/p')
+          MISSING=$(echo "$LINE" | sed -n 's/.*missing=\([0-9]*\).*/\1/p')
+          READY=$(echo "$LINE" | sed -n 's/.*ready=\(true\|false\).*/\1/p')
+          if [ -z "$INDEX_N" ] || [ -z "$FENCE_N" ] || [ -z "$MISSING" ] || [ -z "$READY" ]; then
+            echo "::error::判据脚本输出无法解析：$LINE"
+            exit 1
+          fi
           if [ "${{ inputs.force_precompute }}" = "true" ]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "强制重跑预计算"
-          elif [ "$INDEX_N" -gt 0 ] && [ "$INDEX_N" = "$FENCE_N" ] && [ "$MISSING" = "0" ]; then
+          elif [ "$READY" = "true" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "索引完整（$INDEX_N 条 = $FENCE_N 个唯一 fence，产物无缺失），跳过 precompute"
           else

@@ -44,15 +44,26 @@ demo 数据自动调 def）+ `preferDemo`（纯 def 片段下 used 变量未注�
 `scaffoldOnly` 判定（text 只剩标题行视为无输出回落 note，但 svgs>0 的图表类保留）。
 剩余 ~259 note 属诚实不可跑：纯 class、def 依赖其它 fence 的函数/外部数据、多必填参数无法造 demo。
 
-## 部署架构（2026-09 定）
+## 部署架构（2026-09 定 · 2026-11-01 终局）
 
-- 主站 **EdgeOne Pages 国际版**（edgeone.ai，免备案）。**不要**用腾讯云国内控制台，会强制 ICP 备案。
-- 灾备 Cloudflare Pages。
-- **不能让平台自己构建**：EdgeOne/CF 容器没有 Python，precompute 跑不了，439 个案例结果全丢。
-  必须 GitHub Actions（有 Python）构建完再交给平台。
-- `.github/workflows/deploy.yml`：build → deploy-edgeone → deploy-cloudflare → publish-dist-branch(保底)。
-  CI 检测 `public/code/*.output.json` ≥480 就跳过 precompute（20min → 4min）。
+- 主站 **Cloudflare Pages**，项目名 **`quant-course`**，线上 <https://quant-course.pages.dev>。
+  **2026-11-01 起 EdgeOne 通道已从 `deploy.yml` 彻底撤除**（用户决策，不再恢复）。
+- **EdgeOne 弃用原因（不是选站选错）**：当年连的确实是国际站 `edgeone.ai`，
+  域名实测解析到新加坡节点（`43.168.176.154` · AS139341 · SG）。
+  真正卡点是**国际站系统域名受加速区域限制**：
+  「全球（不含中国大陆）」→ 国内 401；「全球（含中国大陆）」→ 须绑**已备案**自定义域名。
+  本站无备案域名 → EdgeOne 系统域名对国内用户不可用（2026-09-08 改判）。
+  EdgeOne 侧 `quantlab.edgeone.app` 项目现已不存在（实测 404），仅剩 DNS 指向新加坡。
+- ⚠️ **同账号下 `quantlab` 是另一个应用**（WASM 图片量化器，`quantlab.pages.dev`）。
+  **本站项目名是 `quant-course`，别搞混** —— CI 的 `CLOUDFLARE_PROJECT`
+  默认值原写成 `quantlab`，2026-11-01 已订正为 `quant-course`。
+- **不能让平台自己构建**：CF 免费容器 2GB 内存跑 VitePress 必 OOM。
+  必须 GitHub Actions（有 Python）构建完再由 Wrangler 推送，平台零构建。
+- `.github/workflows/deploy.yml`：build → deploy-cloudflare(主站) → publish-dist-branch(保底)。
+  CI 检测预计算产物完整性（`_index.json` 条数 == 唯一 fence 数 且 无缺失）才跳过 precompute（20min → 4min）。
 - CI Python 依赖用 `requirements-ci.txt`（~400MB），**不要**用根目录 `requirements.txt`（3GB+，含 torch）。
+- 线上核验：`node tests/_audit-live.mjs https://quant-course.pages.dev origin/dist`
+  ⚠ 快照导出到**工作区内** `.tmp_distref/`，别用 `os.tmpdir()`（沙箱 EPERM，会跑 33 分钟后崩）。
 
 ## 产物质量守门（2026-10-26 第一令落地）
 
@@ -137,6 +148,11 @@ CI 构建机是 **Windows**，与本地 Git Bash 产物天然有差：
 `_audit-live.mjs` 用法：`node tests/_audit-live.mjs [baseUrl] [ref]`，
 默认 `https://quant-course.pages.dev` + `origin/dist`。
 三级判定：逐字节一致 / 仅环境差异（归一化后同）/ 实质差异。
+
+⚠️ **Cloudflare Pages 会发 308 重定向**（补尾斜杠 / 规范形式），裸 `https.get` 不跟随会拿到
+0 字节空响应 → 比对时**必须手动跟随 301/302/307/308**（最多 5 跳），
+否则会误判成「线上内容全丢」。同理 `curl` 在子进程里可能被沙箱拦（返回 0 字节），
+用 Node 原生 `https` + 手动解压 `content-encoding` 更稳。
 **建议接入 CI 部署后冒烟**——现 `deploy.yml` 只验 `index.html` 存在与裸字符串残留，
 未校验结果↔代码对应性、未校验组件是否渲染、未校验线上↔真源一致性。
 
