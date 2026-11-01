@@ -1,0 +1,4 @@
+{
+  "text": "{'length': 20, 'numbers': [], 'weak_words': ['取得较好'], 'evidence_terms': [], 'pass': False}\r\n{'length': 88, 'numbers': ['0.031', '20', '1.24'], 'weak_words': [], 'evidence_terms': ['容量', '成本', '样本外'], 'pass': True}",
+  "svgs": []
+}

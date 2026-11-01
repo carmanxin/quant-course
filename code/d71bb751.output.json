@@ -1,0 +1,4 @@
+{
+  "text": "current_contribution: {'股票': np.int64(38), '债券': np.int64(22), '商品': np.int64(27), '现金': np.int64(13)}\r\ntarget_budget: {'股票': np.float64(40.0), '债券': np.float64(30.0), '商品': np.float64(20.0), '现金': np.float64(10.0)}\r\ndeviations: {'股票': np.float64(-2.0), '债券': np.float64(-8.0), '商品': np.float64(7.0), '现金': np.float64(3.0)}\r\nmax_deviation: 8.0\r\nalerts: ['债券: under-allocated (-8.0pp vs budget)', '商品: over-allocated (+7.0pp vs budget)']\r\nrebalance_needed: True",
+  "svgs": []
+}

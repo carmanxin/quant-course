@@ -1,0 +1,4 @@
+{
+  "text": "策略 'Multi-Factor Momentum' 过拟合防御检查:\r\n============================================================\r\n[FAIL]      IS/OOS Sharpe差异:               下滑 56%\r\n       WARNING: 样本内外的巨大差异表明严重过拟合\r\n[FAIL]              数据挖掘自由度:          测试了 350 个组合\r\n       WARNING: 大量测试增加了假阳性风险，考虑计算DSR\r\n[PASS]                模型复杂度:               12 个参数\r\n[PASS]           Purged交叉验证:                   使用\r\n[PASS]              真正OOS验证:                    有\r\n\r\n  有 2 项未通过，建议修复后再上线。",
+  "svgs": []
+}

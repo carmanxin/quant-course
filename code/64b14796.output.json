@@ -1,0 +1,4 @@
+{
+  "text": "# A-Share Factor Research\r\n    \r\n    ## Research Thesis\r\n    检验质量因子中性化后是否仍有截面预测能力。\r\n    \r\n    ## Key Results\r\n    - 样本外 Rank IC：0.031\r\n- 成本后 Sharpe：1.24\r\n    \r\n    ## Reproduce\r\n    ```bash\r\n    python -m pytest -q\r\n    python -m src.run_experiment --config configs/baseline.yaml\r\n    ```\r\n    \r\n    ## Tech Stack\r\n    `Python` · `pandas` · `pytest`",
+  "svgs": []
+}

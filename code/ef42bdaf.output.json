@@ -1,0 +1,4 @@
+{
+  "text": "total_spread_bps: 200.00\r\n  liquidity_bps: 20.00\r\n  tax_bps: 5.00\r\n  expected_loss_bps: 175.00\r\n  implied_hazard_rate: 0.03",
+  "svgs": []
+}

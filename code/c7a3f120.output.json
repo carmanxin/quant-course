@@ -1,0 +1,4 @@
+{
+  "text": "--- 结果 ---\r\n========================================================\r\n自动调用 strategy_significance_test(...) — 运行结果:\r\n========================================================\r\nSeries shape=(7,) name=None\r\nt-test_pvalue                                         0.916615\r\nt-test_significant                                       False\r\nvariance_ratio                                        1.051152\r\nsign_test_pvalue                                      0.476986\r\nljung_box_pvalue                                      0.738012\r\nhas_autocorr                                             False\r\nsharpe_95ci           (-1.924187918341743, 1.7107757923062434)",
+  "svgs": []
+}

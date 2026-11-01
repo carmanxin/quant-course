@@ -1,0 +1,4 @@
+{
+  "text": "✓ test_portfolio_cash\r\n  ✓ test_risk_drawdown\r\n  ✓ test_execution_commission\r\n  ✓ test_strategy_no_signal\r\n\r\n4/4 测试通过",
+  "svgs": []
+}

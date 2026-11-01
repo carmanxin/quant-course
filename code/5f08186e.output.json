@@ -1,0 +1,4 @@
+{
+  "text": "席位分类:          date    code  ...  inst_total_sell  inst_net_buy\r\n0  2024-05-01  600001  ...              0.0           0.0\r\n1  2024-05-01  000003  ...              0.0           0.0\r\n2  2024-05-01  300001  ...              0.0           0.0\r\n\r\n[3 rows x 10 columns]\r\n席位跟随信号:           date    code  ...  inst_total_sell  inst_net_buy\r\n87  2024-05-30  600001  ...              0.0           0.0\r\n88  2024-05-30  000003  ...              0.0           0.0\r\n89  2024-05-30  300001  ...              0.0           0.0\r\n\r\n[3 rows x 10 columns]",
+  "svgs": []
+}

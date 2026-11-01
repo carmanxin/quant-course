@@ -1,0 +1,4 @@
+{
+  "text": "策略研发流水线演示:\r\n\r\n策略 Multi-Factor Momentum Alpha: Senior Researcher - David(Senior Researcher) 批准进入 [原型验证]\r\n策略 Multi-Factor Momentum Alpha: Senior Developer - Charlie(Senior Developer) 批准进入 [代码审查中]\r\n策略 Multi-Factor Momentum Alpha: Risk Manager - Diana(Risk Manager) 批准进入 [模拟交易中]\r\n策略 Multi-Factor Momentum Alpha: PM - Eric(Portfolio Manager) 批准进入 [小资金实盘]\r\n\r\n策略: Multi-Factor Momentum Alpha [STRAT_2024_001]\r\n  当前状态: 小资金实盘\r\n  研究员: Alice Wang (QR)\r\n  开发工程师: Bob Zhang (QD)\r\n  审批历史:\r\n    StrategyStatus.PROTOTYPE: Senior Researcher - David (Senior Researcher)\r\n    StrategyStatus.CODE_REVIEW: Senior Developer - Charlie (Senior Developer)\r\n    StrategyStatus.PAPER_TRADING: Risk Manager - Diana (Risk Manager)\r\n    StrategyStatus.LIVE_SMALL: PM - Eric (Portfolio Manager)",
+  "svgs": []
+}

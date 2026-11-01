@@ -1,0 +1,4 @@
+{
+  "text": "{'beta_downside': np.float64(-256.51081041697483), 'beta_upside': np.float64(-251.35055807934103), 'convexity_ratio': np.float64(1.0205301009755663), 'asymmetric': np.False_, 'tail_hedge_effectiveness': 'Low'}",
+  "svgs": []
+}

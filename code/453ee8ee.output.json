@@ -1,0 +1,4 @@
+{
+  "text": "Delta_Charges: {'rates': 2000000.0, 'equity': 3000000.0}\r\nVega_Charges: {'rates': 500000.0, 'equity': 800000.0}\r\nCurvature_Charges: {'rates': 100000.0, 'equity': 200000.0}\r\nTotal_Capital_Charge: 5287721.626560914\r\nRWA: 66096520.33201143",
+  "svgs": []
+}

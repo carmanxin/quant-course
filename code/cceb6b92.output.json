@@ -1,0 +1,4 @@
+{
+  "text": "Vega 中性所需对冲: Short 0.67 张 OTM Put T2\r\n此时组合 Gamma = 0.0093 (不为零)\r\n→ Vega 中性但 Gamma 正, 适合温和看多波动",
+  "svgs": []
+}

@@ -1,0 +1,4 @@
+{
+  "text": "增长+0.6/通胀-0.2 -> {'phase': 'Goldilocks (金发姑娘)', 'equity': 0.55}\r\n增长+0.6/通胀+0.8 -> {'phase': 'Overheat (过热)', 'equity': 0.3}\r\n增长-0.5/通胀+0.9 -> {'phase': 'Stagflation-lite (轻滞胀)', 'equity': 0.2}\r\n增长-0.5/通胀-0.3 -> {'phase': 'Early Recession (衰退初期)', 'equity': 0.25}",
+  "svgs": []
+}

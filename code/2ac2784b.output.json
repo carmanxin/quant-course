@@ -1,0 +1,4 @@
+{
+  "text": "⚠ 未连接 Kafka broker(localhost:9092): KafkaTimeoutError\r\n  本段演示的是发送内容的构造与序列化：\r\n    topic = market_data\r\n    value = {\"symbol\": \"600519.SH\", \"price\": 1688.0, \"size\": 100, \"ts\": \"2024-06-14T09:30:01.123456\"}\r\n    字节数 = 89\r\n  实盘要点：acks='all' + 幂等生产者，避免行情漏发/重发。",
+  "svgs": []
+}

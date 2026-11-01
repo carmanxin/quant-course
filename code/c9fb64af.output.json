@@ -1,0 +1,4 @@
+{
+  "text": "市场Regime特征（均值）:\r\n============================================================\r\n\r\nRegime 0 (113 个交易日, 23.5%):\r\n  mean_ret: 0.0004\r\n  volatility: 0.0101\r\n  avg_corr: 0.1800\r\n  trend_strength: 0.5166\r\n  tail_risk: 0.0223\r\n\r\nRegime 1 (204 个交易日, 42.5%):\r\n  mean_ret: -0.0006\r\n  volatility: 0.0097\r\n  avg_corr: 0.1958\r\n  trend_strength: 0.4823\r\n  tail_risk: 0.0313\r\n\r\nRegime 2 (163 个交易日, 34.0%):\r\n  mean_ret: 0.0006\r\n  volatility: 0.0094\r\n  avg_corr: 0.1924\r\n  trend_strength: 0.5272\r\n  tail_risk: 0.0144",
+  "svgs": []
+}

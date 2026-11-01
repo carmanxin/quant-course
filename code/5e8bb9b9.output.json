@@ -1,0 +1,4 @@
+{
+  "text": "expansion -> {'momentum': 0.3, 'growth': 0.3, 'quality': 0.2, 'value': 0.1, 'low_vol': 0.1}\r\ncontraction -> {'momentum': 0.089, 'growth': 0.054, 'quality': 0.357, 'value': 0.143, 'low_vol': 0.357}\r\nstagflation -> {'momentum': 0.119, 'growth': 0.048, 'quality': 0.238, 'value': 0.357, 'low_vol': 0.238}\r\nrecovery -> {'momentum': 0.192, 'growth': 0.231, 'quality': 0.192, 'value': 0.288, 'low_vol': 0.096}",
+  "svgs": []
+}

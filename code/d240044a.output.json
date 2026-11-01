@@ -1,0 +1,4 @@
+{
+  "text": "Strike_Price: 80.0\r\nStrike_Pct_of_Spot: 80.0\r\nPut_Price: 0.030403170122306977\r\nPut_Delta: -0.008869558596318935\r\nNumber_of_Options: 11274518.22027561\r\nTotal_Premium: 342781.0954980891\r\nPremium_Pct: 3.427810954980891\r\nAnnualized_Cost_bps: 1390.1677761866945\r\nCrash_Scenario_Hedge_Gain: 225490364.4055122\r\nCrash_Scenario_Net: 221147583.31001413\r\nCrash_Scenario_Covered_Pct: 5637.259110137806",
+  "svgs": []
+}

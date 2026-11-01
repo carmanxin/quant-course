@@ -1,0 +1,4 @@
+{
+  "text": "2024-06-01 -> {'date': '2024-06-01', 'source_level': '国务院', 'base_level_score': 2, 'signals': {'新能源': {'direction': 1.0, 'score': 0.27, 'hit_keywords': ['新能源'], 'positive_hits': 1, 'negative_hits': 0}}}\r\n2024-06-05 -> {'date': '2024-06-05', 'source_level': '央行', 'base_level_score': 2, 'signals': {}}\r\n2024-06-08 -> {'date': '2024-06-08', 'source_level': '地方', 'base_level_score': 1, 'signals': {}}\r\n聚合示例跳过: KeyError",
+  "svgs": []
+}

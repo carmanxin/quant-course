@@ -1,0 +1,4 @@
+{
+  "text": "WebSocketApp 已创建:\r\n  URL: wss://api.exchange.com/ws\r\n  回调: on_message(ws, message) -> 解析 JSON 并写入 Redis\r\n\r\n生产环境调用：\r\n  ws.run_forever()  # 阻塞运行，断线自动重连\r\n\r\n模拟一条 tick:\r\n  收到消息: {\"symbol\": \"AAPL\", \"price\": 187.23}\r\n  redis.set('AAPL', 187.23)",
+  "svgs": []
+}

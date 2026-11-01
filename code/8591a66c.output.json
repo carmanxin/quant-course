@@ -1,0 +1,4 @@
+{
+  "text": "total_volatility: 0.980232194045783\r\nfactor_var: 0.9563551542438097\r\nspecific_var: 0.0045\r\nfactor_var_pct: 99.53166718416145\r\nspecific_var_pct: 0.4683328158385628\r\nmarginal_risk_contribution: [1.2309 0.1398 2.0642 0.1482 1.4096]\r\nrisk_contribution: [0.3693 0.035  0.4128 0.0222 0.141 ]\r\nrisk_contribution_pct: [37.6705  3.5661 42.116   2.2672 14.3802]",
+  "svgs": []
+}

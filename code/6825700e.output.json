@@ -1,0 +1,4 @@
+{
+  "text": "Put-Call Parity 验证:\r\n  C - P = 4.877058\r\n  S - Ke^(-rT) = 4.877058\r\n  差异: 0.00e+00",
+  "svgs": []
+}
