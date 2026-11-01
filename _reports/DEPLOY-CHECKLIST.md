@@ -1,8 +1,12 @@
 # QuantLab 上线实施 Checklist（Day 0 – Day 7）
 
-> 版本 v1.0 · 2026-09-08
+> 版本 v1.1 · 2026-11-01
 > 配套文档：`DEPLOY.md`（操作手册）、`_reports/DEPLOY-PRD.md`（平台选型）
 > 用法：每天开工前打开这一节，做完一项勾一项。每节末尾的「验收」必须全绿才能进下一天。
+>
+> **2026-11-01 修订**：EdgeOne 通道已撤除，Cloudflare Pages 为唯一部署通道。
+> §1.6 的 Secrets 清单已订正（原文 secret 名称与取值对不上，属历史笔误）。
+> 其余 EdgeOne 字样为历史决策留档，非执行指引。
 
 ---
 
@@ -151,15 +155,19 @@ git ls-files requirements-ci.txt
 
 ### 1.6 配置 Secrets
 
-- [ ] 打开 `https://github.com/<用户名>/quant-course/settings/secrets/actions`
-- [ ] 新建 `EDGEONE_API_TOKEN`
-  - 取值：Cloudflare 控制台 → My Profile → API Tokens → Create Token（模板选 Edit Cloudflare Workers）
-  - 另需 Account ID：控制台首页右侧栏，或看地址栏 `dash.cloudflare.com/<这串 32 位就是>`
-  - ⚠️ token 只显示一次，先粘到记事本
-- [ ] （可选）新建 `CLOUDFLARE_API_TOKEN`
-- [ ] （可选）新建 `CLOUDFLARE_ACCOUNT_ID`
+> **2026-11-01 订正**：原步骤要求新建 `EDGEONE_API_TOKEN` 却让填 Cloudflare 的 token ——
+> 名称与取值对不上（历史笔误），且 EdgeOne 通道已撤除。
+> 现行只需两个 Cloudflare secret，**两者都是必需**（Cloudflare 是唯一部署通道）。
 
-**Day 1 验收**：☐ 仓库页能看到全部源码 ☐ `.github/workflows/deploy.yml` 已入库 ☐ 至少 `EDGEONE_API_TOKEN` 已配置
+- [ ] 打开 `https://github.com/<用户名>/quant-course/settings/secrets/actions`
+- [ ] 新建 `CLOUDFLARE_API_TOKEN`
+  - 取值：Cloudflare 控制台 → My Profile → API Tokens → Create Token（模板选 Edit Cloudflare Workers）
+  - ⚠️ token 只显示一次，先粘到记事本
+- [ ] 新建 `CLOUDFLARE_ACCOUNT_ID`
+  - 取值：控制台首页右侧栏，或看地址栏 `dash.cloudflare.com/<这串 32 位就是>`
+- [ ] ⚠️ 必须是 **repository secret**（不是 environment secret）—— workflow 未声明 `environment:`，环境里的 secret CI 读不到
+
+**Day 1 验收**：☐ 仓库页能看到全部源码 ☐ `.github/workflows/deploy.yml` 已入库 ☐ `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID` 均已配置
 
 ---
 

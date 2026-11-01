@@ -1,6 +1,6 @@
 # QuantLab 部署 PRD(Product Requirements Document)
 
-> 文档版本:v2.0 · 2026-09-10(**已实施并上线,按实战结果校正**)
+> 文档版本:v2.1 · 2026-11-01(**EdgeOne 通道终局撤除**)
 > 作者:主理人 + AI 协作者
 > 状态:**已上线** — <https://quant-course.pages.dev>
 > 关联文档:`_reports/WORK-REPORT.md`、`DEPLOY.md`(操作手册)
@@ -9,6 +9,13 @@
 > ①EdgeOne 系统域名受加速区域限制,国内访问 401(仅 3 小时预览链接有效);
 > ②Cloudflare 免费构建容器仅 2GB 内存,自构建必 OOM。
 > 最终采用:**GitHub Actions 构建 + Wrangler 推送 → Cloudflare Pages 分发,平台零构建**。
+>
+> **v2.1 修订(2026-11-01)**:EdgeOne 通道从 `deploy.yml` 中**彻底撤除**,
+> Cloudflare Pages 成为唯一部署通道。
+> 澄清一点(避免误判):当年连的确实是**国际站** `edgeone.ai`,
+> 域名实测解析到新加坡节点(`43.168.176.154` · AS139341 · SG)——
+> **不是选站选错**,而是国际站系统域名受加速区域限制 + 本站无备案域名。
+> 下列 EdgeOne 相关内容保留为**决策留档**,不再是执行指引;现行指引见 `DEPLOY.md`。
 
 ---
 

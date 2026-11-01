@@ -1,12 +1,16 @@
 # QuantLab 上线部署手册
 
-> 版本 v2.0 · 2026-09-10（**已按本手册成功上线**，全文按实战结果校正）
+> 版本 v2.1 · 2026-11-01（**EdgeOne 通道撤除，Cloudflare Pages 独家承载**）
 > 面向：主理人本人（以及未来接手这个工程的人）
 > 目标：把 `D:\AI\study\quant\` 这个本地站点变成一个任何人打开链接就能访问的线上网站
 > 前置文档：`_reports/DEPLOY-PRD.md`（为什么选这个平台）、`_reports/WORK-REPORT.md`（工程全貌）
 >
 > **当前线上地址**：<https://quant-course.pages.dev>（Cloudflare Pages，2026-09-10 上线）
 > **唯一可行路线**：GitHub Actions 构建 → Wrangler 推送，**平台零构建**（详见 §5）
+>
+> **2026-11-01 变更**：EdgeOne Pages 通道已从 `deploy.yml` 撤除。
+> 原因不是选站选错（当时连的确实是国际站 `edgeone.ai`，节点在新加坡，实测解析到新加坡 IP），
+> 而是国际站系统域名受加速区域限制 + 本站无备案域名 → 详见 §1.2 与 §8.1。
 
 ---
 
@@ -32,10 +36,13 @@ npm run build
 
 ### 0.2 三条路线，按需选一条
 
+> **2026-11-01：EdgeOne 路线已废弃**（域名区域限制 + 无备案域名，详见 §1.2 / §8.1）。
+> 以下四条均基于 Cloudflare Pages。
+
 | 路线 | 做法 | 实战结论 |
 |---|---|---|
 | **A. Actions 构建 + Wrangler 推送** | push → Actions（7GB 容器）构建 → `wrangler pages deploy` 直接推产物 | ✅ **唯一可行，本站采用**（§5） |
-| **B. 控制台手动传 ZIP** | 本地构建 → 打包 → 拖上传 | ❌ 不可行：拖拽上限 1,000 文件，本站 4,393 个（§5.1） |
+| **B. 控制台手动传 ZIP** | 本地构建 → 打包 → 拖上传 | ⚠️ 仅适合"先看看效果"，长期走路线 A |
 | **C. 平台自己从源码构建** | 平台拉仓库跑 `npm install && npx vitepress build` | ❌ 不可行：**2GB 内存必 OOM**（§5.2 有实测日志） |
 | **D. 平台 Git 集成分发 dist 分支** | Actions 推 `dist` 分支，平台拉分支发布 | ⚠️ 仅作保底：新版界面无 Production branch 编辑项，易锁死在错分支（§5.2） |
 
@@ -82,15 +89,16 @@ npm run build
 | # | 你要做的 | 为什么必须你做 | 大约 |
 |---|---|---|---|
 | 1 | 注册 GitHub 账号（已有则跳过） | 邮箱验证 | 3 min |
-| 2 | 注册 EdgeOne 账号 <https://edgeone.ai> | 邮箱验证 | 3 min |
+| 2 | 注册 Cloudflare 账号 <https://dash.cloudflare.com> | 邮箱验证 | 3 min |
 | 3 | 本地跑一次 `gh auth login`（浏览器点授权） | OAuth 授权 | 2 min |
-| 4 | 生成 EdgeOne API Token 并交给 AI / 自己填进 Secret | 密钥只显示一次 | 3 min |
+| 4 | 生成 Cloudflare API Token + Account ID 并填进 Secret | 密钥只显示一次 | 3 min |
 
 **第 3 步之后**，AI 可以接管这些（你不用管）：
 
 ```bash
 gh repo create quant-course --public --source=. --push   # 建仓库 + push
-gh secret set EDGEONE_API_TOKEN                          # 写密钥
+gh secret set CLOUDFLARE_API_TOKEN                       # 写密钥
+gh secret set CLOUDFLARE_ACCOUNT_ID                     # 写账号 ID
 gh workflow run deploy.yml                               # 触发首次构建
 gh run watch                                             # 盯日志
 ```
@@ -98,10 +106,11 @@ gh run watch                                             # 盯日志
 **最省事的协作方式**：
 
 1. 你先完成上面 4 步
-2. 告诉 AI：「GitHub 用户名是 XXX，EdgeOne Token 是 YYY，开始部署」
+2. 告诉 AI：「GitHub 用户名是 XXX，Cloudflare Token 是 YYY，Account ID 是 ZZZ，开始部署」
 3. AI 跑完剩下的，把线上 URL 交给你
 
-> **关于 Token 的安全**：EdgeOne API Token 只能部署 Pages 项目，泄露风险有限，但仍是凭据。
+> **关于 Token 的安全**：Cloudflare API Token 可操作账号下多个资源，权限比 EdgeOne Token 大得多，
+> 泄露风险更高 → **务必用最小权限模板（Edit Cloudflare Workers）并设过期时间**。
 > 更稳妥的做法是**你自己填进 GitHub Secret**（网页点 3 下），然后把 `gh auth login` 之后的活交给 AI。
 > 这样 AI 全程不接触你的任何密钥。
 
@@ -122,36 +131,42 @@ git branch --show-current          # 当前分支（现在是 master）
 
 > ⚠️ 当前有 **665 个未提交改动**。路线 A 和 C 都要求代码提交到 GitHub，先别急，第 2 步会处理。
 
-### 1.2 申请账号（两个，都是免费、免备案、免绑卡）
+### 1.2 申请账号（都是免费、免备案、免绑卡）
 
 **① GitHub**（已有可跳过）
 - 地址 <https://github.com/signup>
 - 只需邮箱
 
-**② EdgeOne Pages 国际版**
-- 地址 **<https://edgeone.ai>**（注意是 `.ai`，不是腾讯云国内的 `console.cloud.tencent.com`）
-- 国际版 = 海外节点 = **免 ICP 备案**
-- 注册只需邮箱，不需要实名、不需要绑卡
+**② Cloudflare Pages**（本站唯一部署平台）
+- 地址 **<https://dash.cloudflare.com>** → 左侧 **Workers & Pages**
+- Pages 免费额度足够本站（静态站、约 79MB、120 页）
+- 免备案、免绑卡，`*.pages.dev` 域名长期有效、国内可直连
 
-> ⚠️ 千万别走腾讯云国内控制台（`console.cloud.tencent.com/edgeone/pages`）建项目——国内版会要求 ICP 备案，未备案会被回 401 拒绝访问。
+> **2026-11-01 决策：EdgeOne 已弃用，本站改由 Cloudflare Pages 独家承载。**
+> 原因不是选站选错（当时连的确实是国际站 `edgeone.ai`，节点在新加坡），
+> 而是**国际站系统域名受加速区域限制**：
+> - 区域选「全球（不含中国大陆）」→ 国内访问被拦（401）；
+> - 区域选「全球（含中国大陆）」→ 必须绑定**已 ICP 备案**的自定义域名。
+>
+> 本站无备案域名，故 EdgeOne 系统域名对国内用户不可用 → 2026-09-08 起改用 Cloudflare。
+> 详见 §5 与 §8.1。EdgeOne 侧的 `quantlab.edgeone.app` 项目现已不存在（实测 404），
+> 仅剩 DNS 解析指向新加坡节点。
 
-### 1.3 拿 EdgeOne API Token
+### 1.3 拿 Cloudflare API Token
 
-> **2026-10-27 订正**：原步骤写作「右上角头像 → API Token」，**位置有误**——
-> EdgeOne Pages 的 API Token **不在头像菜单里**，而在**顶部「Makers」Tab 下的 API Token 页**。
-> 官方文档：<https://pages.edgeone.ai/zh/document/api-token>
+> 用于让 GitHub Actions 用 Wrangler 直接推产物（§5.3 的唯一可行路线）。
 
-1. 登录 <https://edgeone.ai>
-2. 切到顶部的 **Makers** Tab（Pages 已升级为 Makers；旧称 Pages）
-   - 若登录后直接进场景选择大厅，鼠标移到「创建项目」即可看到 Makers 入口
-3. 点 **API Token** Tab → **创建 API Token**
-4. 填「Token 描述」（如 `github-actions`）+ 选「过期时间」（1 天 ~ 1 年）→ 提交
-   > 建议设过期时间，别选永久
+1. 登录 <https://dash.cloudflare.com>
+2. 右上角头像 → **My Profile** → 左侧 **API Tokens** → **Create Token**
+3. 选模板 **Edit Cloudflare Workers**（需要 Pages 部署权限）
+4. 填 Token 名称（如 `github-actions`）→ **Create Token**
 5. 复制生成的 token（**只显示一次**，立刻粘到记事本）
 
-> ⚠️ **别在这两处找**：
-> - 右上角头像菜单（那是腾讯云账号级 API Key，不是 Pages Token）
-> - 腾讯云国内控制台 `console.cloud.tencent.com/edgeone/pages`（国内版，会强制 ICP 备案）
+**还需要 `CLOUDFLARE_ACCOUNT_ID`**：登录后在**控制台右侧栏**可见，直接复制。
+
+> ⚠️ 两者都必须是 **repository secret**（不是 environment secret）——
+> 本 workflow 未声明 `environment:`，Environment 里的 secret CI 读不到。
+> 若 Repository 与 Environment 同名，**Environment 优先**，容易踩坑。
 
 ---
 
@@ -214,30 +229,25 @@ git push
 1. 打开 <https://github.com/carmanxin/quant-course/settings/secrets/actions>
    （即 `github.com/<你的用户名>/<仓库名>/settings/secrets/actions`，本项目仓库名 `quant-course`）
 2. 点 **New repository secret**
-3. Name 填 `EDGEONE_API_TOKEN`，Value 粘贴 1.3 拿到的 token
-4. 点 Add secret
+3. Name 填 `CLOUDFLARE_API_TOKEN`，Value 粘贴 1.3 拿到的 token
+4. 再点一次 **New repository secret**，Name 填 `CLOUDFLARE_ACCOUNT_ID`，Value 粘贴控制台右侧栏的 Account ID
+5. 点 Add secret
 
 > ⚠️ **必须是「repository secret」，不能放「environment secret」**
 > —— 本项目 `deploy.yml` **未声明 `environment:` 字段**，
 > 放在 `Settings → Environments` 下的 secret **CI 读不到**（会一直显示"未配置 Token，跳过"）。
-> 若你确实想用 Environment secret，则需给 `deploy-edgeone` job 加上：
+> 若你确实想用 Environment secret，则需给 `deploy-cloudflare` job 加上：
 > ```yaml
->   deploy-edgeone:
+>   deploy-cloudflare:
 >     environment: production
 > ```
 
 > ⚠️ **同名遮蔽**：若 Repository secret 与 Environment secret 同名，
 > **Environment 优先**——环境里放了个空值或旧值，就会把仓库级的正确值盖掉。
-> 排查时先看 `Actions` 日志里 EdgeOne job 的第 3 步输出。
+> 排查时先看 `Actions` 日志里 Cloudflare job 的第 3 步输出。
 
-（可选，灾备）再加两个：
-
-| Name | Value 来源 |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → 模板选 "Edit Cloudflare Workers" |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 控制台首页右侧栏 Account ID |
-
-> 没配的 secret 对应的部署步骤会自动跳过，不会让工作流失败。可以先把主站跑通，灾备以后再加。
+> 没配的 secret 对应的部署步骤会自动跳过，不会让工作流失败。
+> 但本站 Cloudflare 是**唯一**部署通道 —— 两个 secret 都缺就只推 `dist` 分支，线上不会更新。
 
 ### 步骤 A3 — 首次触发构建
 
@@ -254,18 +264,22 @@ git push
 | 安装 Python 依赖 | 2-3 min | 只在需要 precompute 时 |
 | precompute | 8-15 min | **最慢**，有产物则跳过 |
 | vitepress build | 3-5 min | |
-| 部署 EdgeOne | 1-3 min | 上传 79 MB |
+| 部署 Cloudflare Pages | 1-3 min | 上传 79 MB |
 
 > 以后每次 `git push` 到 `main` 都会自动触发，不用再手动点。
 
 ### 步骤 A4 — 拿到网址
 
-构建成功后：
+构建成功后，线上地址固定为：
 
-1. 登录 <https://edgeone.ai> → 控制台 → **Pages**
-2. 会看到一个名为 `quantlab` 的项目（CLI 自动创建的）
-3. 点进去，访问链接形如 `https://quantlab-<随机串>.edgeone.app`
-4. 也可以在 Actions 日志的 "Deploy to EdgeOne Pages" 步骤里找到输出 URL
+**<https://quant-course.pages.dev>**
+
+> ⚠️ **注意项目名是 `quant-course`，不是 `quantlab`**。
+> 同一 Cloudflare 账号下还有一个名为 `quantlab` 的项目
+> （内容是另一个 WASM 图片量化器应用，与本站无关）——
+> `https://quantlab.pages.dev` **不是**本站，别搞混。
+> CI 的 `CLOUDFLARE_PROJECT` 默认值已设为 `quant-course`；若你在仓库 Variables 里
+> 手动改过这个值，请确认它不是 `quantlab`，否则会把产物推到错误的站点。
 
 **打开验证**：任意点 3 个章节，确认代码块的「运行结果」里有数字和图表，而不是空白。
 
@@ -306,13 +320,14 @@ Windows 也可以用资源管理器：进 `.vitepress\dist` → 全选 → 右�
 
 ### 步骤 B3 — 上传
 
-1. 登录 <https://edgeone.ai> → 控制台 → Pages → **创建项目**
-2. 选 **直接上传**（Direct Upload）
-3. 填项目名 `quantlab`，加速区域选**全球（不含中国大陆）**或默认
+1. 登录 <https://dash.cloudflare.com> → 左侧 **Workers & Pages** → **创建** → **Pages**
+2. 选 **Direct Upload**（直接上传）
+3. 填项目名 **`quant-course`**（必须与线上现役项目同名，否则会新建出另一个站点）
 4. 把 `quantlab-dist.zip` 拖进上传区
 5. 点 **开始部署**，等 30-60 秒
 
 > ⚠️ 直接上传创建的项目**以后无法切换成 Git 集成**。要自动化部署得另建项目。所以这只适合"先看看效果"，长期还是走路线 A。
+> ⚠️ 另注：Cloudflare Direct Upload 单次上限 20,000 文件；本站 1,484 个，安全。
 
 ### 步骤 B4 — 以后怎么更新
 
@@ -324,7 +339,7 @@ Windows 也可以用资源管理器：进 `.vitepress\dist` → 全选 → 右�
 
 仅在你**已经把 `public/code/` 提交进仓库**的前提下可用（否则运行结果全丢）。
 
-EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 GitHub → 选 `quant-course`：
+Cloudflare Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 GitHub → 选 `quant-course`：
 
 | 配置项 | 值 |
 |---|---|
@@ -336,13 +351,19 @@ EdgeOne Pages 控制台 → 创建项目 → **导入 Git 仓库** → 授权 Gi
 
 注意构建命令是 `npx vitepress build` 而**不是** `npm run build`——后者会触发 precompute，而平台容器没有 Python。
 
+> ⚠️ 实测这条路**走不通**（§5.2 有实测日志）：Cloudflare 免费容器 2GB 内存跑 VitePress 构建必 OOM。
+> 现行方案是 §5.3 的「Actions 构建 + Wrangler 推送」，平台零构建。
+
 ---
 
 ## 5. 主站：Cloudflare Pages
 
-> **为什么改用它做主站**（2026-09-08 决策）：EdgeOne Pages 系统分配的域名受加速区域限制，
-> 要么只能靠 3 小时预览链接、要么国内直接 401（详见 §8.1）。Cloudflare Pages 无此限制，
-> `*.pages.dev` 域名长期有效、免备案、国内可直连。
+> **为什么是 Cloudflare**（2026-09-08 决策，2026-11-01 终局确认）：
+> EdgeOne Pages 系统分配的域名受加速区域限制，要么只能靠 3 小时预览链接、要么国内直接 401（详见 §8.1）；
+> Cloudflare Pages 无此限制，`*.pages.dev` 域名长期有效、免备案、国内可直连。
+>
+> **2026-11-01：EdgeOne 通道已从 `deploy.yml` 中彻底撤除**，本站改由 Cloudflare 独家承载。
+> 现行线上地址：**<https://quant-course.pages.dev>**
 
 ### 5.1 关键限制：不能用拖拽上传
 
@@ -518,7 +539,7 @@ git push
 
 ### 8.0 ⚠ 最常见：平台报「安装依赖失败」
 
-**症状**：EdgeOne / Cloudflare 控制台部署日志里出现「安装依赖失败」、`npm install failed`、`ENOAUDIT`、`Downloading Chromium` 卡死。
+**症状**：Cloudflare 控制台部署日志里出现「安装依赖失败」、`npm install failed`、`ENOAUDIT`、`Downloading Chromium` 卡死。
 
 **原因**：托管平台从 Git 导入仓库后，会**自动检测框架并自行构建**。它看到根目录有 `package.json` 就跑 `npm install`——但：
 
@@ -540,10 +561,13 @@ git push
 
 ---
 
-### 8.1 页面打开是 401 UNAUTHORIZED（加速区域规则）
+### 8.1 EdgeOne 401 / 域名访问限制（**已弃用，留档备查**）
 
-**症状**：部署显示成功，浏览器点控制台「预览」能打开，但直接访问 `https://xxx.edgeone.dev/` 是 401。
-响应体为 `Access Restricted or Authentication Expired`。
+> **2026-11-01：EdgeOne 通道已从 workflow 中撤除，本站改由 Cloudflare Pages 独家承载。**
+> 本节仅作历史留档 —— 若将来要恢复 EdgeOne（须有已备案域名），下面是当初的判断依据。
+
+**症状**：部署显示成功，控制台「预览」能打开，但直接访问 `https://xxx.edgeone.app/` 是 401，
+响应体 `Access Restricted or Authentication Expired`。
 
 **这不是部署失败，是 EdgeOne Pages 的域名访问规则**（官方文档 `pages.edgeone.ai/zh/document/domain-overview`）：
 
@@ -556,13 +580,12 @@ git push
 若提示 `For "Global (MLC excluded)" projects, check your network environment`，
 且你在国内 → 就是"不含中国大陆"区域在拦国内 IP。
 
-**解法（唯一稳定路径）**：绑定自定义域名。
+**当年的解法**：绑定自定义域名。
 
 - 域名**已备案** → 任意区域都行，国内访问正常
-- 域名**未备案** → 只能选「全球（不含中国大陆）」，国内仍会被拦 → 这种情况建议改用 Cloudflare Pages（§5）
+- 域名**未备案** → 只能选「全球（不含中国大陆）」，国内仍会被拦 → **改用 Cloudflare Pages（本站当前方案，§5）**
 
-> 换句话说：**系统分配的 `*.edgeone.dev` 域名只能用于临时预览，不能当作正式访问地址。**
-> 若暂时没有域名，用 §3 路线 B 的思路把同样的产物部署到 Cloudflare Pages 即可免备案公开访问。
+> 换句话说：**系统分配的 `*.edgeone.app` / `*.edgeone.dev` 域名只能用于临时预览，不能当作正式访问地址。**
 
 ---
 
@@ -608,11 +631,9 @@ git 本身走 SSH（已配 `url.git@github.com:.insteadOf`）是通的 —— **
 | Actions 在 precompute 步骤超时 | 439 个代码块在 2 核 runner 上跑不完 | 把 `public/code` 提交进仓库（CI 会自动跳过）；或调大 `timeout-minutes` |
 | 部署后页面空白 | 路径用了绝对路径但部署在子目录 | 本项目就是绝对路径，确保部署在域名根目录；或用 `relativize-dist.mjs` 转相对路径 |
 | 案例没有运行结果 | CI 里没跑 precompute 或跑失败了 | 看 Actions 日志里 precompute 那一步；本地跑一遍把产物提交 |
-| 平台域名打开是 401 / 提示备案 | EdgeOne 加速区域规则（见 §8.1） | 换 Cloudflare Pages；或绑定已备案自定义域名 |
-| **页面打开是 401 UNAUTHORIZED** | **加速区域规则**（见 §8.1，最常见） | 系统分配的域名本就不能长期公开访问，需绑自定义域名 |
-| 部署报 "project not found" | 项目名不匹配 | CLI 传了 `-n quantlab`，检查 `vars.EDGEONE_PROJECT` |
-| `npx edgeone` 报命令不存在 | npm 拉包失败 | 重试；或在 workflow 里改成 `npm i -g edgeone && edgeone pages deploy ...` |
-| 国内某些运营商打不开 | 国际版节点对某些线路不友好 | 切 Cloudflare Pages 对比；或上自定义域名做分运营商解析 |
+| 线上变成了另一个网站 | **项目名搞错**：同账号下 `quantlab` 是另一个应用（WASM 图片量化器） | 检查 `vars.CLOUDFLARE_PROJECT` 必须是 `quant-course`；确认访问的是 `quant-course.pages.dev` |
+| 部署报 "project not found" | 项目名不匹配 | 确认 `--project-name` 传的是 `quant-course` |
+| 部署报 "already exists" | 项目已存在，属正常 | workflow 里已用 `|| true` 吞掉，无害 |
 | push 后 Actions 没触发 | 分支名不匹配 | workflow 监听 `master`/`main`；`git branch --show-current` 确认 |
 | 构建崩在 `heap out of memory` | 平台免费容器只有 2GB（Cloudflare） | 见 §8.2：改 Actions 构建 + Wrangler 推送 |
 | `gh` 报未登录 / 连接超时 | `gh` 只走 HTTPS，本机 443 被墙 | 见 §8.3：改空 commit + SSH push，Secret 走网页配 |
@@ -622,9 +643,9 @@ git 本身走 SSH（已配 `url.git@github.com:.insteadOf`）是通的 —— **
 
 ## 9. 回滚
 
-**方法 1 — 平台控制台回滚（最快，30 秒）**
+**方法 1 — Cloudflare 控制台回滚（最快，30 秒）**
 
-EdgeOne Pages → 进项目 → **部署记录** → 找到上一个成功版本 → 点「回滚」。
+Cloudflare Dashboard → Workers & Pages → 进 `quant-course` → **部署记录** → 找到上一个成功版本 → 点「回滚」。
 
 **方法 2 — git revert（留记录）**
 
@@ -635,9 +656,10 @@ git push
 
 等 Actions 跑完自动上线。
 
-**方法 3 — 切灾备**
+**方法 3 — 切 dist 分支**
 
-把 Cloudflare Pages 的链接发给用户，或者改 DNS 指向。
+`dist` 分支保存着每次构建的完整产物（保底通道）。若 Pages 出问题，
+可在 Cloudflare 把生产分支改指向 `dist`，直接用分支内容发布。
 
 ---
 
@@ -659,7 +681,7 @@ git push
 
 ```bash
 #!/usr/bin/env bash
-# 用法: bash check-deploy.sh https://quantlab.edgeone.app
+# 用法: bash check-deploy.sh https://quant-course.pages.dev
 URL="${1:?用法: bash check-deploy.sh <站点URL>}"
 URL="${URL%/}"
 

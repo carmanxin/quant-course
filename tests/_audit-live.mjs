@@ -23,7 +23,6 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
 import crypto from 'node:crypto'
 import { execSync } from 'node:child_process'
 
@@ -57,9 +56,18 @@ async function fetchText(url) {
   throw new Error(last || 'unknown')
 }
 
-/** 导出 ref 到临时目录 */
+/**
+ * 导出 ref 到临时目录
+ *
+ * ⚠ 2026-11-01 修正：原用 `os.tmpdir()`（系统 TEMP），在沙箱环境下会被拦读
+ *   （EPERM），跑到第 33 分钟读 guide/m19-a-share/19.5-policy-events.html 时崩。
+ *   改为导出到**工作区内**的 `.tmp_distref/`（D 盘），避开系统 TEMP 的权限边界。
+ *   `.tmp_*` 已在 .gitignore 中，不会污染仓库。
+ */
 function exportRef(ref) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quantlab-live-'))
+  const dir = path.resolve(process.cwd(), '.tmp_distref')
+  fs.rmSync(dir, { recursive: true, force: true })
+  fs.mkdirSync(dir, { recursive: true })
   execSync(`git archive "${ref}" | tar -x -C "${dir}"`, { stdio: 'pipe' })
   return dir
 }
