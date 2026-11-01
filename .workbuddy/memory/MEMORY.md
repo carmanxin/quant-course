@@ -54,9 +54,17 @@ demo 数据自动调 def）+ `preferDemo`（纯 def 片段下 used 变量未注�
   「全球（不含中国大陆）」→ 国内 401；「全球（含中国大陆）」→ 须绑**已备案**自定义域名。
   本站无备案域名 → EdgeOne 系统域名对国内用户不可用（2026-09-08 改判）。
   EdgeOne 侧 `quantlab.edgeone.app` 项目现已不存在（实测 404），仅剩 DNS 指向新加坡。
-- ⚠️ **同账号下 `quantlab` 是另一个应用**（WASM 图片量化器，`quantlab.pages.dev`）。
-  **本站项目名是 `quant-course`，别搞混** —— CI 的 `CLOUDFLARE_PROJECT`
-  默认值原写成 `quantlab`，2026-11-01 已订正为 `quant-course`。
+- 🔴 **`quantlab` 不是本站的 Cloudflare Pages 项目**（主理人 2026-11-01 确认：那不是他的项目）。
+  同账号下该名项目跑的是 WASM 图片量化器（`quantlab.pages.dev`，实测 title
+  `QuantLAB Web - WASM Image Quantizer`），与本站无关。
+  **本站项目名是 `quant-course`**（线上 `quant-course.pages.dev`）。
+  **误推的后果不是"站点内容被换掉"，而是覆盖别人的站点**（`wrangler pages deploy`
+  会成为该项目的生产部署）。
+  - 风险来源：CI 一直靠仓库 Variables 的 `CLOUDFLARE_PROJECT=quant-course`
+    盖住 workflow 默认值；变量一旦被删/改名就会回落到默认值而误推。
+  - 三重防护（2026-11-01 已落地）：① 默认值改为 `quant-course`；
+    ② 部署步骤**硬闸门**：项目名为 `quantlab` 直接 `exit 1`；
+    ③ 实际部署目标写入 **job summary**（`### Cloudflare 部署目标`）供事后核对。
 - **不能让平台自己构建**：CF 免费容器 2GB 内存跑 VitePress 必 OOM。
   必须 GitHub Actions（有 Python）构建完再由 Wrangler 推送，平台零构建。
 - `.github/workflows/deploy.yml`：build → deploy-cloudflare(主站) → publish-dist-branch(保底)。

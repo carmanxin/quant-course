@@ -275,11 +275,24 @@ git push
 **<https://quant-course.pages.dev>**
 
 > ⚠️ **注意项目名是 `quant-course`，不是 `quantlab`**。
-> 同一 Cloudflare 账号下还有一个名为 `quantlab` 的项目
-> （内容是另一个 WASM 图片量化器应用，与本站无关）——
-> `https://quantlab.pages.dev` **不是**本站，别搞混。
-> CI 的 `CLOUDFLARE_PROJECT` 默认值已设为 `quant-course`；若你在仓库 Variables 里
-> 手动改过这个值，请确认它不是 `quantlab`，否则会把产物推到错误的站点。
+>
+> 同一个 Cloudflare 账号下有一个名为 **`quantlab`** 的 Pages 项目，
+> 但**它不是本站**（主理人 2026-11-01 确认：那不是他的项目）——
+> `https://quantlab.pages.dev` 上跑的是一个 WASM 图片量化器应用，与本站无关。
+>
+> **风险**：`wrangler pages deploy` 会把产物推上去并成为该项目的生产部署，
+> 也就是**覆盖别人的站点**。本站的 `CLOUDFLARE_PROJECT` 曾长期靠仓库 Variables
+> 里的 `quant-course` 盖住 workflow 的默认值；一旦该变量被删除或改名，
+> 就会回落到默认值而误推。
+>
+> **已做三重防护**（2026-11-01）：
+> 1. workflow 默认值改为 `quant-course`；
+> 2. 部署步骤加了**硬闸门** —— 项目名为 `quantlab` 时直接 `exit 1` 并报错；
+> 3. 实际部署目标写入 **job summary**（`### Cloudflare 部署目标`），事后可核对。
+>
+> 你自己核对时看这两处：
+> - 仓库 `Settings → Secrets and variables → Actions → Variables` → `CLOUDFLARE_PROJECT` 应为 `quant-course`
+> - Actions 运行页面的 job summary 里会显示本次实际推到的项目名与线上地址
 
 **打开验证**：任意点 3 个章节，确认代码块的「运行结果」里有数字和图表，而不是空白。
 
@@ -631,7 +644,7 @@ git 本身走 SSH（已配 `url.git@github.com:.insteadOf`）是通的 —— **
 | Actions 在 precompute 步骤超时 | 439 个代码块在 2 核 runner 上跑不完 | 把 `public/code` 提交进仓库（CI 会自动跳过）；或调大 `timeout-minutes` |
 | 部署后页面空白 | 路径用了绝对路径但部署在子目录 | 本项目就是绝对路径，确保部署在域名根目录；或用 `relativize-dist.mjs` 转相对路径 |
 | 案例没有运行结果 | CI 里没跑 precompute 或跑失败了 | 看 Actions 日志里 precompute 那一步；本地跑一遍把产物提交 |
-| 线上变成了另一个网站 | **项目名搞错**：同账号下 `quantlab` 是另一个应用（WASM 图片量化器） | 检查 `vars.CLOUDFLARE_PROJECT` 必须是 `quant-course`；确认访问的是 `quant-course.pages.dev` |
+| 线上变成了另一个网站 | **项目名搞错**：同账号下的 `quantlab` 不是本站（是别人的 WASM 图片量化器项目），推过去会覆盖它 | 检查 `vars.CLOUDFLARE_PROJECT` 必须是 `quant-course`；确认访问的是 `quant-course.pages.dev`；workflow 已加硬闸门拒绝 `quantlab` |
 | 部署报 "project not found" | 项目名不匹配 | 确认 `--project-name` 传的是 `quant-course` |
 | 部署报 "already exists" | 项目已存在，属正常 | workflow 里已用 `|| true` 吞掉，无害 |
 | push 后 Actions 没触发 | 分支名不匹配 | workflow 监听 `master`/`main`；`git branch --show-current` 确认 |
